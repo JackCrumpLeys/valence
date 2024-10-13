@@ -34,6 +34,7 @@ pub mod packets;
 pub mod profile;
 mod raw;
 pub mod sound;
+pub mod text_component;
 pub mod var_int;
 mod var_long;
 mod velocity;
