@@ -18,8 +18,8 @@ use valence_server::protocol::packets::play::open_screen_s2c::WindowType;
 pub use valence_server::protocol::packets::play::player_action_c2s::PlayerAction;
 use valence_server::protocol::packets::play::{
     ContainerClickC2s, ContainerCloseC2s, ContainerCloseS2c, ContainerSetContentS2c,
-    ContainerSetSlotS2c, OpenScreenS2c, PlayerActionC2s, SetCreativeModeSlotC2s,
-    UpdateSelectedSlotC2s, UpdateSelectedSlotS2c,
+    ContainerSetSlotS2c, OpenScreenS2c, PlayerActionC2s, SetCarriedItemC2s, SetCarriedItemS2c,
+    SetCreativeModeSlotC2s,
 };
 use valence_server::protocol::{VarInt, WritePacket};
 use valence_server::text::IntoText;
@@ -1449,7 +1449,7 @@ pub struct UpdateSelectedSlotEvent {
 /// indicates that the server has changed the selected hotbar slot.
 fn update_player_selected_slot(mut clients: Query<(&mut Client, &HeldItem), Changed<HeldItem>>) {
     for (mut client, held_item) in &mut clients {
-        client.write_packet(&UpdateSelectedSlotS2c {
+        client.write_packet(&SetCarriedItemS2c {
             slot: held_item.hotbar_idx(),
         });
     }
@@ -1462,7 +1462,7 @@ fn handle_update_selected_slot(
     mut events: EventWriter<UpdateSelectedSlotEvent>,
 ) {
     for packet in packets.read() {
-        if let Some(pkt) = packet.decode::<UpdateSelectedSlotC2s>() {
+        if let Some(pkt) = packet.decode::<SetCarriedItemC2s>() {
             if let Ok(mut mut_held) = clients.get_mut(packet.client) {
                 // We bypass the change detection here because the server listens for changes
                 // of `HeldItem` in order to send the update to the client.
