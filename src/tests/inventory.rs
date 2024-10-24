@@ -9,7 +9,7 @@ use crate::inventory::{
 };
 use crate::protocol::packets::play::{
     ContainerClickC2s, ContainerCloseS2c, ContainerSetContentS2c, ContainerSetSlotS2c,
-    OpenScreenS2c, SetCreativeModeSlotC2s, UpdateSelectedSlotC2s,
+    OpenScreenS2c, SetCarriedItemC2s, SetCreativeModeSlotC2s,
 };
 use crate::protocol::VarInt;
 use crate::testing::ScenarioSingleClient;
@@ -1103,7 +1103,7 @@ fn test_should_handle_set_held_item() {
     app.update();
     helper.clear_received();
 
-    helper.send(&UpdateSelectedSlotC2s { slot: 4 });
+    helper.send(&SetCarriedItemC2s { slot: 4 });
 
     app.update();
 
