@@ -12,8 +12,7 @@ use player_inventory::PlayerInventory;
 use tracing::{debug, warn};
 use valence_server::client::{Client, FlushPacketsSet, SpawnClientsSet};
 use valence_server::event_loop::{EventLoopPreUpdate, PacketEvent};
-use valence_server::interact_block::InteractBlockEvent;
-pub use valence_server::protocol::packets::play::click_slot_c2s::{ClickMode, SlotChange};
+pub use valence_server::protocol::packets::play::container_click_c2s::{ClickMode, SlotChange};
 use valence_server::protocol::packets::play::open_screen_s2c::WindowType;
 pub use valence_server::protocol::packets::play::player_action_c2s::PlayerAction;
 use valence_server::protocol::packets::play::{
@@ -1520,6 +1519,7 @@ pub enum InventoryKind {
     Cartography,
     Stonecutter,
     Player,
+    Crafter3x3,
 }
 
 impl InventoryKind {
@@ -1535,6 +1535,7 @@ impl InventoryKind {
             InventoryKind::Generic9x6 => 9 * 6,
             InventoryKind::Generic3x3 => 3 * 3,
             InventoryKind::Anvil => 4,
+            InventoryKind::Crafter3x3 => 3 * 3,
             InventoryKind::Beacon => 1,
             InventoryKind::BlastFurnace => 3,
             InventoryKind::BrewingStand => 5,
@@ -1586,6 +1587,7 @@ impl From<InventoryKind> for WindowType {
             // arbitrarily chosen, because a player inventory technically does not have a window
             // type
             InventoryKind::Player => WindowType::Generic9x4,
+            InventoryKind::Crafter3x3 => WindowType::Crafter3x3,
         }
     }
 }
@@ -1617,6 +1619,7 @@ impl From<WindowType> for InventoryKind {
             WindowType::Smoker => InventoryKind::Smoker,
             WindowType::Cartography => InventoryKind::Cartography,
             WindowType::Stonecutter => InventoryKind::Stonecutter,
+            WindowType::Crafter3x3 => InventoryKind::Crafter3x3,
         }
     }
 }
