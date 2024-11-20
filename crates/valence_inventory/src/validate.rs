@@ -13,9 +13,9 @@ pub(super) fn validate_click_slot_packet(
     cursor_item: &CursorItem,
 ) -> anyhow::Result<()> {
     ensure!(
-        (packet.window_id == 0) == open_inventory.is_none(),
+        (packet.window_id.0 == 0) == open_inventory.is_none(),
         "window id and open inventory mismatch: window_id: {} open_inventory: {}",
-        packet.window_id,
+        packet.window_id.0,
         open_inventory.is_some()
     );
 
@@ -417,7 +417,7 @@ mod tests {
     #[test]
     fn net_item_delta_1() {
         let drag_packet = ContainerClickC2s {
-            window_id: 2,
+            window_id: VarInt(2),
             state_id: VarInt(14),
             slot_idx: -999,
             button: 2,
@@ -454,7 +454,7 @@ mod tests {
     #[test]
     fn net_item_delta_2() {
         let drag_packet = ContainerClickC2s {
-            window_id: 2,
+            window_id: VarInt(2),
             state_id: VarInt(14),
             slot_idx: -999,
             button: 2,
@@ -499,7 +499,7 @@ mod tests {
         inventory.set_slot(0, ItemStack::new(ItemKind::Diamond, 20, None));
         let cursor_item = CursorItem::default();
         let packet = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -530,7 +530,7 @@ mod tests {
         compound.insert("Damage", Int(1));
 
         let packet = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             state_id: VarInt(0),
             slot_idx: 0,
             button: 0,
@@ -559,7 +559,7 @@ mod tests {
         inventory2.set_slot(0, ItemStack::new(ItemKind::Diamond, 10, None));
         let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 20, None));
         let packet1 = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -572,7 +572,7 @@ mod tests {
             carried_item: ItemStack::EMPTY,
         };
         let packet2 = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -599,7 +599,7 @@ mod tests {
         inventory.set_slot(0, ItemStack::new(ItemKind::Diamond, 20, None));
         let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 64, None));
         let packet = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -623,7 +623,7 @@ mod tests {
         inventory.set_slot(0, ItemStack::new(ItemKind::IronIngot, 2, None));
         let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 2, None));
         let packet = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -648,7 +648,7 @@ mod tests {
         inventory2.set_slot(0, ItemStack::new(ItemKind::Diamond, 10, None));
         let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 20, None));
         let packet1 = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -661,7 +661,7 @@ mod tests {
             carried_item: ItemStack::EMPTY,
         };
         let packet2 = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -674,7 +674,7 @@ mod tests {
             carried_item: ItemStack::EMPTY,
         };
         let packet3 = ContainerClickC2s {
-            window_id: 1,
+            window_id: VarInt(1),
             button: 0,
             mode: ClickMode::Click,
             state_id: VarInt(0),
@@ -713,7 +713,7 @@ mod tests {
 
         let packets = vec![
             ContainerClickC2s {
-                window_id: 0,
+                window_id: VarInt(0),
                 button: 0,
                 mode: ClickMode::ShiftClick,
                 state_id: VarInt(0),
@@ -732,7 +732,7 @@ mod tests {
                 carried_item: ItemStack::EMPTY,
             },
             ContainerClickC2s {
-                window_id: 0,
+                window_id: VarInt(0),
                 button: 0,
                 mode: ClickMode::Hotbar,
                 state_id: VarInt(0),
@@ -751,7 +751,7 @@ mod tests {
                 carried_item: ItemStack::EMPTY,
             },
             ContainerClickC2s {
-                window_id: 0,
+                window_id: VarInt(0),
                 button: 0,
                 mode: ClickMode::Click,
                 state_id: VarInt(0),
@@ -764,7 +764,7 @@ mod tests {
                 carried_item: ItemStack::new(ItemKind::GoldIngot, 2, None),
             },
             ContainerClickC2s {
-                window_id: 0,
+                window_id: VarInt(0),
                 button: 0,
                 mode: ClickMode::DropKey,
                 state_id: VarInt(0),
@@ -793,7 +793,7 @@ mod tests {
         let cursor_item = CursorItem::default();
 
         let packet = ContainerClickC2s {
-            window_id: 0,
+            window_id: VarInt(0),
             state_id: VarInt(2),
             slot_idx: 9,
             button: 0,
@@ -827,7 +827,7 @@ mod tests {
         let cursor_item = CursorItem::default();
 
         let packet = ContainerClickC2s {
-            window_id: 0,
+            window_id: VarInt(0),
             state_id: VarInt(2),
             slot_idx: 9,
             button: 0,
@@ -850,7 +850,7 @@ mod tests {
         let cursor_item = CursorItem(ItemStack::new(ItemKind::Apple, 100, None));
 
         let packet = ContainerClickC2s {
-            window_id: 0,
+            window_id: VarInt(0),
             state_id: VarInt(2),
             slot_idx: 9,
             button: 0,
