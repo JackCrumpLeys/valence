@@ -173,7 +173,9 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         .collect::<TokenStream>();
 
     Ok(quote! {
-        #[doc = "Represents an item from the game"]
+        use crate::registry_id::RegistryId;
+
+        /// Represents an item from the game
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
         #[repr(u16)]
         pub enum ItemKind {
@@ -299,6 +301,12 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
 
             #[doc = "An array of all item kinds."]
             pub const ALL: [Self; #item_kind_count] = [#(Self::#item_kind_variants,)*];
+        }
+
+        impl From<ItemKind> for RegistryId {
+            fn from(item: ItemKind) -> Self {
+                RegistryId::new(item.to_raw() as i32)
+            }
         }
     })
 }

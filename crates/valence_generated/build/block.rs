@@ -579,6 +579,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
 
     Ok(quote! {
         use valence_math::{Aabb, DVec3};
+        use crate::registry_id::RegistryId;
 
         #[doc = "Represents the state of a block. This does not include block entity data such as"]
         #[doc = "the text on a sign, the design on a banner, or the content of a spawner."]
@@ -820,7 +821,13 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
             pub const ALL: [Self; #block_kind_count] = [#(Self::#block_kind_variants,)*];
         }
 
-        #[doc = "The default block kind is `air`."]
+        impl From<BlockKind> for RegistryId {
+            fn from(kind: BlockKind) -> Self {
+                RegistryId::new(kind.to_raw() as i32)
+            }
+        }
+
+        /// The default block kind is `air`.
         impl Default for BlockKind {
             fn default() -> Self {
                 Self::Air
