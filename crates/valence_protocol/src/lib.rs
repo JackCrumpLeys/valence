@@ -386,7 +386,7 @@ mod tests {
         f: BlockPos,
         g: Hand,
         h: Ident<Cow<'a, str>>,
-        i: ItemStack<'a>,
+        i: ItemStack,
         j: Text,
         k: VarInt,
         l: VarLong,
