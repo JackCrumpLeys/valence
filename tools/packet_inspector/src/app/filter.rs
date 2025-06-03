@@ -33,10 +33,13 @@ impl View for Filter {
             .auto_shrink([false, false])
             .stick_to_bottom(false)
             .show(ui, |ui| {
-                if draw_packet_list(ui, state, PacketState::Handshaking) > 0 {
+                if draw_packet_list(ui, state, PacketState::Handshake) > 0 {
                     ui.separator();
                 }
                 if draw_packet_list(ui, state, PacketState::Status) > 0 {
+                    ui.separator();
+                }
+                if draw_packet_list(ui, state, PacketState::Configuration) > 0 {
                     ui.separator();
                 }
                 if draw_packet_list(ui, state, PacketState::Login) > 0 {
@@ -72,10 +75,11 @@ fn get_checkbox_state(state: &SharedState, packet_state: PacketState) -> TriChec
 
 fn draw_packet_list(ui: &mut Ui, state: &mut SharedState, packet_state: PacketState) -> usize {
     let title = match packet_state {
-        PacketState::Handshaking => "Handshaking",
+        PacketState::Handshake => "Handshaking",
         PacketState::Status => "Status",
         PacketState::Login => "Login",
         PacketState::Play => "Play",
+        PacketState::Configuration => "Configuration",
     };
 
     let search = state.packet_search.to_lowercase();

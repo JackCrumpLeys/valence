@@ -6,7 +6,7 @@ use valence::nbt::{compound, List};
 use valence::prelude::*;
 use valence::protocol::decode::PacketDecoder;
 use valence::protocol::encode::{PacketEncoder, PacketWriter, WritePacket};
-use valence::protocol::packets::play::{ChunkDataS2c, EntitySpawnS2c, PlayerListHeaderS2c};
+use valence::protocol::packets::play::{AddEntityS2c, LevelChunkWithLightS2c, TabListS2c};
 use valence::protocol::{ByteAngle, FixedArray, VarInt};
 use valence::text::IntoText;
 use valence_server::protocol::Velocity;
@@ -14,16 +14,16 @@ use valence_server::CompressionThreshold;
 
 pub(crate) fn setup<'a>() -> (
     PacketEncoder,
-    ChunkDataS2c<'a>,
-    PlayerListHeaderS2c<'a>,
-    EntitySpawnS2c,
+    LevelChunkWithLightS2c<'a>,
+    TabListS2c<'a>,
+    AddEntityS2c,
 ) {
     let encoder = PacketEncoder::new();
 
     const BLOCKS_AND_BIOMES: [u8; 2000] = [0x80; 2000];
     static SKY_LIGHT_ARRAYS: [FixedArray<u8, 2048>; 26] = [FixedArray([0xff; 2048]); 26];
 
-    let chunk_data_packet = ChunkDataS2c {
+    let chunk_data_packet = LevelChunkWithLightS2c {
         pos: ChunkPos::new(123, 456),
         heightmaps: Cow::Owned(compound! {
             "MOTION_BLOCKING" => List::Long(vec![123; 256]),
@@ -38,7 +38,7 @@ pub(crate) fn setup<'a>() -> (
         block_light_arrays: Cow::Borrowed(&[]),
     };
 
-    let player_list_header_packet = PlayerListHeaderS2c {
+    let player_list_header_packet = TabListS2c {
         header: ("this".italic() + " is the " + "header".bold().color(Color::RED)).into(),
         footer: ("this".italic()
             + " is the "
@@ -48,7 +48,7 @@ pub(crate) fn setup<'a>() -> (
             .into(),
     };
 
-    let spawn_entity_packet = EntitySpawnS2c {
+    let spawn_entity_packet = AddEntityS2c {
         entity_id: VarInt(1234),
         object_uuid: Default::default(),
         kind: VarInt(5),
@@ -167,7 +167,7 @@ fn decode_chunk_data(bencher: Bencher) {
             .try_next_packet()
             .unwrap()
             .unwrap()
-            .decode::<ChunkDataS2c>()
+            .decode::<LevelChunkWithLightS2c>()
             .unwrap();
 
         black_box(decoder);
@@ -191,7 +191,7 @@ fn decode_player_list_header(bencher: Bencher) {
             .try_next_packet()
             .unwrap()
             .unwrap()
-            .decode::<PlayerListHeaderS2c>()
+            .decode::<TabListS2c>()
             .unwrap();
 
         black_box(decoder);
@@ -214,7 +214,7 @@ fn decode_entity_spawn(bencher: Bencher) {
             .try_next_packet()
             .unwrap()
             .unwrap()
-            .decode::<EntitySpawnS2c>()
+            .decode::<AddEntityS2c>()
             .unwrap();
 
         black_box(decoder);
@@ -240,7 +240,7 @@ fn decode_chunk_data_compressed(bencher: Bencher) {
             .try_next_packet()
             .unwrap()
             .unwrap()
-            .decode::<ChunkDataS2c>()
+            .decode::<LevelChunkWithLightS2c>()
             .unwrap();
 
         black_box(decoder);
@@ -266,7 +266,7 @@ fn decode_player_list_header_compressed(bencher: Bencher) {
             .try_next_packet()
             .unwrap()
             .unwrap()
-            .decode::<PlayerListHeaderS2c>()
+            .decode::<TabListS2c>()
             .unwrap();
 
         black_box(decoder);
@@ -291,7 +291,7 @@ fn decode_spawn_data_compressed(bencher: Bencher) {
             .try_next_packet()
             .unwrap()
             .unwrap()
-            .decode::<EntitySpawnS2c>()
+            .decode::<AddEntityS2c>()
             .unwrap();
 
         black_box(decoder);

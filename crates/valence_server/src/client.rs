@@ -23,17 +23,17 @@ use valence_entity::{
 };
 use valence_math::{DVec3, Vec3};
 use valence_protocol::encode::{PacketEncoder, WritePacket};
-use valence_protocol::packets::play::chunk_biome_data_s2c::ChunkBiome;
-use valence_protocol::packets::play::game_state_change_s2c::GameEventKind;
-use valence_protocol::packets::play::particle_s2c::Particle;
+use valence_protocol::packets::play::chunks_biomes_s2c::ChunkBiome;
+use valence_protocol::packets::play::game_event_s2c::GameEventKind;
+use valence_protocol::packets::play::level_particles_s2c::Particle;
 use valence_protocol::packets::play::{
-    ChunkBiomeDataS2c, ChunkLoadDistanceS2c, ChunkRenderDistanceCenterS2c, DeathMessageS2c,
-    DisconnectS2c, EntitiesDestroyS2c, EntityAttributesS2c, EntityStatusS2c,
-    EntityTrackerUpdateS2c, EntityVelocityUpdateS2c, GameStateChangeS2c, HealthUpdateS2c,
-    ParticleS2c, PlaySoundS2c, UnloadChunkS2c,
+    ChunksBiomesS2c, DisconnectS2c, EntityEventS2c, ForgetLevelChunkS2c, GameEventS2c,
+    LevelParticlesS2c, PlayerCombatKillS2c, RemoveEntitiesS2c, SetChunkCacheCenterS2c,
+    SetChunkCacheRadiusS2c, SetEntityDataS2c, SetEntityMotionS2c, SetHealthS2c, SoundS2c,
+    UpdateAttributesS2c,
 };
 use valence_protocol::profile::Property;
-use valence_protocol::sound::{Sound, SoundCategory, SoundId};
+use valence_protocol::sound::{Sound, SoundCategory, SoundDirect, SoundId};
 use valence_protocol::text::{IntoText, Text};
 use valence_protocol::var_int::VarInt;
 use valence_protocol::{BlockPos, ChunkPos, Encode, GameMode, Packet};
@@ -301,7 +301,7 @@ impl Client {
     /// Kills the client and shows `message` on the death screen. If an entity
     /// killed the player, you should supply it as `killer`.
     pub fn kill<'a, M: IntoText<'a>>(&mut self, message: M) {
-        self.write_packet(&DeathMessageS2c {
+        self.write_packet(&PlayerCombatKillS2c {
             player_id: VarInt(0),
             message: message.into_cow_text(),
         });
@@ -309,7 +309,7 @@ impl Client {
 
     /// Respawns client. Optionally can roll the credits before respawning.
     pub fn win_game(&mut self, show_credits: bool) {
-        self.write_packet(&GameStateChangeS2c {
+        self.write_packet(&GameEventS2c {
             kind: GameEventKind::WinGame,
             value: if show_credits { 1.0 } else { 0.0 },
         });
@@ -328,8 +328,8 @@ impl Client {
         P: Into<DVec3>,
         O: Into<Vec3>,
     {
-        self.write_packet(&ParticleS2c {
-            particle: Cow::Borrowed(particle),
+        self.write_packet(&LevelParticlesS2c {
+            particle: particle.clone(),
             long_distance,
             position: position.into(),
             offset: offset.into(),
@@ -349,11 +349,11 @@ impl Client {
     ) {
         let position = position.into();
 
-        self.write_packet(&PlaySoundS2c {
-            id: SoundId::Direct {
+        self.write_packet(&SoundS2c {
+            id: SoundId::Inline(SoundDirect {
                 id: sound.to_ident().into(),
                 range: None,
-            },
+            }),
             category,
             position: (position * 8.0).as_ivec3(),
             volume,
@@ -364,7 +364,7 @@ impl Client {
 
     /// `velocity` is in m/s.
     pub fn set_velocity<V: Into<Vec3>>(&mut self, velocity: V) {
-        self.write_packet(&EntityVelocityUpdateS2c {
+        self.write_packet(&SetEntityMotionS2c {
             entity_id: VarInt(0),
             velocity: Velocity(velocity.into()).to_packet_units(),
         });
@@ -374,7 +374,7 @@ impl Client {
     ///
     /// The status is only visible to this client.
     pub fn trigger_status(&mut self, status: EntityStatus) {
-        self.write_packet(&EntityStatusS2c {
+        self.write_packet(&EntityEventS2c {
             entity_id: 0,
             entity_status: status as u8,
         });
@@ -425,7 +425,7 @@ impl EntityRemoveBuf {
     /// the buffer is empty.
     pub fn send_and_clear<W: WritePacket>(&mut self, mut w: W) {
         if !self.0.is_empty() {
-            w.write_packet(&EntitiesDestroyS2c {
+            w.write_packet(&RemoveEntitiesS2c {
                 entity_ids: Cow::Borrowed(&self.0),
             });
 
@@ -623,7 +623,7 @@ fn update_chunk_load_dist(
 
         if dist.0 != old_dist.0 {
             // Note: This packet is just aesthetic.
-            client.write_packet(&ChunkLoadDistanceS2c {
+            client.write_packet(&SetChunkCacheRadiusS2c {
                 view_distance: VarInt(dist.0.into()),
             });
         }
@@ -735,7 +735,7 @@ fn handle_layer_messages(
                             }
                             [.., ChunkLayer::UNLOAD] => {
                                 // Unload chunk.
-                                client.write_packet(&UnloadChunkS2c { pos });
+                                client.write_packet(&ForgetLevelChunkS2c { pos });
                                 debug_assert!(chunk_layer.chunk(pos).is_none());
                             }
                             _ => unreachable!("invalid message data while changing chunk state"),
@@ -744,7 +744,7 @@ fn handle_layer_messages(
                 });
 
                 if !chunk_biome_buf.is_empty() {
-                    client.write_packet(&ChunkBiomeDataS2c {
+                    client.write_packet(&ChunksBiomesS2c {
                         chunks: chunk_biome_buf.into(),
                     });
                 }
@@ -958,7 +958,7 @@ pub(crate) fn update_view_and_layers(
             // Make sure the center chunk is set before loading chunks! Otherwise the client
             // may ignore the chunk.
             if old_view.pos != view.pos {
-                client.write_packet(&ChunkRenderDistanceCenterS2c {
+                client.write_packet(&SetChunkCacheCenterS2c {
                     chunk_x: VarInt(view.pos.x),
                     chunk_z: VarInt(view.pos.z),
                 });
@@ -971,7 +971,7 @@ pub(crate) fn update_view_and_layers(
                 if let Ok(layer) = chunk_layers.get(old_chunk_layer.0) {
                     for pos in old_view.iter() {
                         if let Some(chunk) = layer.chunk(pos) {
-                            client.write_packet(&UnloadChunkS2c { pos });
+                            client.write_packet(&ForgetLevelChunkS2c { pos });
                             chunk.dec_viewer_count();
                         }
                     }
@@ -1103,7 +1103,7 @@ pub(crate) fn update_view_and_layers(
                     if let Ok(layer) = chunk_layers.get(chunk_layer.0) {
                         for pos in old_view.diff(view) {
                             if let Some(chunk) = layer.chunk(pos) {
-                                client.write_packet(&UnloadChunkS2c { pos });
+                                client.write_packet(&ForgetLevelChunkS2c { pos });
                                 chunk.dec_viewer_count();
                             }
                         }
@@ -1199,7 +1199,7 @@ pub(crate) fn update_game_mode(mut clients: Query<(&mut Client, &GameMode), Chan
             continue;
         }
 
-        client.write_packet(&GameStateChangeS2c {
+        client.write_packet(&GameEventS2c {
             kind: GameEventKind::ChangeGameMode,
             value: *game_mode as i32 as f32,
         })
@@ -1213,7 +1213,7 @@ fn update_food_saturation_health(
     >,
 ) {
     for (mut client, food, saturation, health) in &mut clients {
-        client.write_packet(&HealthUpdateS2c {
+        client.write_packet(&SetHealthS2c {
             health: health.0,
             food: VarInt(food.0),
             food_saturation: saturation.0,
@@ -1244,7 +1244,7 @@ fn flush_packets(
 fn init_tracked_data(mut clients: Query<(&mut Client, &TrackedData), Added<TrackedData>>) {
     for (mut client, tracked_data) in &mut clients {
         if let Some(init_data) = tracked_data.init_data() {
-            client.write_packet(&EntityTrackerUpdateS2c {
+            client.write_packet(&SetEntityDataS2c {
                 entity_id: VarInt(0),
                 tracked_values: init_data.into(),
             });
@@ -1255,7 +1255,7 @@ fn init_tracked_data(mut clients: Query<(&mut Client, &TrackedData), Added<Track
 fn update_tracked_data(mut clients: Query<(&mut Client, &TrackedData)>) {
     for (mut client, tracked_data) in &mut clients {
         if let Some(update_data) = tracked_data.update_data() {
-            client.write_packet(&EntityTrackerUpdateS2c {
+            client.write_packet(&SetEntityDataS2c {
                 entity_id: VarInt(0),
                 tracked_values: update_data.into(),
             });
@@ -1267,7 +1267,7 @@ fn init_tracked_attributes(
     mut clients: Query<(&mut Client, &EntityAttributes), Added<EntityAttributes>>,
 ) {
     for (mut client, attributes) in &mut clients {
-        client.write_packet(&EntityAttributesS2c {
+        client.write_packet(&UpdateAttributesS2c {
             entity_id: VarInt(0),
             properties: attributes.to_properties(),
         });
@@ -1278,7 +1278,7 @@ fn update_tracked_attributes(mut clients: Query<(&mut Client, &TrackedEntityAttr
     for (mut client, attributes) in &mut clients {
         let properties = attributes.get_properties();
         if !properties.is_empty() {
-            client.write_packet(&EntityAttributesS2c {
+            client.write_packet(&UpdateAttributesS2c {
                 entity_id: VarInt(0),
                 properties,
             });

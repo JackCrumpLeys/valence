@@ -75,10 +75,8 @@ use std::fmt::{Display, Formatter};
 
 use petgraph::dot::Dot;
 use petgraph::prelude::*;
-use valence_server::protocol::packets::play::command_tree_s2c::{
-    Node, NodeData, Parser, StringArg,
-};
-use valence_server::protocol::packets::play::CommandTreeS2c;
+use valence_server::protocol::packets::play::commands_s2c::{Node, NodeData, Parser, StringArg};
+use valence_server::protocol::packets::play::CommandsS2c;
 use valence_server::protocol::VarInt;
 
 use crate::modifier_value::ModifierValue;
@@ -153,7 +151,7 @@ impl Display for CommandEdgeType {
     }
 }
 
-impl From<CommandGraph> for CommandTreeS2c {
+impl From<CommandGraph> for CommandsS2c {
     fn from(command_graph: CommandGraph) -> Self {
         let graph = command_graph.graph;
         let nodes_and_edges = graph.into_nodes_edges();
@@ -185,7 +183,7 @@ impl From<CommandGraph> for CommandTreeS2c {
             }
         }
 
-        CommandTreeS2c {
+        CommandsS2c {
             commands: nodes,
             root_index: VarInt::from(command_graph.root.index() as i32),
         }

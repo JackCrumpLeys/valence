@@ -3,7 +3,8 @@ use bevy_ecs::prelude::*;
 use valence_entity::{HeadYaw, Look, OnGround, Position};
 use valence_math::DVec3;
 use valence_protocol::packets::play::{
-    FullC2s, LookAndOnGroundC2s, OnGroundOnlyC2s, PositionAndOnGroundC2s, VehicleMoveC2s,
+    MovePlayerPosC2s, MovePlayerPosRotC2s, MovePlayerRotC2s, MovePlayerStatusOnlyC2s,
+    MoveVehicleC2s,
 };
 
 use crate::event_loop::{EventLoopPreUpdate, PacketEvent};
@@ -47,7 +48,7 @@ fn handle_client_movement(
     mut movement_events: EventWriter<MovementEvent>,
 ) {
     for packet in packets.read() {
-        if let Some(pkt) = packet.decode::<PositionAndOnGroundC2s>() {
+        if let Some(pkt) = packet.decode::<MovePlayerPosC2s>() {
             if let Ok((pos, look, head_yaw, on_ground, teleport_state)) =
                 clients.get_mut(packet.client)
             {
@@ -57,7 +58,7 @@ fn handle_client_movement(
                     old_position: pos.0,
                     look: *look,
                     old_look: *look,
-                    on_ground: pkt.on_ground,
+                    on_ground: pkt.flags.on_ground(),
                     old_on_ground: on_ground.0,
                 };
 
@@ -71,7 +72,7 @@ fn handle_client_movement(
                     &mut movement_events,
                 );
             }
-        } else if let Some(pkt) = packet.decode::<FullC2s>() {
+        } else if let Some(pkt) = packet.decode::<MovePlayerPosRotC2s>() {
             if let Ok((pos, look, head_yaw, on_ground, teleport_state)) =
                 clients.get_mut(packet.client)
             {
@@ -84,7 +85,7 @@ fn handle_client_movement(
                         pitch: pkt.pitch,
                     },
                     old_look: *look,
-                    on_ground: pkt.on_ground,
+                    on_ground: pkt.flags.on_ground(),
                     old_on_ground: on_ground.0,
                 };
 
@@ -98,7 +99,7 @@ fn handle_client_movement(
                     &mut movement_events,
                 );
             }
-        } else if let Some(pkt) = packet.decode::<LookAndOnGroundC2s>() {
+        } else if let Some(pkt) = packet.decode::<MovePlayerRotC2s>() {
             if let Ok((pos, look, head_yaw, on_ground, teleport_state)) =
                 clients.get_mut(packet.client)
             {
@@ -111,7 +112,7 @@ fn handle_client_movement(
                         pitch: pkt.pitch,
                     },
                     old_look: *look,
-                    on_ground: pkt.on_ground,
+                    on_ground: pkt.flags.on_ground(),
                     old_on_ground: on_ground.0,
                 };
 
@@ -125,7 +126,7 @@ fn handle_client_movement(
                     &mut movement_events,
                 );
             }
-        } else if let Some(pkt) = packet.decode::<OnGroundOnlyC2s>() {
+        } else if let Some(pkt) = packet.decode::<MovePlayerStatusOnlyC2s>() {
             if let Ok((pos, look, head_yaw, on_ground, teleport_state)) =
                 clients.get_mut(packet.client)
             {
@@ -135,7 +136,7 @@ fn handle_client_movement(
                     old_position: pos.0,
                     look: *look,
                     old_look: *look,
-                    on_ground: pkt.on_ground,
+                    on_ground: pkt.flags.on_ground(),
                     old_on_ground: on_ground.0,
                 };
 
@@ -149,7 +150,7 @@ fn handle_client_movement(
                     &mut movement_events,
                 );
             }
-        } else if let Some(pkt) = packet.decode::<VehicleMoveC2s>() {
+        } else if let Some(pkt) = packet.decode::<MoveVehicleC2s>() {
             if let Ok((pos, look, head_yaw, on_ground, teleport_state)) =
                 clients.get_mut(packet.client)
             {

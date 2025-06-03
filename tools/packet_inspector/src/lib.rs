@@ -11,11 +11,12 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 use valence_protocol::decode::PacketFrame;
-use valence_protocol::packets::handshaking::handshake_c2s::HandshakeNextState;
-use valence_protocol::packets::handshaking::HandshakeC2s;
+use valence_protocol::packets::handshake::intention_c2s::HandshakeNextState;
+use valence_protocol::packets::handshake::IntentionC2s;
 use valence_protocol::packets::login::{
-    LoginCompressionS2c, LoginDisconnectS2c, LoginHelloS2c, LoginSuccessS2c,
+    HelloS2c, LoginCompressionS2c, LoginDisconnectS2c, LoginFinishedS2c,
 };
+use valence_protocol::packets::{configuration, play};
 use valence_protocol::text::color::NamedColor;
 use valence_protocol::text::{Color, IntoText};
 use valence_protocol::{
@@ -24,7 +25,7 @@ use valence_protocol::{
 
 use crate::packet_io::PacketIo;
 pub use crate::packet_registry::Packet;
-use crate::packet_registry::PacketRegistry;
+pub use crate::packet_registry::PacketRegistry;
 
 include!(concat!(env!("OUT_DIR"), "/packets.rs"));
 
@@ -164,7 +165,7 @@ impl Proxy {
         let (mut client_reader, mut client_writer) = client.split();
         let (mut server_reader, mut server_writer) = server.split();
 
-        let a_state = Arc::new(RwLock::new(PacketState::Handshaking));
+        let a_state = Arc::new(RwLock::new(PacketState::Handshake));
         let a_threshold = Arc::new(RwLock::new(CompressionThreshold::DEFAULT));
 
         let registry = packet_registry.clone();
@@ -201,12 +202,24 @@ impl Proxy {
                     .process(PacketSide::Serverbound, state, threshold, &packet)
                     .await?;
 
-                if state == PacketState::Handshaking {
-                    if let Some(handshake) = extrapolate_packet::<HandshakeC2s>(&packet) {
+                if state == PacketState::Handshake {
+                    if let Some(handshake) = extrapolate_packet::<IntentionC2s>(&packet) {
                         *state_lock.write().await = match handshake.next_state {
                             HandshakeNextState::Status => PacketState::Status,
                             HandshakeNextState::Login => PacketState::Login,
                         };
+                    }
+                }
+                if state == PacketState::Play {
+                    if extrapolate_packet::<play::ConfigurationAcknowledgedC2s>(&packet).is_some() {
+                        *state_lock.write().await = PacketState::Configuration;
+                    }
+                }
+                if state == PacketState::Configuration {
+                    if extrapolate_packet::<configuration::FinishConfigurationC2s>(&packet)
+                        .is_some()
+                    {
+                        *state_lock.write().await = PacketState::Play;
                     }
                 }
 
@@ -240,8 +253,8 @@ impl Proxy {
                         *threshold_lock.write().await = CompressionThreshold(threshold.0);
                     }
 
-                    if extrapolate_packet::<LoginSuccessS2c>(&packet).is_some() {
-                        *state_lock.write().await = PacketState::Play;
+                    if extrapolate_packet::<LoginFinishedS2c>(&packet).is_some() {
+                        *state_lock.write().await = PacketState::Configuration;
                     }
                 }
 
@@ -253,8 +266,7 @@ impl Proxy {
 
                 // (The check is done in this if rather than the one above, to still send the
                 // encryption request packet to the inspector)
-                if state == PacketState::Login
-                    && extrapolate_packet::<LoginHelloS2c>(&packet).is_some()
+                if state == PacketState::Login && extrapolate_packet::<HelloS2c>(&packet).is_some()
                 {
                     // The server is requesting encryption, we can't support that
 

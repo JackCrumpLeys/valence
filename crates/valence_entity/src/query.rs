@@ -5,10 +5,11 @@ use bevy_ecs::query::QueryData;
 use bevy_ecs::world::Ref;
 use valence_math::DVec3;
 use valence_protocol::encode::WritePacket;
+use valence_protocol::movement_flags::MovementFlags;
 use valence_protocol::packets::play::{
-    EntityAnimationS2c, EntityAttributesS2c, EntityPositionS2c, EntitySetHeadYawS2c,
-    EntitySpawnS2c, EntityStatusS2c, EntityTrackerUpdateS2c, EntityVelocityUpdateS2c,
-    ExperienceOrbSpawnS2c, MoveRelativeS2c, PlayerSpawnS2c, RotateAndMoveRelativeS2c, RotateS2c,
+    AddEntityS2c, AddExperienceOrbS2c, AnimateS2c, EntityEventS2c, MoveEntityPosRotS2c,
+    MoveEntityPosS2c, MoveEntityRotS2c, RotateHeadS2c, SetEntityDataS2c, SetEntityMotionS2c,
+    TeleportEntityS2c, UpdateAttributesS2c,
 };
 use valence_protocol::var_int::VarInt;
 use valence_protocol::ByteAngle;
@@ -42,28 +43,13 @@ impl EntityInitQueryItem<'_> {
         match *self.kind {
             EntityKind::MARKER => {}
             EntityKind::EXPERIENCE_ORB => {
-                writer.write_packet(&ExperienceOrbSpawnS2c {
+                writer.write_packet(&AddExperienceOrbS2c {
                     entity_id: self.entity_id.get().into(),
                     position: pos,
                     count: self.object_data.0 as i16,
                 });
             }
-            EntityKind::PLAYER => {
-                writer.write_packet(&PlayerSpawnS2c {
-                    entity_id: self.entity_id.get().into(),
-                    player_uuid: self.uuid.0,
-                    position: pos,
-                    yaw: ByteAngle::from_degrees(self.look.yaw),
-                    pitch: ByteAngle::from_degrees(self.look.pitch),
-                });
-
-                // Player spawn packet doesn't include head yaw for some reason.
-                writer.write_packet(&EntitySetHeadYawS2c {
-                    entity_id: self.entity_id.get().into(),
-                    head_yaw: ByteAngle::from_degrees(self.head_yaw.0),
-                });
-            }
-            _ => writer.write_packet(&EntitySpawnS2c {
+            _ => writer.write_packet(&AddEntityS2c {
                 entity_id: self.entity_id.get().into(),
                 object_uuid: self.uuid.0,
                 kind: self.kind.get().into(),
@@ -77,7 +63,7 @@ impl EntityInitQueryItem<'_> {
         }
 
         if let Some(init_data) = self.tracked_data.init_data() {
-            writer.write_packet(&EntityTrackerUpdateS2c {
+            writer.write_packet(&SetEntityDataS2c {
                 entity_id: self.entity_id.get().into(),
                 tracked_values: init_data.into(),
             });
@@ -114,16 +100,17 @@ impl UpdateEntityQueryItem<'_> {
         let changed_position = self.pos.0 != self.old_pos.get();
 
         if changed_position && !needs_teleport && self.look.is_changed() {
-            writer.write_packet(&RotateAndMoveRelativeS2c {
+            writer.write_packet(&MoveEntityPosRotS2c {
                 entity_id,
                 delta: (position_delta * 4096.0).to_array().map(|v| v as i16),
                 yaw: ByteAngle::from_degrees(self.look.yaw),
                 pitch: ByteAngle::from_degrees(self.look.pitch),
-                on_ground: self.on_ground.0,
+                // FIXME: add missing pushing_against_wall
+                flags: MovementFlags::new().with_on_ground(self.on_ground.0),
             });
         } else {
             if changed_position && !needs_teleport {
-                writer.write_packet(&MoveRelativeS2c {
+                writer.write_packet(&MoveEntityPosS2c {
                     entity_id,
                     delta: (position_delta * 4096.0).to_array().map(|v| v as i16),
                     on_ground: self.on_ground.0,
@@ -131,7 +118,7 @@ impl UpdateEntityQueryItem<'_> {
             }
 
             if self.look.is_changed() {
-                writer.write_packet(&RotateS2c {
+                writer.write_packet(&MoveEntityRotS2c {
                     entity_id,
                     yaw: ByteAngle::from_degrees(self.look.yaw),
                     pitch: ByteAngle::from_degrees(self.look.pitch),
@@ -141,7 +128,7 @@ impl UpdateEntityQueryItem<'_> {
         }
 
         if needs_teleport {
-            writer.write_packet(&EntityPositionS2c {
+            writer.write_packet(&TeleportEntityS2c {
                 entity_id,
                 position: self.pos.0,
                 yaw: ByteAngle::from_degrees(self.look.yaw),
@@ -151,21 +138,21 @@ impl UpdateEntityQueryItem<'_> {
         }
 
         if self.velocity.is_changed() {
-            writer.write_packet(&EntityVelocityUpdateS2c {
+            writer.write_packet(&SetEntityMotionS2c {
                 entity_id,
                 velocity: self.velocity.to_packet_units(),
             });
         }
 
         if self.head_yaw.is_changed() {
-            writer.write_packet(&EntitySetHeadYawS2c {
+            writer.write_packet(&RotateHeadS2c {
                 entity_id,
                 head_yaw: ByteAngle::from_degrees(self.head_yaw.0),
             });
         }
 
         if let Some(update_data) = self.tracked_data.update_data() {
-            writer.write_packet(&EntityTrackerUpdateS2c {
+            writer.write_packet(&SetEntityDataS2c {
                 entity_id,
                 tracked_values: update_data.into(),
             });
@@ -174,7 +161,7 @@ impl UpdateEntityQueryItem<'_> {
         if self.statuses.0 != 0 {
             for i in 0..mem::size_of_val(self.statuses) {
                 if (self.statuses.0 >> i) & 1 == 1 {
-                    writer.write_packet(&EntityStatusS2c {
+                    writer.write_packet(&EntityEventS2c {
                         entity_id: entity_id.0,
                         entity_status: i as u8,
                     });
@@ -185,7 +172,7 @@ impl UpdateEntityQueryItem<'_> {
         if self.animations.0 != 0 {
             for i in 0..mem::size_of_val(self.animations) {
                 if (self.animations.0 >> i) & 1 == 1 {
-                    writer.write_packet(&EntityAnimationS2c {
+                    writer.write_packet(&AnimateS2c {
                         entity_id,
                         animation: i as u8,
                     });
@@ -197,7 +184,7 @@ impl UpdateEntityQueryItem<'_> {
             let properties = attributes.get_properties();
 
             if !properties.is_empty() {
-                writer.write_packet(&EntityAttributesS2c {
+                writer.write_packet(&UpdateAttributesS2c {
                     entity_id,
                     properties,
                 });

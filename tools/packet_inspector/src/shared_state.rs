@@ -1,5 +1,3 @@
-#![allow(clippy::mutable_key_type)]
-
 use std::collections::HashMap;
 use std::sync::RwLock;
 
@@ -65,6 +63,8 @@ pub(crate) struct SharedState {
     #[serde(skip)]
     pub(crate) packets: RwLock<Vec<Packet>>,
     #[serde(skip)]
+    pub(crate) failed_packets: RwLock<Vec<(Packet, usize)>>,
+    #[serde(skip)]
     pub(super) receiver: Option<flume::Receiver<Event>>,
     #[serde(skip)]
     sender: Option<flume::Sender<Event>>,
@@ -86,6 +86,7 @@ impl Default for SharedState {
             selected_packet: None,
             update_scroll: false,
             packets: RwLock::new(Vec::new()),
+            failed_packets: RwLock::new(Vec::new()),
             receiver: Some(receiver),
             sender: Some(sender),
             ctx: None,

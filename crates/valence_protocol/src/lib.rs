@@ -27,12 +27,16 @@ pub mod encode;
 pub mod game_mode;
 mod global_pos;
 mod hand;
+pub mod id_or;
+pub mod id_set;
 mod impls;
 pub mod item;
+pub mod movement_flags;
 pub mod packets;
 pub mod profile;
 mod raw;
 pub mod sound;
+pub mod text_component;
 pub mod var_int;
 mod var_long;
 mod velocity;
@@ -57,9 +61,10 @@ pub use encode::{PacketEncoder, WritePacket};
 pub use game_mode::GameMode;
 pub use global_pos::GlobalPos;
 pub use hand::Hand;
+pub use id_set::IDSet;
 pub use ident::ident;
 pub use item::{ItemKind, ItemStack};
-pub use packets::play::particle_s2c::Particle;
+pub use packets::play::level_particles_s2c::Particle;
 pub use raw::RawBytes;
 use serde::{Deserialize, Serialize};
 pub use sound::Sound;
@@ -79,11 +84,11 @@ pub use {
 pub const MAX_PACKET_SIZE: i32 = 2097152;
 
 /// The Minecraft protocol version this library currently targets.
-pub const PROTOCOL_VERSION: i32 = 763;
+pub const PROTOCOL_VERSION: i32 = 769;
 
 /// The stringified name of the Minecraft version this library currently
 /// targets.
-pub const MINECRAFT_VERSION: &str = "1.20.1";
+pub const MINECRAFT_VERSION: &str = "1.21.4";
 
 /// How large a packet should be before it is compressed by the packet encoder.
 ///
@@ -287,12 +292,13 @@ pub enum PacketSide {
     Serverbound,
 }
 
-/// The statein  which a packet is used.
+/// The state in  which a packet is used.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum PacketState {
-    Handshaking,
+    Handshake,
     Status,
     Login,
+    Configuration,
     Play,
 }
 
@@ -399,7 +405,7 @@ mod tests {
                 f: BlockPos::new(1, 2, 3),
                 g: Hand::Off,
                 h: Ident::new("minecraft:whatever").unwrap(),
-                i: ItemStack::new(ItemKind::WoodenSword, 12, None),
+                i: ItemStack::new(ItemKind::WoodenSword, 12, Vec::new()),
                 j: "my ".into_text() + "fancy".italic() + " text",
                 k: VarInt(123),
                 l: VarLong(456),

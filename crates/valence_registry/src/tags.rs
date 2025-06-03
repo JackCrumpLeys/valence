@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use valence_protocol::encode::{PacketWriter, WritePacket};
-pub use valence_protocol::packets::play::synchronize_tags_s2c::RegistryMap;
-use valence_protocol::packets::play::SynchronizeTagsS2c;
+pub use valence_protocol::packets::play::update_tags_s2c::RegistryMap;
+use valence_protocol::packets::play::UpdateTagsS2c;
 use valence_server_common::Server;
 
 use crate::RegistrySet;
@@ -22,8 +22,8 @@ pub(super) fn build(app: &mut App) {
 }
 
 impl TagsRegistry {
-    fn build_synchronize_tags(&self) -> SynchronizeTagsS2c {
-        SynchronizeTagsS2c {
+    fn build_synchronize_tags(&self) -> UpdateTagsS2c {
+        UpdateTagsS2c {
             groups: Cow::Borrowed(&self.registries),
         }
     }
@@ -31,6 +31,18 @@ impl TagsRegistry {
     /// Returns bytes of the cached [`SynchronizeTagsS2c`] packet.
     pub fn sync_tags_packet(&self) -> &[u8] {
         &self.cached_packet
+    }
+}
+
+impl TagsRegistry {
+    pub fn default_tags() -> valence_protocol::packets::configuration::UpdateTagsS2c<'static> {
+        let registries =
+            serde_json::from_str::<RegistryMap>(include_str!("../extracted/tags.json"))
+                .expect("tags.json must have expected structure");
+
+        valence_protocol::packets::configuration::UpdateTagsS2c {
+            groups: Cow::Owned(registries),
+        }
     }
 }
 

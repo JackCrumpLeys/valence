@@ -13,7 +13,7 @@ use bevy_ecs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use valence_ident::{ident, Ident};
-use valence_nbt::serde::CompoundSerializer;
+use valence_nbt::serde::ser::CompoundSerializer;
 
 use crate::codec::{RegistryCodec, RegistryValue};
 use crate::{Registry, RegistryIdx, RegistrySet};
@@ -84,6 +84,15 @@ impl DimensionTypeRegistry {
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug)]
 pub struct DimensionTypeId(u16);
+
+impl DimensionTypeId {
+    pub fn new(value: u16) -> Self {
+        DimensionTypeId(value)
+    }
+    pub fn get_value(&self) -> u16 {
+        self.0
+    }
+}
 
 impl RegistryIdx for DimensionTypeId {
     const MAX: usize = u16::MAX as usize;
@@ -180,7 +189,7 @@ pub enum MonsterSpawnLightLevel {
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[serde(tag = "type", content = "value")]
+#[serde(tag = "type")]
 pub enum MonsterSpawnLightLevelTagged {
     #[serde(rename = "minecraft:uniform")]
     Uniform {

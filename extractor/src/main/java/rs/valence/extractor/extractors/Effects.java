@@ -5,11 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.registry.Registries;
 import rs.valence.extractor.Main;
-import rs.valence.extractor.ValenceUtils;
 
 public class Effects implements Main.Extractor {
-    public Effects() {
-    }
+
+    public Effects() {}
 
     @Override
     public String fileName() {
@@ -23,27 +22,52 @@ public class Effects implements Main.Extractor {
         for (var effect : Registries.STATUS_EFFECT) {
             var effectJson = new JsonObject();
 
-            effectJson.addProperty("id", Registries.STATUS_EFFECT.getRawId(effect));
-            effectJson.addProperty("name", Registries.STATUS_EFFECT.getId(effect).getPath());
-            effectJson.addProperty("translation_key", effect.getTranslationKey());
+            effectJson.addProperty(
+                "id",
+                Registries.STATUS_EFFECT.getRawId(effect)
+            );
+            effectJson.addProperty(
+                "name",
+                Registries.STATUS_EFFECT.getId(effect).getPath()
+            );
+            effectJson.addProperty(
+                "translation_key",
+                effect.getTranslationKey()
+            );
             effectJson.addProperty("color", effect.getColor());
             effectJson.addProperty("instant", effect.isInstant());
-            effectJson.addProperty("category", ValenceUtils.toPascalCase(effect.getCategory().name()));
+            effectJson.addProperty("category", effect.getCategory().name());
 
             var attributeModifiersJson = new JsonArray();
 
-            effect.forEachAttributeModifier(0, (attribute, modifier) -> {
-                var attributeModifierJson = new JsonObject();
+            effect.forEachAttributeModifier(
+                0,
+                (attrRegistryEntry, modifier) -> {
+                    var attributeModifierJson = new JsonObject();
 
-                attributeModifierJson.addProperty("attribute", attribute.getIdAsString());
-                attributeModifierJson.addProperty("operation", modifier.operation().getId());
-                attributeModifierJson.addProperty("base_value", modifier.value());
-                attributeModifierJson.addProperty("uuid", modifier.id().toTranslationKey());
+                    var attr = attrRegistryEntry
+                        .getKeyOrValue()
+                        .map(k -> Registries.ATTRIBUTE.get(k), v -> v);
+                    attributeModifierJson.addProperty(
+                        "attribute_name",
+                        attr
+                            .getTranslationKey()
+                            .replaceFirst("^attribute.name.", "")
+                    );
+                    attributeModifierJson.addProperty(
+                        "operation",
+                        modifier.operation().getId()
+                    );
+                    attributeModifierJson.addProperty(
+                        "base_value",
+                        modifier.value()
+                    );
 
-                attributeModifiersJson.add(attributeModifierJson);
-            });
+                    attributeModifiersJson.add(attributeModifierJson);
+                }
+            );
 
-            if (!attributeModifiersJson.isEmpty()) {
+            if (attributeModifiersJson.size() > 0) {
                 effectJson.add("attribute_modifiers", attributeModifiersJson);
             }
 

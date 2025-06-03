@@ -5,13 +5,13 @@ use anyhow::bail;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use uuid::Uuid;
-use valence_protocol::packets::handshaking::handshake_c2s::HandshakeNextState;
-use valence_protocol::packets::handshaking::HandshakeC2s;
-use valence_protocol::packets::login::{
-    LoginCompressionS2c, LoginHelloC2s, LoginHelloS2c, LoginSuccessS2c,
-};
+use valence_protocol::movement_flags::MovementFlags;
+use valence_protocol::packets::handshake::intention_c2s::HandshakeNextState;
+use valence_protocol::packets::handshake::IntentionC2s;
+use valence_protocol::packets::login::{HelloC2s, HelloS2c, LoginCompressionS2c};
 use valence_protocol::packets::play::{
-    KeepAliveC2s, KeepAliveS2c, PlayerPositionLookS2c, PositionAndOnGroundC2s, TeleportConfirmC2s,
+    AcceptTeleportationC2s, KeepAliveC2s, KeepAliveS2c, LoginS2c, MovePlayerPosC2s,
+    PlayerPositionS2c,
 };
 use valence_protocol::var_int::VarInt;
 use valence_protocol::{
@@ -47,7 +47,7 @@ pub async fn make_session(params: &SessionParams<'_>) -> anyhow::Result<()> {
 
     let server_addr_str = sock_addr.ip().to_string();
 
-    let handshake_pkt = HandshakeC2s {
+    let handshake_pkt = IntentionC2s {
         protocol_version: VarInt(PROTOCOL_VERSION),
         server_address: server_addr_str.as_str().into(),
         server_port: sock_addr.port(),
@@ -56,9 +56,9 @@ pub async fn make_session(params: &SessionParams<'_>) -> anyhow::Result<()> {
 
     enc.append_packet(&handshake_pkt)?;
 
-    enc.append_packet(&LoginHelloC2s {
+    enc.append_packet(&HelloC2s {
         username: sess_name.into(),
-        profile_id: Some(Uuid::new_v4()),
+        profile_id: Uuid::new_v4(),
     })?;
 
     let write_buf = enc.take();
@@ -90,11 +90,11 @@ pub async fn make_session(params: &SessionParams<'_>) -> anyhow::Result<()> {
                     enc.set_compression(CompressionThreshold(threshold));
                 }
 
-                LoginSuccessS2c::ID => {
+                LoginS2c::ID => {
                     break;
                 }
 
-                LoginHelloS2c::ID => {
+                HelloS2c::ID => {
                     bail!("encryption not implemented");
                 }
 
@@ -116,17 +116,17 @@ pub async fn make_session(params: &SessionParams<'_>) -> anyhow::Result<()> {
                     conn.write_all(&enc.take()).await?;
                 }
 
-                PlayerPositionLookS2c::ID => {
-                    let packet: PlayerPositionLookS2c = frame.decode()?;
+                PlayerPositionS2c::ID => {
+                    let packet: PlayerPositionS2c = frame.decode()?;
                     enc.clear();
 
-                    enc.append_packet(&TeleportConfirmC2s {
+                    enc.append_packet(&AcceptTeleportationC2s {
                         teleport_id: packet.teleport_id,
                     })?;
 
-                    enc.append_packet(&PositionAndOnGroundC2s {
+                    enc.append_packet(&MovePlayerPosC2s {
                         position: packet.position,
-                        on_ground: true,
+                        flags: MovementFlags::new().with_on_ground(true),
                     })?;
 
                     conn.write_all(&enc.take()).await?;

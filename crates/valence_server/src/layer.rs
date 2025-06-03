@@ -125,14 +125,14 @@ pub struct LayerBundle {
 
 impl LayerBundle {
     /// Returns a new layer bundle.
-    pub fn new<N: Into<Ident<String>>>(
-        dimension_type_name: N,
+    pub fn new(
+        dimension_type: Ident<&str>,
         dimensions: &DimensionTypeRegistry,
         biomes: &BiomeRegistry,
         server: &Server,
     ) -> Self {
         Self {
-            chunk: ChunkLayer::new(dimension_type_name, dimensions, biomes, server),
+            chunk: ChunkLayer::new(dimension_type, dimensions, biomes, server),
             entity: EntityLayer::new(server),
         }
     }

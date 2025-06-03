@@ -2,10 +2,13 @@ use std::io::Write;
 
 use anyhow::Context;
 use uuid::Uuid;
+use valence_generated::attributes::{EntityAttribute, EntityAttributeOperation};
 use valence_generated::block::{BlockEntityKind, BlockKind, BlockState};
 use valence_generated::item::ItemKind;
+use valence_generated::registry_id::RegistryId;
 use valence_ident::{Ident, IdentError};
 use valence_nbt::Compound;
+use valence_text::color::RgbColor;
 
 use crate::{Decode, Encode, VarInt};
 
@@ -45,7 +48,7 @@ impl<'a> Decode<'a> for Uuid {
 
 impl Encode for Compound {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {
-        Ok(valence_nbt::to_binary(self, w, "")?)
+        Ok(valence_nbt::to_binary(self, w, None::<&'static str>)?)
     }
 }
 
@@ -134,5 +137,62 @@ impl Decode<'_> for ItemKind {
         let errmsg = "invalid item ID";
 
         ItemKind::from_raw(id.try_into().context(errmsg)?).context(errmsg)
+    }
+}
+
+impl Encode for RegistryId {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        VarInt(self.id()).encode(w)
+    }
+}
+
+impl<'a> Decode<'a> for RegistryId {
+    fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
+        let id = VarInt::decode(r)?;
+        Ok(RegistryId::new(id.0))
+    }
+}
+
+impl Encode for EntityAttributeOperation {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        VarInt(*self as i32).encode(w)
+    }
+}
+
+impl Decode<'_> for EntityAttributeOperation {
+    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
+        match VarInt::decode(r)?.0 {
+            0 => Ok(EntityAttributeOperation::Add),
+            1 => Ok(EntityAttributeOperation::MultiplyTotal),
+            2 => Ok(EntityAttributeOperation::MultiplyBase),
+            _ => Err(anyhow::anyhow!("invalid entity attribute operation")),
+        }
+    }
+}
+
+impl Encode for EntityAttribute {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        VarInt(self.get_id() as i32).encode(w)?;
+        Ok(())
+    }
+}
+
+impl<'a> Decode<'a> for EntityAttribute {
+    fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
+        let id = VarInt::decode(r)?.0;
+        EntityAttribute::from_id(id as u8).context("invalid entity attribute ID")
+    }
+}
+
+impl Encode for RgbColor {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        self.into_bits().encode(w)
+    }
+}
+
+impl Decode<'_> for RgbColor {
+    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
+        let color = u32::decode(r)?;
+        Ok(Self::from_bits(color))
     }
 }

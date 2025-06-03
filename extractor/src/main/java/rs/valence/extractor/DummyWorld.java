@@ -1,12 +1,19 @@
 package rs.valence.extractor;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.boss.dragon.EnderDragonPart;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.item.FuelRegistry;
 import net.minecraft.item.map.MapState;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.recipe.BrewingRecipeRegistry;
 import net.minecraft.recipe.RecipeManager;
 import net.minecraft.registry.DynamicRegistryManager;
@@ -24,7 +31,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -32,11 +38,10 @@ import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.entity.EntityLookup;
 import net.minecraft.world.event.GameEvent;
+import net.minecraft.world.explosion.ExplosionBehavior;
 import net.minecraft.world.tick.QueryableTickScheduler;
 import net.minecraft.world.tick.TickManager;
 import org.jetbrains.annotations.Nullable;
-import java.util.List;
-import java.util.function.Supplier;
 
 public class DummyWorld extends World {
 
@@ -53,35 +58,79 @@ public class DummyWorld extends World {
             var propertiesField = World.class.getDeclaredField("properties");
             propertiesField.setAccessible(true);
             propertiesField.set(INSTANCE, new DummyMutableWorldProperties());
-
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private DummyWorld(MutableWorldProperties properties, RegistryKey<World> registryRef, DynamicRegistryManager registryManager, RegistryEntry<DimensionType> dimension, Supplier<Profiler> profiler, boolean isClient, boolean debugWorld, long seed, int maxChainedNeighborUpdates) {
-        super(properties, registryRef, registryManager, dimension, profiler, isClient, debugWorld, seed, maxChainedNeighborUpdates);
+    private DummyWorld(
+        MutableWorldProperties properties,
+        RegistryKey<World> registryRef,
+        DynamicRegistryManager registryManager,
+        RegistryEntry<DimensionType> dimension,
+        Supplier<Profiler> profiler,
+        boolean isClient,
+        boolean debugWorld,
+        long seed,
+        int maxChainedNeighborUpdates
+    ) {
+        super(
+            properties,
+            registryRef,
+            registryManager,
+            dimension,
+            //            profiler,
+            isClient,
+            debugWorld,
+            seed,
+            maxChainedNeighborUpdates
+        );
     }
 
     @Override
-    public void updateListeners(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
-
-    }
-
-    @Override
-    public void playSound(@Nullable PlayerEntity except, double x, double y, double z, RegistryEntry<SoundEvent> sound, SoundCategory category, float volume, float pitch, long seed) {
-
-    }
+    public void updateListeners(
+        BlockPos pos,
+        BlockState oldState,
+        BlockState newState,
+        int flags
+    ) {}
 
     @Override
-    public void playSound(@Nullable PlayerEntity except, double x, double y, double z, SoundEvent sound, SoundCategory category, float volume, float pitch, long seed) {
-
-    }
+    public void playSound(
+        @Nullable PlayerEntity except,
+        double x,
+        double y,
+        double z,
+        RegistryEntry<SoundEvent> sound,
+        SoundCategory category,
+        float volume,
+        float pitch,
+        long seed
+    ) {}
 
     @Override
-    public void playSoundFromEntity(@Nullable PlayerEntity except, Entity entity, RegistryEntry<SoundEvent> sound, SoundCategory category, float volume, float pitch, long seed) {
+    public void playSound(
+        @Nullable PlayerEntity except,
+        double x,
+        double y,
+        double z,
+        SoundEvent sound,
+        SoundCategory category,
+        float volume,
+        float pitch,
+        long seed
+    ) {}
 
-    }
+    @Override
+    public void playSoundFromEntity(
+        @Nullable PlayerEntity except,
+        Entity entity,
+        RegistryEntry<SoundEvent> sound,
+        SoundCategory category,
+        float volume,
+        float pitch,
+        long seed
+    ) {}
 
     @Override
     public String asString() {
@@ -106,9 +155,7 @@ public class DummyWorld extends World {
     }
 
     @Override
-    public void putMapState(MapIdComponent id, MapState state) {
-
-    }
+    public void putMapState(MapIdComponent id, MapState state) {}
 
     @Override
     public MapIdComponent increaseAndGetMapId() {
@@ -116,9 +163,11 @@ public class DummyWorld extends World {
     }
 
     @Override
-    public void setBlockBreakingInfo(int entityId, BlockPos pos, int progress) {
-
-    }
+    public void setBlockBreakingInfo(
+        int entityId,
+        BlockPos pos,
+        int progress
+    ) {}
 
     @Override
     public Scoreboard getScoreboard() {
@@ -127,6 +176,12 @@ public class DummyWorld extends World {
 
     @Override
     public RecipeManager getRecipeManager() {
+        return null;
+    }
+
+
+    @Override
+    public Collection<EnderDragonPart> getEnderDragonParts() {
         return null;
     }
 
@@ -151,15 +206,19 @@ public class DummyWorld extends World {
     }
 
     @Override
-    public void syncWorldEvent(@Nullable PlayerEntity player, int eventId, BlockPos pos, int data) {
-
-    }
+    public void syncWorldEvent(
+        @Nullable PlayerEntity player,
+        int eventId,
+        BlockPos pos,
+        int data
+    ) {}
 
     @Override
-    public void emitGameEvent(RegistryEntry<GameEvent> event, Vec3d emitterPos, GameEvent.Emitter emitter) {
-
-    }
-
+    public void emitGameEvent(
+        RegistryEntry<GameEvent> event,
+        Vec3d emitterPos,
+        GameEvent.Emitter emitter
+    ) {}
 
     @Override
     public DynamicRegistryManager getRegistryManager() {
@@ -173,7 +232,38 @@ public class DummyWorld extends World {
 
     @Override
     public FeatureSet getEnabledFeatures() {
-        return FeatureSet.of(FeatureFlags.VANILLA, FeatureFlags.BUNDLE);
+        return FeatureSet.of(
+            FeatureFlags.VANILLA,
+            FeatureFlags.MINECART_IMPROVEMENTS,
+            FeatureFlags.REDSTONE_EXPERIMENTS,
+            FeatureFlags.TRADE_REBALANCE
+        );
+    }
+
+    @Override
+    public FuelRegistry getFuelRegistry() {
+        return null;
+    }
+
+    @Override
+    public void createExplosion(
+        @Nullable Entity entity,
+        @Nullable DamageSource damageSource,
+        @Nullable ExplosionBehavior behavior,
+        double x,
+        double y,
+        double z,
+        float power,
+        boolean createFire,
+        ExplosionSourceType explosionSourceType,
+        ParticleEffect smallParticle,
+        ParticleEffect largeParticle,
+        RegistryEntry<SoundEvent> soundEvent
+    ) {}
+
+    @Override
+    public int getSeaLevel() {
+        return 0;
     }
 
     @Override
@@ -187,12 +277,16 @@ public class DummyWorld extends World {
     }
 
     @Override
-    public RegistryEntry<Biome> getGeneratorStoredBiome(int biomeX, int biomeY, int biomeZ) {
+    public RegistryEntry<Biome> getGeneratorStoredBiome(
+        int biomeX,
+        int biomeY,
+        int biomeZ
+    ) {
         return null;
     }
 
-    private static class DummyMutableWorldProperties implements MutableWorldProperties {
-
+    private static class DummyMutableWorldProperties
+        implements MutableWorldProperties {
 
         @Override
         public BlockPos getSpawnPos() {
@@ -203,7 +297,6 @@ public class DummyWorld extends World {
         public float getSpawnAngle() {
             return 0;
         }
-
 
         @Override
         public long getTime() {
@@ -226,18 +319,11 @@ public class DummyWorld extends World {
         }
 
         @Override
-        public void setRaining(boolean raining) {
-
-        }
+        public void setRaining(boolean raining) {}
 
         @Override
         public boolean isHardcore() {
             return false;
-        }
-
-        @Override
-        public GameRules getGameRules() {
-            return null;
         }
 
         @Override
@@ -251,8 +337,6 @@ public class DummyWorld extends World {
         }
 
         @Override
-        public void setSpawnPos(BlockPos pos, float angle) {
-
-        }
+        public void setSpawnPos(BlockPos pos, float angle) {}
     }
 }

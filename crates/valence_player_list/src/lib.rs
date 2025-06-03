@@ -10,7 +10,7 @@ use valence_server::keepalive::Ping;
 use valence_server::layer::UpdateLayersPreClientSet;
 use valence_server::protocol::encode::PacketWriter;
 use valence_server::protocol::packets::play::{
-    player_list_s2c as packet, PlayerListHeaderS2c, PlayerListS2c, PlayerRemoveS2c,
+    player_info_update_s2c as packet, PlayerInfoRemoveS2c, PlayerInfoUpdateS2c, TabListS2c,
 };
 use valence_server::protocol::WritePacket;
 use valence_server::text::IntoText;
@@ -145,7 +145,7 @@ fn update_header_footer(player_list: ResMut<PlayerList>, server: Res<Server>) {
             server.compression_threshold(),
         );
 
-        w.write_packet(&PlayerListHeaderS2c {
+        w.write_packet(&TabListS2c {
             header: (&player_list.header).into(),
             footer: (&player_list.footer).into(),
         });
@@ -208,20 +208,22 @@ fn init_player_list_for_clients(
                             ping: ping.0,
                             game_mode: *game_mode,
                             display_name: display_name.0.as_ref().map(Cow::Borrowed),
+                            priority: 0,
+                            // priority: todo!("Implement priority"),
                         }
                     },
                 )
                 .collect();
 
             if !entries.is_empty() {
-                client.write_packet(&PlayerListS2c {
+                client.write_packet(&PlayerInfoUpdateS2c {
                     actions,
                     entries: Cow::Owned(entries),
                 });
             }
 
             if !player_list.header.is_empty() || !player_list.footer.is_empty() {
-                client.write_packet(&PlayerListHeaderS2c {
+                client.write_packet(&TabListS2c {
                     header: Cow::Borrowed(&player_list.header),
                     footer: Cow::Borrowed(&player_list.footer),
                 });
@@ -249,7 +251,7 @@ fn remove_despawned_entries(
                 server.compression_threshold(),
             );
 
-            w.write_packet(&PlayerRemoveS2c {
+            w.write_packet(&PlayerInfoRemoveS2c {
                 uuids: Cow::Borrowed(&removed),
             });
 
@@ -344,9 +346,11 @@ fn update_entries(
             ping: ping.0,
             game_mode: *game_mode,
             display_name: display_name.0.as_ref().map(|x| x.into()),
+            priority: 0,
+            // priority: todo!("Implement priority"),
         };
 
-        writer.write_packet(&PlayerListS2c {
+        writer.write_packet(&PlayerInfoUpdateS2c {
             actions,
             entries: Cow::Borrowed(&[entry]),
         });

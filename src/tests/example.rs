@@ -11,7 +11,7 @@ use crate::client::Client;
 use crate::entity::Position;
 use crate::inventory::{Inventory, InventoryKind, OpenInventory};
 use crate::math::DVec3;
-use crate::protocol::packets::play::{InventoryS2c, OpenScreenS2c, PositionAndOnGroundC2s};
+use crate::protocol::packets::play::{ContainerSetContentS2c, MovePlayerPosC2s, OpenScreenS2c};
 use crate::testing::ScenarioSingleClient;
 use crate::{DefaultPlugins, Server};
 
@@ -42,7 +42,7 @@ fn example_test_client_position() {
     } = ScenarioSingleClient::new();
 
     // Send a packet as the client to the server.
-    let packet = PositionAndOnGroundC2s {
+    let packet = MovePlayerPosC2s {
         position: DVec3::new(12.0, 64.0, 0.0),
         on_ground: true,
     };
@@ -91,7 +91,7 @@ fn example_test_open_inventory() {
     let sent_packets = helper.collect_received();
 
     sent_packets.assert_count::<OpenScreenS2c>(1);
-    sent_packets.assert_count::<InventoryS2c>(1);
+    sent_packets.assert_count::<ContainerSetContentS2c>(1);
 
-    sent_packets.assert_order::<(OpenScreenS2c, InventoryS2c)>();
+    sent_packets.assert_order::<(OpenScreenS2c, ContainerSetContentS2c)>();
 }

@@ -1,6 +1,6 @@
 use valence_protocol::encode::WritePacket;
 use valence_protocol::packets::play::{
-    ClearTitleS2c, OverlayMessageS2c, SubtitleS2c, TitleFadeS2c, TitleS2c,
+    ClearTitlesS2c, SetActionBarTextS2c, SetSubtitleTextS2c, SetTitleTextS2c, SetTitlesAnimationS2c,
 };
 use valence_protocol::text::IntoText;
 
@@ -29,25 +29,25 @@ pub trait SetTitle {
 
 impl<T: WritePacket> SetTitle for T {
     fn set_title<'a>(&mut self, text: impl IntoText<'a>) {
-        self.write_packet(&TitleS2c {
+        self.write_packet(&SetTitleTextS2c {
             title_text: text.into_cow_text(),
         });
     }
 
     fn set_subtitle<'a>(&mut self, text: impl IntoText<'a>) {
-        self.write_packet(&SubtitleS2c {
+        self.write_packet(&SetSubtitleTextS2c {
             subtitle_text: text.into_cow_text(),
         });
     }
 
     fn set_action_bar<'a>(&mut self, text: impl IntoText<'a>) {
-        self.write_packet(&OverlayMessageS2c {
+        self.write_packet(&SetActionBarTextS2c {
             action_bar_text: text.into_cow_text(),
         });
     }
 
     fn set_title_times(&mut self, fade_in: i32, stay: i32, fade_out: i32) {
-        self.write_packet(&TitleFadeS2c {
+        self.write_packet(&SetTitlesAnimationS2c {
             fade_in,
             stay,
             fade_out,
@@ -55,10 +55,10 @@ impl<T: WritePacket> SetTitle for T {
     }
 
     fn clear_title(&mut self) {
-        self.write_packet(&ClearTitleS2c { reset: false });
+        self.write_packet(&ClearTitlesS2c { reset: false });
     }
 
     fn reset_title(&mut self) {
-        self.write_packet(&ClearTitleS2c { reset: true });
+        self.write_packet(&ClearTitlesS2c { reset: true });
     }
 }

@@ -4,7 +4,6 @@ pub mod loaded;
 mod paletted_container;
 pub mod unloaded;
 
-use std::borrow::Cow;
 use std::collections::hash_map::{Entry, OccupiedEntry, VacantEntry};
 use std::fmt;
 
@@ -17,11 +16,12 @@ pub use unloaded::UnloadedChunk;
 use valence_math::{DVec3, Vec3};
 use valence_nbt::Compound;
 use valence_protocol::encode::{PacketWriter, WritePacket};
-use valence_protocol::packets::play::particle_s2c::Particle;
-use valence_protocol::packets::play::{ParticleS2c, PlaySoundS2c};
-use valence_protocol::sound::{Sound, SoundCategory, SoundId};
+use valence_protocol::packets::play::level_particles_s2c::Particle;
+use valence_protocol::packets::play::{LevelParticlesS2c, SoundS2c};
+use valence_protocol::sound::{Sound, SoundCategory, SoundDirect, SoundId};
 use valence_protocol::{BiomePos, BlockPos, ChunkPos, CompressionThreshold, Encode, Ident, Packet};
 use valence_registry::biome::{BiomeId, BiomeRegistry};
+use valence_registry::dimension_type::DimensionTypeId;
 use valence_registry::DimensionTypeRegistry;
 use valence_server_common::Server;
 
@@ -41,7 +41,7 @@ pub struct ChunkLayer {
 
 /// Chunk layer information.
 pub(crate) struct ChunkLayerInfo {
-    dimension_type_name: Ident<String>,
+    dimension_type: DimensionTypeId,
     height: u32,
     min_y: i32,
     biome_registry_len: usize,
@@ -51,7 +51,7 @@ pub(crate) struct ChunkLayerInfo {
 impl fmt::Debug for ChunkLayerInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ChunkLayerInfo")
-            .field("dimension_type_name", &self.dimension_type_name)
+            .field("dimension_type", &self.dimension_type)
             .field("height", &self.height)
             .field("min_y", &self.min_y)
             .field("biome_registry_len", &self.biome_registry_len)
@@ -126,15 +126,15 @@ impl ChunkLayer {
 
     /// Creates a new chunk layer.
     #[track_caller]
-    pub fn new<N: Into<Ident<String>>>(
-        dimension_type_name: N,
+    pub fn new(
+        dimension_type: Ident<&str>,
         dimensions: &DimensionTypeRegistry,
         biomes: &BiomeRegistry,
         server: &Server,
     ) -> Self {
-        let dimension_type_name = dimension_type_name.into();
-
-        let dim = &dimensions[dimension_type_name.as_str_ident()];
+        let dim = &dimensions
+            .get(dimension_type)
+            .expect("invalid dimension type");
 
         assert!(
             (0..MAX_HEIGHT as i32).contains(&dim.height),
@@ -146,7 +146,7 @@ impl ChunkLayer {
             messages: Messages::new(),
             chunks: Default::default(),
             info: ChunkLayerInfo {
-                dimension_type_name,
+                dimension_type: dimensions.index_of(dimension_type).unwrap(),
                 height: dim.height as u32,
                 min_y: dim.min_y,
                 biome_registry_len: biomes.iter().len(),
@@ -156,8 +156,8 @@ impl ChunkLayer {
     }
 
     /// The name of the dimension this chunk layer is using.
-    pub fn dimension_type_name(&self) -> Ident<&str> {
-        self.info.dimension_type_name.as_str_ident()
+    pub fn dimension_type(&self) -> &DimensionTypeId {
+        &self.info.dimension_type
     }
 
     /// The height of this instance's dimension.
@@ -397,8 +397,8 @@ impl ChunkLayer {
     {
         let position = position.into();
 
-        self.view_writer(position).write_packet(&ParticleS2c {
-            particle: Cow::Borrowed(particle),
+        self.view_writer(position).write_packet(&LevelParticlesS2c {
+            particle: particle.clone(),
             long_distance,
             position,
             offset: offset.into(),
@@ -421,11 +421,11 @@ impl ChunkLayer {
     ) {
         let position = position.into();
 
-        self.view_writer(position).write_packet(&PlaySoundS2c {
-            id: SoundId::Direct {
+        self.view_writer(position).write_packet(&SoundS2c {
+            id: SoundId::Inline(SoundDirect {
                 id: sound.to_ident().into(),
                 range: None,
-            },
+            }),
             category,
             position: (position * 8.0).as_ivec3(),
             volume,

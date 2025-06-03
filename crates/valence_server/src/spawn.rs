@@ -7,10 +7,14 @@ use bevy_ecs::prelude::*;
 use bevy_ecs::query::QueryData;
 use derive_more::{Deref, DerefMut};
 use valence_entity::EntityLayerId;
-use valence_protocol::packets::play::{GameJoinS2c, PlayerRespawnS2c, PlayerSpawnPositionS2c};
+use valence_protocol::packets::play::game_event_s2c::GameEventKind;
+use valence_protocol::packets::play::respawn_s2c::DataKeptFlags;
+use valence_protocol::packets::play::{
+    GameEventS2c, LoginS2c, RespawnS2c, SetDefaultSpawnPositionS2c,
+};
 use valence_protocol::{BlockPos, GameMode, GlobalPos, Ident, VarInt, WritePacket};
 use valence_registry::tags::TagsRegistry;
-use valence_registry::{BiomeRegistry, RegistryCodec};
+use valence_registry::{DimensionTypeRegistry, RegistryCodec};
 
 use crate::client::{Client, ViewDistance, VisibleChunkLayer};
 use crate::layer::ChunkLayer;
@@ -95,12 +99,12 @@ pub(super) fn initial_join(
         };
 
         let dimension_names: BTreeSet<Ident<Cow<str>>> = codec
-            .registry(BiomeRegistry::KEY)
+            .registry(DimensionTypeRegistry::KEY)
             .iter()
             .map(|value| value.name.as_str_ident().into())
             .collect();
 
-        let dimension_name: Ident<Cow<str>> = chunk_layer.dimension_type_name().into();
+        let dimension_type = chunk_layer.dimension_type();
 
         let last_death_location = spawn.death_loc.0.as_ref().map(|(id, pos)| GlobalPos {
             dimension_name: id.as_str_ident().into(),
@@ -109,15 +113,13 @@ pub(super) fn initial_join(
 
         // The login packet is prepended so that it's sent before all the other packets.
         // Some packets don't work correctly when sent before the game join packet.
-        _ = client.enc.prepend_packet(&GameJoinS2c {
+        _ = client.enc.prepend_packet(&LoginS2c {
             entity_id: 0, // We reserve ID 0 for clients.
             is_hardcore: spawn.is_hardcore.0,
             game_mode: *spawn.game_mode,
             previous_game_mode: spawn.prev_game_mode.0.into(),
             dimension_names: Cow::Owned(dimension_names),
-            registry_codec: Cow::Borrowed(codec.cached_codec()),
-            dimension_type_name: dimension_name.clone(),
-            dimension_name,
+            dimension_name: Ident::new("overworld").unwrap(),
             hashed_seed: spawn.hashed_seed.0 as i64,
             max_players: VarInt(0), // Ignored by clients.
             view_distance: VarInt(i32::from(spawn.view_distance.get())),
@@ -128,9 +130,19 @@ pub(super) fn initial_join(
             is_flat: spawn.is_flat.0,
             last_death_location,
             portal_cooldown: VarInt(spawn.portal_cooldown.0),
+            do_limited_crafting: false, // TODO
+            dimension_type: VarInt(dimension_type.get_value().into()),
+            enforeces_secure_chat: true,
+            // FIXME: add missing sea_level
+            sea_level: VarInt(0),
         });
 
         client.write_packet_bytes(tags.sync_tags_packet());
+
+        client.write_packet(&GameEventS2c {
+            kind: GameEventKind::StartWaitingForLevelChunks,
+            value: 0.0,
+        });
 
         /*
         // TODO: enable all the features?
@@ -169,24 +181,24 @@ pub(super) fn respawn(
             continue;
         };
 
-        let dimension_name = chunk_layer.dimension_type_name();
+        let dimension_type = chunk_layer.dimension_type();
 
         let last_death_location = death_loc.0.as_ref().map(|(id, pos)| GlobalPos {
             dimension_name: id.as_str_ident().into(),
             position: *pos,
         });
 
-        client.write_packet(&PlayerRespawnS2c {
-            dimension_type_name: dimension_name.into(),
-            dimension_name: dimension_name.into(),
+        client.write_packet(&RespawnS2c {
+            dimension_type: VarInt(dimension_type.get_value().into()),
+            dimension_name: Ident::new("overworld").unwrap(),
             hashed_seed: hashed_seed.0,
             game_mode: *game_mode,
             previous_game_mode: prev_game_mode.0.into(),
             is_debug: is_debug.0,
             is_flat: is_flat.0,
-            copy_metadata: true,
             last_death_location,
             portal_cooldown: VarInt(0), // TODO
+            data_kept: DataKeptFlags::new(),
         });
     }
 }
@@ -199,7 +211,7 @@ pub(super) fn update_respawn_position(
     mut clients: Query<(&mut Client, &RespawnPosition), Changed<RespawnPosition>>,
 ) {
     for (mut client, respawn_pos) in &mut clients {
-        client.write_packet(&PlayerSpawnPositionS2c {
+        client.write_packet(&SetDefaultSpawnPositionS2c {
             position: respawn_pos.pos,
             angle: respawn_pos.yaw,
         });

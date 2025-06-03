@@ -5,6 +5,7 @@ use serde::Deserialize;
 use valence_build_utils::{ident, rerun_if_changed};
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "UPPERCASE")]
 pub(crate) enum StatusEffectCategory {
     Beneficial,
     Harmful,
@@ -13,10 +14,9 @@ pub(crate) enum StatusEffectCategory {
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct AttributeModifiers {
-    attribute: u8,
     operation: u8,
-    value: f64,
-    uuid: String,
+    attribute_name: String,
+    base_value: f64,
 }
 
 #[derive(Deserialize, Debug)]
@@ -141,17 +141,15 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
             effect.attribute_modifiers.as_ref().map(|modifiers| {
                 let name = ident(effect.name.to_pascal_case());
                 let modifiers = modifiers.iter().map(|modifier| {
-                    let attribute = &modifier.attribute;
+                    let attribute =  ident(modifier.attribute_name.to_pascal_case());
                     let operation = &modifier.operation;
-                    let value = &modifier.value;
-                    let uuid = &modifier.uuid;
+                    let value = &modifier.base_value;
 
                     quote! {
                         AttributeModifier {
-                            attribute: EntityAttribute::from_id(#attribute).unwrap(),
-                            operation: EntityAttributeOperation::from_raw(#operation).unwrap(),
+                            attribute: EntityAttribute::#attribute,
+                            operation: EntityAttributeOperation::from_raw(#operation).expect("invalid attribute operation"),
                             value: #value,
-                            uuid: Uuid::parse_str(#uuid).unwrap(),
                         }
                     }
                 });
@@ -169,9 +167,9 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         .collect::<Vec<_>>();
 
     Ok(quote! {
-        use uuid::Uuid;
         use valence_ident::{Ident, ident};
         use super::attributes::{EntityAttribute, EntityAttributeOperation};
+        use crate::registry_id::RegistryId;
 
         #[doc = "Represents an attribute modifier."]
         #[derive(Debug, Clone, Copy, PartialEq)]
@@ -182,8 +180,6 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
             pub operation: EntityAttributeOperation,
             #[doc = "The value of this modifier."]
             pub value: f64,
-            #[doc = "The UUID of this modifier."]
-            pub uuid: Uuid,
         }
 
         #[doc = "Represents a status effect category"]
@@ -281,6 +277,12 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
 
             #[doc = "An array of all effects."]
             pub const ALL: [Self; #effect_count] = [#(Self::#effect_variants,)*];
+        }
+
+        impl From<StatusEffect> for RegistryId {
+            fn from(effect: StatusEffect) -> Self {
+                RegistryId::new(effect.to_raw() as i32)
+            }
         }
     })
 }
