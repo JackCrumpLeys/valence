@@ -75,8 +75,8 @@ impl<I: Encode> Encode for AdvancementDisplay<'_, I> {
 
 impl<'a, I: Decode<'a>> Decode<'a> for AdvancementDisplay<'a, I> {
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
-        let title = <Cow<'a, JsonText>>::decode(r)?;
-        let description = <Cow<'a, JsonText>>::decode(r)?;
+        let title = <Cow<'a, Text>>::decode(r)?;
+        let description = <Cow<'a, Text>>::decode(r)?;
         let icon = I::decode(r)?;
         let frame_type = VarInt::decode(r)?;
         let flags = i32::decode(r)?;
