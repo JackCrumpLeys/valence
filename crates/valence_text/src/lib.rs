@@ -53,6 +53,12 @@ pub use into_text::IntoText;
 #[serde(transparent)]
 pub struct Text(Box<TextInner>);
 
+#[derive(Clone, PartialEq, Debug, Default, Serialize)]
+#[serde(transparent)]
+/// Will always be serialized as JSON instead of NBT for backwards compatibility.
+/// See https://minecraft.wiki/w/Java_Edition_protocol/Packets#Disconnect_(login)
+pub struct JsonText(pub Text);
+
 /// Text data and formatting.
 #[derive(Clone, PartialEq, Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

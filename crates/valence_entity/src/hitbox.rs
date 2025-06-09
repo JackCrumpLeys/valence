@@ -202,7 +202,7 @@ fn update_constant_hitbox(
             EntityKind::EGG => [0.25, 0.25, 0.25],
             EntityKind::ENDER_PEARL => [0.25, 0.25, 0.25],
             EntityKind::EXPERIENCE_BOTTLE => [0.25, 0.25, 0.25],
-            EntityKind::POTION => [0.25, 0.25, 0.25],
+            EntityKind::SPLASH_POTION | EntityKind::LINGERING_POTION => [0.25, 0.25, 0.25],
             EntityKind::TRIDENT => [0.5, 0.5, 0.5],
             EntityKind::TRADER_LLAMA => [0.9, 1.87, 0.9],
             EntityKind::TROPICAL_FISH => [0.5, 0.4, 0.5],

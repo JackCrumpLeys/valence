@@ -11,7 +11,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 use valence_protocol::decode::PacketFrame;
-use valence_protocol::packets::handshake::intention_c2s::HandshakeNextState;
+use valence_protocol::packets::handshake::intention_c2s::HandShakeIntent;
 use valence_protocol::packets::handshake::IntentionC2s;
 use valence_protocol::packets::login::{
     HelloS2c, LoginCompressionS2c, LoginDisconnectS2c, LoginFinishedS2c,
@@ -205,8 +205,8 @@ impl Proxy {
                 if state == PacketState::Handshake {
                     if let Some(handshake) = extrapolate_packet::<IntentionC2s>(&packet) {
                         *state_lock.write().await = match handshake.next_state {
-                            HandshakeNextState::Status => PacketState::Status,
-                            HandshakeNextState::Login => PacketState::Login,
+                            HandShakeIntent::Status => PacketState::Status,
+                            HandShakeIntent::Login => PacketState::Login,
                         };
                     }
                 }

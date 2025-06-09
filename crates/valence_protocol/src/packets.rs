@@ -264,8 +264,6 @@ pub mod play {
     pub use set_entity_motion_s2c::SetEntityMotionS2c;
     pub mod set_experience_s2c;
     pub use set_experience_s2c::SetExperienceS2c;
-    pub mod add_experience_orb_s2c;
-    pub use add_experience_orb_s2c::AddExperienceOrbS2c;
     pub mod explode_s2c;
     pub use explode_s2c::ExplodeS2c;
     pub mod move_player_pos_rot_c2s;

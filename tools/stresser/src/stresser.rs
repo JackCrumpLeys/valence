@@ -6,7 +6,7 @@ use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use uuid::Uuid;
 use valence_protocol::movement_flags::MovementFlags;
-use valence_protocol::packets::handshake::intention_c2s::HandshakeNextState;
+use valence_protocol::packets::handshake::intention_c2s::HandShakeIntent;
 use valence_protocol::packets::handshake::IntentionC2s;
 use valence_protocol::packets::login::{HelloC2s, HelloS2c, LoginCompressionS2c};
 use valence_protocol::packets::play::{
@@ -51,7 +51,7 @@ pub async fn make_session(params: &SessionParams<'_>) -> anyhow::Result<()> {
         protocol_version: VarInt(PROTOCOL_VERSION),
         server_address: server_addr_str.as_str().into(),
         server_port: sock_addr.port(),
-        next_state: HandshakeNextState::Login,
+        next_state: HandShakeIntent::Login,
     };
 
     enc.append_packet(&handshake_pkt)?;

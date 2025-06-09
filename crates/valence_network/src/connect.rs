@@ -1,5 +1,6 @@
 //! Handles new connections to the server and the log-in process.
 
+use std::borrow::Cow;
 use std::io;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -29,9 +30,9 @@ use valence_protocol::packets::status::{
     PingRequestC2s, PongResponseS2c, StatusRequestC2s, StatusResponseS2c,
 };
 use valence_protocol::profile::Property;
-use valence_protocol::{Bounded, Decode};
+use valence_protocol::{Bounded, Decode, JsonText};
 use valence_server::client::Properties;
-use valence_server::protocol::packets::handshake::intention_c2s::HandshakeNextState;
+use valence_server::protocol::packets::handshake::intention_c2s::HandShakeIntent;
 use valence_server::protocol::packets::handshake::IntentionC2s;
 use valence_server::protocol::packets::login::{
     CustomQueryAnswerC2s, CustomQueryS2c, HelloC2s, HelloS2c, KeyC2s, LoginCompressionS2c,
@@ -140,7 +141,7 @@ async fn handle_handshake(
 ) -> anyhow::Result<()> {
     let handshake = io.recv_packet::<IntentionC2s>().await?;
 
-    let next_state = handshake.next_state;
+    let next_state = handshake.intent;
 
     let handshake = HandshakeData {
         protocol_version: handshake.protocol_version.0,
@@ -156,10 +157,10 @@ async fn handle_handshake(
     );
 
     match next_state {
-        HandshakeNextState::Status => handle_status(shared, io, remote_addr, handshake)
+        HandShakeIntent::Status => handle_status(shared, io, remote_addr, handshake)
             .await
             .context("handling status"),
-        HandshakeNextState::Login => {
+        HandShakeIntent::Login => {
             match handle_login(&shared, &mut io, remote_addr, handshake)
                 .await
                 .context("handling login")?
@@ -178,7 +179,11 @@ async fn handle_handshake(
                 }
                 None => Ok(()),
             }
-        }
+        },
+        HandShakeIntent::Transfer => {
+            // TODO
+            todo!()
+        },
     }
 }
 
@@ -249,9 +254,9 @@ async fn handle_status(
         ServerListPing::Ignore => return Ok(()),
     }
 
-    let PingRequestC2s { payload } = io.recv_packet().await?;
+    let PingRequestC2s { timestamp: payload } = io.recv_packet().await?;
 
-    io.send_packet(&PongResponseS2c { payload }).await?;
+    io.send_packet(&PongResponseS2c { timestamp: payload }).await?;
 
     Ok(())
 }
@@ -266,9 +271,9 @@ async fn handle_login(
     if handshake.protocol_version != PROTOCOL_VERSION {
         io.send_packet(&LoginDisconnectS2c {
             // TODO: use correct translation key.
-            reason: format!("Mismatched Minecraft version (server is on {MINECRAFT_VERSION})")
+            reason: Cow::Owned(JsonText(format!("Mismatched Minecraft version (server is on {MINECRAFT_VERSION})")
                 .color(Color::RED)
-                .into(),
+            ))
         })
         .await?;
 
@@ -305,7 +310,7 @@ async fn handle_login(
         Err(reason) => {
             info!("disconnect at login: \"{reason}\"");
             io.send_packet(&LoginDisconnectS2c {
-                reason: reason.into(),
+                reason: Cow::Owned(JsonText(reason))
             })
             .await?;
             return Ok(None);
@@ -434,7 +439,7 @@ async fn login_online(
         StatusCode::NO_CONTENT => {
             let reason = Text::translate(keys::MULTIPLAYER_DISCONNECT_UNVERIFIED_USERNAME, []);
             io.send_packet(&LoginDisconnectS2c {
-                reason: reason.into(),
+                reason: Cow::Owned(JsonText(reason)),
             })
             .await?;
             bail!("session server could not verify username");

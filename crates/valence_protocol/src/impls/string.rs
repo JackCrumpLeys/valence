@@ -2,8 +2,9 @@ use std::io::Write;
 use std::str::FromStr;
 
 use anyhow::{ensure, Context};
-use valence_text::Text;
-
+use serde::{Serialize, Deserialize};
+use valence_nbt::{serde::ser::CompoundSerializer, Compound};
+use valence_text::{JsonText, Text};
 use crate::{Bounded, Decode, Encode, VarInt};
 
 const DEFAULT_MAX_STRING_CHARS: usize = 32767;
@@ -99,16 +100,41 @@ impl<const MAX_CHARS: usize> Decode<'_> for Bounded<Box<str>, MAX_CHARS> {
 
 impl Encode for Text {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        let c = self.serialize(CompoundSerializer)
+            .context("serializing text as compound")?;
+
+        Bounded::<_, MAX_TEXT_CHARS>(c).encode(w)
+    }
+}
+
+impl Decode<'_> for Text {
+    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
+        let mut bytes = Bounded::<&[u8], MAX_TEXT_CHARS>::decode(r)?.0;
+
+        let c = valence_nbt::from_binary(&mut bytes)
+            .context("deserializing text NBT")?.0;
+
+        Self::deserialize(c)
+            .context("deserializing text from NBT")
+    }
+}
+
+impl Encode for JsonText {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
         let s = serde_json::to_string(self).context("serializing text JSON")?;
 
         Bounded::<_, MAX_TEXT_CHARS>(s).encode(w)
     }
 }
 
-impl Decode<'_> for Text {
+impl Decode<'_> for JsonText {
     fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
         let str = Bounded::<&str, MAX_TEXT_CHARS>::decode(r)?.0;
 
-        Self::from_str(str).context("deserializing text JSON")
+        Ok(JsonText(
+            Text::from_str(str)
+                .context("parsing text from JSON string")?
+        ))
     }
 }
+

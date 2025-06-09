@@ -69,7 +69,7 @@ pub use packets::play::level_particles_s2c::Particle;
 pub use raw::RawBytes;
 use serde::{Deserialize, Serialize};
 pub use sound::Sound;
-pub use text::Text;
+pub use text::{Text, JsonText};
 pub use valence_generated::{block, packet_id, status_effects};
 pub use valence_ident::Ident;
 pub use valence_protocol_macros::{Decode, Encode, Packet};
@@ -85,11 +85,11 @@ pub use {
 pub const MAX_PACKET_SIZE: i32 = 2097152;
 
 /// The Minecraft protocol version this library currently targets.
-pub const PROTOCOL_VERSION: i32 = 769;
+pub const PROTOCOL_VERSION: i32 = 770;
 
 /// The stringified name of the Minecraft version this library currently
 /// targets.
-pub const MINECRAFT_VERSION: &str = "1.21.4";
+pub const MINECRAFT_VERSION: &str = "1.21.5";
 
 /// How large a packet should be before it is compressed by the packet encoder.
 ///
@@ -406,7 +406,7 @@ mod tests {
                 f: BlockPos::new(1, 2, 3),
                 g: Hand::Off,
                 h: Ident::new("minecraft:whatever").unwrap(),
-                i: ItemStack::new(ItemKind::WoodenSword, 12, Vec::new()),
+                i: ItemStack::new(ItemKind::WoodenSword, 12),
                 j: "my ".into_text() + "fancy".italic() + " text",
                 k: VarInt(123),
                 l: VarLong(456),

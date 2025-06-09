@@ -7,7 +7,7 @@ use valence_math::DVec3;
 use valence_protocol::encode::WritePacket;
 use valence_protocol::movement_flags::MovementFlags;
 use valence_protocol::packets::play::{
-    AddEntityS2c, AddExperienceOrbS2c, AnimateS2c, EntityEventS2c, MoveEntityPosRotS2c,
+    AddEntityS2c, AnimateS2c, EntityEventS2c, MoveEntityPosRotS2c,
     MoveEntityPosS2c, MoveEntityRotS2c, RotateHeadS2c, SetEntityDataS2c, SetEntityMotionS2c,
     TeleportEntityS2c, UpdateAttributesS2c,
 };
@@ -42,13 +42,6 @@ impl EntityInitQueryItem<'_> {
     pub fn write_init_packets<W: WritePacket>(&self, pos: DVec3, mut writer: W) {
         match *self.kind {
             EntityKind::MARKER => {}
-            EntityKind::EXPERIENCE_ORB => {
-                writer.write_packet(&AddExperienceOrbS2c {
-                    entity_id: self.entity_id.get().into(),
-                    position: pos,
-                    count: self.object_data.0 as i16,
-                });
-            }
             _ => writer.write_packet(&AddEntityS2c {
                 entity_id: self.entity_id.get().into(),
                 object_uuid: self.uuid.0,

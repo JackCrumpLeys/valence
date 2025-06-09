@@ -1,7 +1,6 @@
 //! Provides the [`IntoText`] trait and implementations.
 
 use std::borrow::Cow;
-
 use super::{ClickEvent, Color, Font, HoverEvent, Text};
 
 /// Trait for any data that can be converted to a [`Text`] object.

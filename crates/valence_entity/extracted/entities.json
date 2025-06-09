@@ -11576,7 +11576,7 @@
         "type": "villager_data",
         "default_value": {
           "type": "plains",
-          "profession": "cartographer",
+          "profession": "none",
           "level": 1
         }
       }

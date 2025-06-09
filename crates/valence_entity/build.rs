@@ -57,7 +57,7 @@ enum Value {
     BlockPos(BlockPos),
     OptionalBlockPos(Option<BlockPos>),
     Facing(String),
-    OptionalUuid(Option<String>),
+    LazyEntityReference(Option<()>), // TODO
     BlockState(String),
     OptionalBlockState(Option<String>),
     NbtCompound(String),
@@ -72,8 +72,12 @@ enum Value {
     OptionalInt(Option<i32>),
     EntityPose(String),
     CatVariant(String),
+    CowVariant(String),
     WolfVariant(String),
+    WolfSoundVariant(String),
     FrogVariant(String),
+    PigVariant(String),
+    ChickenVariant(String),
     OptionalGlobalPos(Option<()>), // TODO
     PaintingVariant(String),
     SnifferState(String),
@@ -114,7 +118,7 @@ impl Value {
             Value::BlockPos(_) => 10,
             Value::OptionalBlockPos(_) => 11,
             Value::Facing(_) => 12,
-            Value::OptionalUuid(_) => 13,
+            Value::LazyEntityReference(_) => 13,
             Value::BlockState(_) => 14,
             Value::OptionalBlockState(_) => 15,
             Value::NbtCompound(_) => 16,
@@ -124,14 +128,18 @@ impl Value {
             Value::OptionalInt(_) => 20,
             Value::EntityPose(_) => 21,
             Value::CatVariant(_) => 22,
-            Value::WolfVariant(_) => 23,
-            Value::FrogVariant(_) => 24,
-            Value::OptionalGlobalPos(_) => 25,
-            Value::PaintingVariant(_) => 26,
-            Value::SnifferState(_) => 27,
-            Value::ArmadilloState(_) => 28,
-            Value::Vector3f { .. } => 29,
-            Value::Quaternionf { .. } => 30,
+            Value::CowVariant(_) => 23,
+            Value::WolfVariant(_) => 24,
+            Value::WolfSoundVariant(_) => 25,
+            Value::FrogVariant(_) => 26,
+            Value::PigVariant(_) => 27,
+            Value::ChickenVariant(_) => 28,
+            Value::OptionalGlobalPos(_) => 29,
+            Value::PaintingVariant(_) => 30,
+            Value::SnifferState(_) => 31,
+            Value::ArmadilloState(_) => 32,
+            Value::Vector3f { .. } => 33,
+            Value::Quaternionf { .. } => 34,
         }
     }
 
@@ -150,7 +158,7 @@ impl Value {
             Value::BlockPos(_) => quote!(valence_protocol::BlockPos),
             Value::OptionalBlockPos(_) => quote!(Option<valence_protocol::BlockPos>),
             Value::Facing(_) => quote!(valence_protocol::Direction),
-            Value::OptionalUuid(_) => quote!(Option<::uuid::Uuid>),
+            Value::LazyEntityReference(_) => quote!(()), // TODO
             Value::BlockState(_) => quote!(valence_protocol::BlockState),
             Value::OptionalBlockState(_) => quote!(valence_protocol::BlockState),
             Value::NbtCompound(_) => quote!(valence_nbt::Compound),
@@ -164,8 +172,12 @@ impl Value {
             Value::OptionalInt(_) => quote!(Option<i32>),
             Value::EntityPose(_) => quote!(crate::Pose),
             Value::CatVariant(_) => quote!(crate::CatKind),
+            Value::CowVariant(_) => quote!(crate::CowKind),
             Value::WolfVariant(_) => quote!(crate::WolfKind),
+            Value::WolfSoundVariant(_) => quote!(crate::WolfSoundKind),
             Value::FrogVariant(_) => quote!(crate::FrogKind),
+            Value::PigVariant(_) => quote!(crate::PigKind),
+            Value::ChickenVariant(_) => quote!(crate::ChickenKind),
             Value::OptionalGlobalPos(_) => quote!(()), // TODO
             Value::PaintingVariant(_) => quote!(crate::PaintingKind),
             Value::SnifferState(_) => quote!(crate::SnifferState),
@@ -212,9 +224,8 @@ impl Value {
                 let variant = ident(f.to_pascal_case());
                 quote!(valence_protocol::Direction::#variant)
             }
-            Value::OptionalUuid(uuid) => {
-                assert!(uuid.is_none());
-                quote!(None)
+            Value::LazyEntityReference(_) => {
+                quote!(())
             }
             Value::BlockState(_) => {
                 quote!(valence_protocol::BlockState::default())
@@ -267,15 +278,35 @@ impl Value {
                 let variant = ident(stripped_variant.to_pascal_case());
                 quote!(crate::CatKind::#variant)
             }
-            Value::WolfVariant(w) => {
-                let stripped_variant = w.trim_start_matches("minecraft");
+            Value::CowVariant(c) => {
+                let stripped_variant = c.trim_start_matches("minecraft");
+                let variant = ident(stripped_variant.to_pascal_case());
+                quote!(crate::CowKind::#variant)
+            }
+            Value::WolfVariant(c) => {
+                let stripped_variant = c.trim_start_matches("minecraft");
                 let variant = ident(stripped_variant.to_pascal_case());
                 quote!(crate::WolfKind::#variant)
             }
-            Value::FrogVariant(f) => {
-                let stripped_variant = f.trim_start_matches("minecraft");
+            Value::WolfSoundVariant(c) => {
+                let stripped_variant = c.trim_start_matches("minecraft");
+                let variant = ident(stripped_variant.to_pascal_case());
+                quote!(crate::WolfSoundKind::#variant)
+            }
+            Value::FrogVariant(c) => {
+                let stripped_variant = c.trim_start_matches("minecraft");
                 let variant = ident(stripped_variant.to_pascal_case());
                 quote!(crate::FrogKind::#variant)
+            }
+            Value::PigVariant(c) => {
+                let stripped_variant = c.trim_start_matches("minecraft");
+                let variant = ident(stripped_variant.to_pascal_case());
+                quote!(crate::PigKind::#variant)
+            }
+            Value::ChickenVariant(c) => {
+                let stripped_variant = c.trim_start_matches("minecraft");
+                let variant = ident(stripped_variant.to_pascal_case());
+                quote!(crate::ChickenKind::#variant)
             }
             Value::OptionalGlobalPos(_) => quote!(()),
             Value::PaintingVariant(p) => {
