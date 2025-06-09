@@ -179,11 +179,11 @@ async fn handle_handshake(
                 }
                 None => Ok(()),
             }
-        },
+        }
         HandShakeIntent::Transfer => {
             // TODO
             todo!()
-        },
+        }
     }
 }
 
@@ -256,7 +256,8 @@ async fn handle_status(
 
     let PingRequestC2s { timestamp: payload } = io.recv_packet().await?;
 
-    io.send_packet(&PongResponseS2c { timestamp: payload }).await?;
+    io.send_packet(&PongResponseS2c { timestamp: payload })
+        .await?;
 
     Ok(())
 }
@@ -271,9 +272,10 @@ async fn handle_login(
     if handshake.protocol_version != PROTOCOL_VERSION {
         io.send_packet(&LoginDisconnectS2c {
             // TODO: use correct translation key.
-            reason: Cow::Owned(JsonText(format!("Mismatched Minecraft version (server is on {MINECRAFT_VERSION})")
-                .color(Color::RED)
-            ))
+            reason: Cow::Owned(JsonText(
+                format!("Mismatched Minecraft version (server is on {MINECRAFT_VERSION})")
+                    .color(Color::RED),
+            )),
         })
         .await?;
 
@@ -310,7 +312,7 @@ async fn handle_login(
         Err(reason) => {
             info!("disconnect at login: \"{reason}\"");
             io.send_packet(&LoginDisconnectS2c {
-                reason: Cow::Owned(JsonText(reason))
+                reason: Cow::Owned(JsonText(reason)),
             })
             .await?;
             return Ok(None);

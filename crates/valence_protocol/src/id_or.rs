@@ -1,4 +1,5 @@
-use std::{fmt::Debug, io::Write};
+use std::fmt::Debug;
+use std::io::Write;
 
 use anyhow::Error;
 use valence_generated::registry_id::RegistryId;

@@ -24,8 +24,7 @@ use valence_protocol::{
 };
 
 use crate::packet_io::PacketIo;
-pub use crate::packet_registry::Packet;
-pub use crate::packet_registry::PacketRegistry;
+pub use crate::packet_registry::{Packet, PacketRegistry};
 
 include!(concat!(env!("OUT_DIR"), "/packets.rs"));
 

@@ -7,9 +7,9 @@ use valence_math::DVec3;
 use valence_protocol::encode::WritePacket;
 use valence_protocol::movement_flags::MovementFlags;
 use valence_protocol::packets::play::{
-    AddEntityS2c, AnimateS2c, EntityEventS2c, MoveEntityPosRotS2c,
-    MoveEntityPosS2c, MoveEntityRotS2c, RotateHeadS2c, SetEntityDataS2c, SetEntityMotionS2c,
-    TeleportEntityS2c, UpdateAttributesS2c,
+    AddEntityS2c, AnimateS2c, EntityEventS2c, MoveEntityPosRotS2c, MoveEntityPosS2c,
+    MoveEntityRotS2c, RotateHeadS2c, SetEntityDataS2c, SetEntityMotionS2c, TeleportEntityS2c,
+    UpdateAttributesS2c,
 };
 use valence_protocol::var_int::VarInt;
 use valence_protocol::ByteAngle;

@@ -1,4 +1,5 @@
-use std::{borrow::Cow, io::Write};
+use std::borrow::Cow;
+use std::io::Write;
 
 use valence_generated::registry_id::RegistryId;
 

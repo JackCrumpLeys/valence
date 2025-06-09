@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{Decode, Encode, Packet, PacketState, JsonText};
+use crate::{Decode, Encode, JsonText, Packet, PacketState};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Login)]

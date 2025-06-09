@@ -69,7 +69,7 @@ pub use packets::play::level_particles_s2c::Particle;
 pub use raw::RawBytes;
 use serde::{Deserialize, Serialize};
 pub use sound::Sound;
-pub use text::{Text, JsonText};
+pub use text::{JsonText, Text};
 pub use valence_generated::{block, packet_id, status_effects};
 pub use valence_ident::Ident;
 pub use valence_protocol_macros::{Decode, Encode, Packet};

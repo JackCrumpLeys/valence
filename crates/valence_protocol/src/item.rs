@@ -1,16 +1,17 @@
-use std::{borrow::Cow, io::Write};
+use std::borrow::Cow;
+use std::io::Write;
 
+use valence_generated::attributes::{EntityAttribute, EntityAttributeOperation};
 pub use valence_generated::item::ItemKind;
+use valence_generated::registry_id::RegistryId;
 pub use valence_generated::sound::Sound;
-use valence_generated::{
-    attributes::{EntityAttribute, EntityAttributeOperation},
-    registry_id::RegistryId,
-};
 use valence_ident::Ident;
 use valence_nbt::Compound;
-use valence_text::{color::RgbColor, Text};
+use valence_text::color::RgbColor;
+use valence_text::Text;
 
-use crate::{sound::SoundId, Decode, Encode, IDSet, VarInt};
+use crate::sound::SoundId;
+use crate::{Decode, Encode, IDSet, VarInt};
 
 const NUM_ITEM_COMPONENTS: usize = 96;
 
@@ -43,15 +44,25 @@ pub enum ItemComponent {
         max_stack_size: VarInt,
     },
     /// The maximum damage the item can take before breaking.
-    MaxDamage { max_damage: VarInt },
+    MaxDamage {
+        max_damage: VarInt,
+    },
     /// The current damage of the item.
-    Damage { damage: VarInt },
+    Damage {
+        damage: VarInt,
+    },
     /// Marks the item as unbreakable.
     Unbreakable,
-    /// Item's custom name. Normally shown in italic, and changeable at an anvil.
-    CustomName { name: Text },
-    /// Override for the item's default name. Shown when the item has no custom name.
-    ItemName { name: Text },
+    /// Item's custom name. Normally shown in italic, and changeable at an
+    /// anvil.
+    CustomName {
+        name: Text,
+    },
+    /// Override for the item's default name. Shown when the item has no custom
+    /// name.
+    ItemName {
+        name: Text,
+    },
     /// Item's model.
     ItemModel {
         /// The model identifier.
@@ -63,10 +74,13 @@ pub enum ItemComponent {
         lines: Vec<Text>,
     },
     /// Item's rarity. This affects the default color of the item's name.
-    Rarity { rarity: Rarity },
+    Rarity {
+        rarity: Rarity,
+    },
     /// The enchantments of the item.
     Enchantments {
-        /// The enchantments. (The ID of the enchantment in the enchantment registry, The level of the enchantment)
+        /// The enchantments. (The ID of the enchantment in the enchantment
+        /// registry, The level of the enchantment)
         enchantments: Vec<(VarInt, VarInt)>,
     },
     /// List of blocks this block can be placed on when in adventure mode.
@@ -87,20 +101,27 @@ pub enum ItemComponent {
         show_in_tooltip: bool,
     },
     /// Value for the item predicate when using custom item models.
-    CustomModelData { value: VarInt },
-    /// Allows you to hide all or parts of the item tooltip. 
+    CustomModelData {
+        value: VarInt,
+    },
+    /// Allows you to hide all or parts of the item tooltip.
     TooltipDisplay {
-        /// Whether to hide the tooltip entirely. 
+        /// Whether to hide the tooltip entirely.
         hide_tooltip: bool,
-        // The IDs of data components in the minecraft:data_component_type registry to hide. 
+        // The IDs of data components in the minecraft:data_component_type registry to hide.
         hidden_components: Vec<VarInt>,
     },
     /// Accumulated anvil usage cost.
-    RepairCost { cost: VarInt },
-    /// Marks the item as non-interactive on the creative inventory (the first 5 rows of items).
+    RepairCost {
+        cost: VarInt,
+    },
+    /// Marks the item as non-interactive on the creative inventory (the first 5
+    /// rows of items).
     CreativeSlotLock,
     /// Overrides the item glint resulted from enchantments.
-    EnchantmentGlintOverride { has_glint: bool },
+    EnchantmentGlintOverride {
+        has_glint: bool,
+    },
     /// Marks the projectile as intangible (cannot be picked-up).
     IntangibleProjectile,
     /// Makes the item restore players hunger when eaten.
@@ -142,7 +163,8 @@ pub enum ItemComponent {
     },
     /// Marks this item as damage resistant.
     DamageResistant {
-        /// Tag specifying damage types the item is immune to. Not prefixed by '#'.
+        /// Tag specifying damage types the item is immune to. Not prefixed by
+        /// '#'.
         types: StrIdent,
     },
     /// Alters the speed at which this item breaks certain blocks.
@@ -161,7 +183,8 @@ pub enum ItemComponent {
     },
     /// Allows the item to be enchanted by an enchanting table.
     Enchantable {
-        /// Opaque internal value controlling how expensive enchantments may be offered.
+        /// Opaque internal value controlling how expensive enchantments may be
+        /// offered.
         value: VarInt,
     },
     /// Allows the item to be equipped by the player.
@@ -204,7 +227,8 @@ pub enum ItemComponent {
     BlocksAttacks, // marked as TODO on minecraft.wiki
     /// The enchantments stored in this enchanted book.
     StoredEnchantments {
-        /// The enchantments. The first element is the enchantment ID, the second is the level.
+        /// The enchantments. The first element is the enchantment ID, the
+        /// second is the level.
         enchantments: Vec<(RegistryId, VarInt)>,
         show_in_tooltip: bool,
     },
@@ -221,13 +245,16 @@ pub enum ItemComponent {
         color: RgbColor,
     },
     /// The ID of the map.
-    MapId { id: VarInt },
+    MapId {
+        id: VarInt,
+    },
     /// Icons present on a map.
     MapDecorations {
         /// Always a Compound Tag.
         data: Compound,
     },
-    /// Used internally by the client when expanding or locking a map. Display extra information on the item's tooltip when the component is present.
+    /// Used internally by the client when expanding or locking a map. Display
+    /// extra information on the item's tooltip when the component is present.
     MapPostProcessing {
         /// Type of post processing.
         type_: MapPostProcessingType,
@@ -287,7 +314,8 @@ pub enum ItemComponent {
         raw_title: String,
         /// Whether the title has been filtered.
         has_filtered_title: bool,
-        /// The title after going through chat filters. Only present if Has Filtered Title is true.
+        /// The title after going through chat filters. Only present if Has
+        /// Filtered Title is true.
         filtered_title: Option<String>,
         /// The author of the book.
         author: String,
@@ -302,9 +330,11 @@ pub enum ItemComponent {
     },
     /// Armor's trim pattern and color.
     Trim {
-        /// ID in the `minecraft:trim_material` registry, or an inline definition.
+        /// ID in the `minecraft:trim_material` registry, or an inline
+        /// definition.
         trim_material: String,
-        /// ID in the `minecraft:trim_pattern` registry, or an inline definition.
+        /// ID in the `minecraft:trim_pattern` registry, or an inline
+        /// definition.
         trim_pattern: String,
         /// Whether the trim information should be shown on the item's tooltip.
         show_in_tooltip: bool,
@@ -343,11 +373,14 @@ pub enum ItemComponent {
     },
     /// The song this item will play when inserted into a jukebox.
     JukeboxPlayable {
-        /// Whether the jukebox song is specified directly, or just referenced by name.
+        /// Whether the jukebox song is specified directly, or just referenced
+        /// by name.
         direct_mode: bool,
-        /// The name of the jukebox song in its respective registry. Only present if Direct Mode is false.
+        /// The name of the jukebox song in its respective registry. Only
+        /// present if Direct Mode is false.
         jukebox_song_name: Option<String>,
-        /// ID in the `minecraft:jukebox_song` registry. Only present if Direct Mode is true.
+        /// ID in the `minecraft:jukebox_song` registry. Only present if Direct
+        /// Mode is true.
         jukebox_song: Option<String>,
         /// Whether the song should be shown on the item's tooltip.
         show_in_tooltip: bool,
@@ -364,13 +397,17 @@ pub enum ItemComponent {
     },
     /// The lodestone this compass points to.
     LodestoneTracker {
-        /// Whether this lodestone points to a position, otherwise it spins randomly.
+        /// Whether this lodestone points to a position, otherwise it spins
+        /// randomly.
         has_global_position: bool,
-        /// The dimension the compass points to. Only present if Has Global Position is true.
+        /// The dimension the compass points to. Only present if Has Global
+        /// Position is true.
         dimension: Option<String>,
-        /// The position the compass points to. Only present if Has Global Position is true.
+        /// The position the compass points to. Only present if Has Global
+        /// Position is true.
         position: Option<(VarInt, VarInt, VarInt)>,
-        /// Whether the component is removed when the associated lodestone is broken.
+        /// Whether the component is removed when the associated lodestone is
+        /// broken.
         tracked: bool,
     },
     /// Properties of a firework star.
@@ -402,7 +439,8 @@ pub enum ItemComponent {
         /// The properties.
         properties: Vec<(String, String, bool, Option<String>)>,
     },
-    /// Sound played by a note block when this player's head is placed on top of it.
+    /// Sound played by a note block when this player's head is placed on top of
+    /// it.
     NoteBlockSound {
         /// The sound.
         sound: String,
@@ -458,121 +496,124 @@ pub enum ItemComponent {
         /// Always a Compound Tag.
         data: Compound,
     },
-    /// Changes the sound that plays when the item breaks. 
+    /// Changes the sound that plays when the item breaks.
     BreakSound {
         sound_event: SoundId,
     },
-    /// The biome variant of a villager. 
-    VillagerVariant { 
-        /// An ID in the minecraft:villager_type registry. 
+    /// The biome variant of a villager.
+    VillagerVariant {
+        /// An ID in the minecraft:villager_type registry.
         variant: VarInt,
     },
-    /// The variant of a wolf. 
-    WolfVariant { 
-        /// An ID in the minecraft:wolf_variant registry. 
+    /// The variant of a wolf.
+    WolfVariant {
+        /// An ID in the minecraft:wolf_variant registry.
         variant: VarInt,
     },
-    /// The type of sounds that a wolf makes. 
-    WolfSoundVariant { 
-        /// An ID in the minecraft:wolf_sound_variant registry. 
+    /// The type of sounds that a wolf makes.
+    WolfSoundVariant {
+        /// An ID in the minecraft:wolf_sound_variant registry.
         variant: VarInt,
     },
-    /// The dye color of the wolf's collar. 
-    WolfCollar { 
-        color: VarInt, // TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color
+    /// The dye color of the wolf's collar.
+    WolfCollar {
+        color: VarInt, /* TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color */
     },
-    /// The variant of a fox. 
-    FoxVariant { 
-        /// 0: red, 1: snow. 
+    /// The variant of a fox.
+    FoxVariant {
+        /// 0: red, 1: snow.
         variant: VarInt,
     },
     ///
-    SalmonSize { 
+    SalmonSize {
         /// 0: small, 1: medium, 2: large.
-        size: VarInt, 
+        size: VarInt,
     },
-    /// The variant of a parrot. 
-    ParrotVariant { 
+    /// The variant of a parrot.
+    ParrotVariant {
         /// An ID in the minecraft:parrot_type registry.
         variant: VarInt,
     },
-    /// The pattern of a tropical fish. 
-    TropicalFishPattern { 
-        /// 0: kob, 1: sunstreak, 2: snooper, 3: dasher, 4: brinely, 5: spotty, 6: flopper, 7: stripey, 8: glitter, 9: blockfish, 10: betty, 11: clayfish. 
+    /// The pattern of a tropical fish.
+    TropicalFishPattern {
+        /// 0: kob, 1: sunstreak, 2: snooper, 3: dasher, 4: brinely, 5: spotty,
+        /// 6: flopper, 7: stripey, 8: glitter, 9: blockfish, 10: betty, 11:
+        /// clayfish.
         pattern: VarInt, // TODO: maybe also enum?
     },
-    /// The base color of a tropical fish. 
-    TropicalFishBaseColor { 
-        color: VarInt, // TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color
+    /// The base color of a tropical fish.
+    TropicalFishBaseColor {
+        color: VarInt, /* TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color */
     },
-    /// The pattern color of a tropical fish. 
-    TropicalFishPatternColor { 
-        color: VarInt, // TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color
+    /// The pattern color of a tropical fish.
+    TropicalFishPatternColor {
+        color: VarInt, /* TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color */
     },
-    /// The variant of a mooshroom. 
-    MooshroomVariant { 
+    /// The variant of a mooshroom.
+    MooshroomVariant {
         /// 0: red, 1: brown.
         variant: VarInt,
     },
-    /// The variant of a rabbit. 
-    RabbitVariant { 
+    /// The variant of a rabbit.
+    RabbitVariant {
         // 0: brown, 1: white, 2: black, 3: white splotched, 4: gold, 5: salt, 6: evil.
         variant: VarInt, // TODO: enum?
     },
-    /// An ID in the minecraft:pig_variant registry. 
-    PigVariant { 
-        /// An ID in the minecraft:pig_variant registry. 
+    /// An ID in the minecraft:pig_variant registry.
+    PigVariant {
+        /// An ID in the minecraft:pig_variant registry.
         variant: VarInt,
     },
-    /// The variant of a cow. 
-    CowVariant { 
-        /// An ID in the minecraft:cow_variant registry. 
+    /// The variant of a cow.
+    CowVariant {
+        /// An ID in the minecraft:cow_variant registry.
         variant: VarInt,
     },
-    /// The variant of a chicken. 
-    ChickenVariant { 
+    /// The variant of a chicken.
+    ChickenVariant {
         // TODO: implement
     },
-    /// The variant of a frog. 
-    FrogVariant { 
-        /// An ID in the minecraft:frog_variant registry. 
+    /// The variant of a frog.
+    FrogVariant {
+        /// An ID in the minecraft:frog_variant registry.
         variant: VarInt,
     },
-    /// The variant of a horse. 
-    HorseVariant { 
-        /// 0: white, 1: creamy, 2: chestnut, 3: brown, 4: black, 5: gray, 6: dark brown. 
+    /// The variant of a horse.
+    HorseVariant {
+        /// 0: white, 1: creamy, 2: chestnut, 3: brown, 4: black, 5: gray, 6:
+        /// dark brown.
         variant: VarInt, // TODO: enum?
     },
-    /// The variant of a painting. 
-    PaintingVariant { 
+    /// The variant of a painting.
+    PaintingVariant {
         // TODO: implement
     },
-    /// The variant of a llama. 
-    LlamaVariant { 
+    /// The variant of a llama.
+    LlamaVariant {
         /// 0: creamy, 1: white, 2: brown, 3: gray.
         variant: VarInt, // TODO: enum?
     },
-    /// The variant of an axolotl. 
-    AxolotlVariant { 
-        /// 0: lucy, 1: wild, 2: gold, 3: cyan, 4: blue. 
+    /// The variant of an axolotl.
+    AxolotlVariant {
+        /// 0: lucy, 1: wild, 2: gold, 3: cyan, 4: blue.
         variant: VarInt, // TODO: enum?
     },
-    /// The variant of a cat. 
-    CatVariant { 
+    /// The variant of a cat.
+    CatVariant {
         /// An ID in the minecraft:cat_variant registry.
         variant: VarInt, // TODO: enum?
     },
-    /// The dye color of the cat's collar. 
-    CatCollar { 
-        color: VarInt, // TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color
+    /// The dye color of the cat's collar.
+    CatCollar {
+        color: VarInt, /* TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color */
     },
-    /// The color of a sheep. 
-    SheepColor { 
-        color: VarInt, // TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color
+    /// The color of a sheep.
+    SheepColor {
+        color: VarInt, /* TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color */
     },
-    /// The color of a shulker. 
-    ShulkerColor { 
-        color: VarInt, // TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color
+    /// The color of a shulker.
+    ShulkerColor {
+        color: VarInt, /* TODO: make this an enum https://minecraft.wiki/w/Java_Edition_protocol/Slot_data#Dye_Color */
     },
 }
 
@@ -822,8 +863,9 @@ impl ItemComponent {
         }
     }
 
-    // Create a [`ItemComponent`] from a [`valence_generated::item::SerItemComponent`] (which is generated by the build script).
-    // fn from_serialized(serialized: SerItemComponent) -> Self {
+    // Create a [`ItemComponent`] from a
+    // [`valence_generated::item::SerItemComponent`] (which is generated by the
+    // build script). fn from_serialized(serialized: SerItemComponent) -> Self {
     //     todo!()
     // }
 }
@@ -836,18 +878,20 @@ impl ItemStack {
     };
 
     /// Creates a new item stack.
-    /// 
-    /// If `components` is `None` then the default components of the [`ItemKind`] will be used (see [`ItemKind::components`]).] 
+    ///
+    /// If `components` is `None` then the default components of the
+    /// [`ItemKind`] will be used (see [`ItemKind::components`]).]
     #[must_use]
     pub const fn new(item: ItemKind, count: i8) -> Self {
         Self {
             item,
             count,
             components: [const { None }; NUM_ITEM_COMPONENTS],
-        } 
+        }
     }
 
-    /// Creates a new item stack with the vanilla default components for the given [`ItemKind`].
+    /// Creates a new item stack with the vanilla default components for the
+    /// given [`ItemKind`].
     pub fn new_vanilla(item: ItemKind, count: i8) -> Self {
         let components = item.default_components();
 
@@ -868,7 +912,8 @@ impl ItemStack {
 
     /// Returns the default components for the [`ItemKind`].
     pub fn default_components(&self) -> Vec<ItemComponent> {
-        self.item.default_components()
+        self.item
+            .default_components()
             .iter()
             .filter_map(|component| component.as_ref().map(|boxed| *boxed.clone()))
             .collect()
@@ -880,8 +925,9 @@ impl ItemStack {
         self.components[id] = Some(Box::new(component));
     }
 
-    /// Remove a component from the item stack by its ID, see [`ItemComponent::id`].
-    /// 
+    /// Remove a component from the item stack by its ID, see
+    /// [`ItemComponent::id`].
+    ///
     /// Returns the removed component if it was present, otherwise `None`.
     pub fn remove_component(&mut self, id: impl Into<usize>) -> Option<ItemComponent> {
         let id = id.into();
@@ -904,7 +950,9 @@ impl ItemStack {
 
     /// Get a mutable iterator over the components of the item stack.
     pub fn components_iter_mut(&mut self) -> impl Iterator<Item = &mut ItemComponent> {
-        self.components.iter_mut().filter_map(|component| component.as_mut().map(|boxed| &mut **boxed))
+        self.components
+            .iter_mut()
+            .filter_map(|component| component.as_mut().map(|boxed| &mut **boxed))
     }
 
     #[must_use]
@@ -1014,7 +1062,7 @@ impl<'a> Decode<'a> for ItemStack {
             item,
             count,
             components,
-        })        
+        })
     }
 }
 
@@ -1025,17 +1073,17 @@ pub trait ItemKindExt {
 
 impl ItemKindExt for ItemKind {
     fn default_components(&self) -> [Option<Box<ItemComponent>>; NUM_ITEM_COMPONENTS] {
-    //     let ser_default_components = self.ser_components();
-    //     let mut components = [const { None }; NUM_ITEM_COMPONENTS];
+        //     let ser_default_components = self.ser_components();
+        //     let mut components = [const { None }; NUM_ITEM_COMPONENTS];
 
-    //     for component in ser_default_components {
-    //         let item_component = ItemComponent::from_serialized(component);
-    //         let id = item_component.id() as usize;
-    //         components[id] = Some(Box::new(item_component));
-    //     }
+        //     for component in ser_default_components {
+        //         let item_component = ItemComponent::from_serialized(component);
+        //         let id = item_component.id() as usize;
+        //         components[id] = Some(Box::new(item_component));
+        //     }
 
-    //     components
-    // }
+        //     components
+        // }
 
         [const { None }; NUM_ITEM_COMPONENTS]
     }

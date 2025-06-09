@@ -537,7 +537,8 @@ mod tests {
                 stack: ItemStack::EMPTY,
             }]
             .into(),
-            carried_item: ItemStack::new(ItemKind::DiamondPickaxe, 1).with_components(vec![ItemComponent::Damage { damage: 1.into() }]),
+            carried_item: ItemStack::new(ItemKind::DiamondPickaxe, 1)
+                .with_components(vec![ItemComponent::Damage { damage: 1.into() }]),
         };
 
         validate_click_slot_packet(&packet, &player_inventory, Some(&inventory), &cursor_item)

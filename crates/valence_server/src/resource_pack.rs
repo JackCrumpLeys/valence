@@ -67,7 +67,6 @@ impl Client {
     /// declining the pack (this is enforced client-side)
     /// * `prompt_message` - A message to be displayed with the resource pack
     /// dialog.
-    ///
     pub fn set_resource_pack_with_uuid(
         &mut self,
         uuid: Uuid,

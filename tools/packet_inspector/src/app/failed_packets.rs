@@ -1,10 +1,11 @@
-use super::{SharedState, Tab, View};
-use crate::app::packet_list::systemtime_strftime;
 use eframe::emath::{Pos2, Vec2};
 use eframe::epaint::text::TextWrapMode;
 use eframe::epaint::{Color32, Rgba, Shape, Stroke};
 use egui::{Response, Sense, TextStyle, Ui, WidgetText};
 use packet_inspector::Packet;
+
+use super::{SharedState, Tab, View};
+use crate::app::packet_list::systemtime_strftime;
 
 pub(crate) struct FailedPackets;
 
