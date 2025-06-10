@@ -12,7 +12,8 @@ pub struct UpdateAttributesS2c<'a> {
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct AttributeProperty<'a> {
-    pub id: VarInt, // This could be an enum, but seems like arbitrary values are supported, while a
+    pub id: VarInt, /* This could be an enum, but seems like arbitrary values are supported,
+                     * while a */
     // few are special:w
     pub value: f64,
     pub modifiers: Vec<AttributeModifier<'a>>,

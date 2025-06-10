@@ -14,7 +14,9 @@ use valence_protocol::packets::play::section_blocks_update_s2c::ChunkDeltaUpdate
 use valence_protocol::packets::play::{
     BlockEntityDataS2c, BlockUpdateS2c, LevelChunkWithLightS2c, SectionBlocksUpdateS2c,
 };
-use valence_protocol::{BlockPos, BlockState, ChunkPos, ChunkSectionPos, Encode};
+use valence_protocol::{
+    BitStorage, BlockPos, BlockState, ChunkPos, ChunkSectionPos, Encode, FixedArray,
+};
 use valence_registry::biome::BiomeId;
 use valence_registry::RegistryIdx;
 
@@ -46,16 +48,47 @@ pub struct LoadedChunk {
     cached_init_packets: Mutex<Vec<u8>>,
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 struct Section {
     block_states: BlockStateContainer,
     biomes: BiomeContainer,
+    block_light: [u8; 2048],
+    sky_light: [u8; 2048],
     /// Contains modifications for the update section packet. (Or the regular
     /// block update packet if len == 1).
     updates: Vec<ChunkDeltaUpdateEntry>,
 }
 
+impl Default for Section {
+    fn default() -> Self {
+        Self {
+            block_light: [0x00; 2048],
+            sky_light: [0x00; 2048],
+            block_states: BlockStateContainer::default(),
+            biomes: BiomeContainer::default(),
+            updates: Vec::new(),
+        }
+    }
+}
+
 impl Section {
+    /// Create a new section fully lit by sky light.
+    pub(crate) fn with_sky_light() -> Self {
+        Self {
+            sky_light: [0xff; 2048],
+            ..Default::default()
+        }
+    }
+
+    /// Create a fully lit section
+    pub(crate) fn with_full_light() -> Self {
+        Self {
+            sky_light: [0xff; 2048],
+            block_light: [0xff; 2048],
+            ..Default::default()
+        }
+    }
+
     fn count_non_air_blocks(&self) -> u16 {
         let mut count = 0;
 
@@ -88,7 +121,7 @@ impl LoadedChunk {
     pub(crate) fn new(height: u32) -> Self {
         Self {
             viewer_count: AtomicU32::new(0),
-            sections: vec![Section::default(); height as usize / 16].into(),
+            sections: vec![Section::with_sky_light(); height as usize / 16].into(),
             block_entities: BTreeMap::new(),
             changed_block_entities: BTreeSet::new(),
             changed_biomes: false,
@@ -401,7 +434,13 @@ impl LoadedChunk {
 
             let mut blocks_and_biomes: Vec<u8> = vec![];
 
-            for sect in &self.sections {
+            let mut sky_light_mask = BitStorage::new(1, self.sections.len() + 2, None).unwrap();
+            let mut block_light_mask = BitStorage::new(1, self.sections.len() + 2, None).unwrap();
+
+            let mut sky_light_arrays = Vec::with_capacity(self.sections.len());
+            let mut block_light_arrays = Vec::with_capacity(self.sections.len());
+
+            for (i, sect) in self.sections.iter().enumerate() {
                 sect.count_non_air_blocks()
                     .encode(&mut blocks_and_biomes)
                     .unwrap();
@@ -425,6 +464,14 @@ impl LoadedChunk {
                         bit_width(info.biome_registry_len - 1),
                     )
                     .expect("paletted container encode should always succeed");
+
+                let sky_light = FixedArray(sect.sky_light);
+                sky_light_arrays.push(sky_light);
+                sky_light_mask.set(i + 1, 1);
+
+                let block_light = FixedArray(sect.block_light);
+                block_light_arrays.push(block_light);
+                block_light_mask.set(i + 1, 1);
             }
 
             let block_entities: Vec<_> = self
@@ -449,18 +496,23 @@ impl LoadedChunk {
                 })
                 .collect();
 
+            println!(
+                "Writing init packets for chunk at {pos:?} with {} block entities",
+                block_entities.len()
+            );
+
             PacketWriter::new(&mut init_packets, info.threshold).write_packet(
                 &LevelChunkWithLightS2c {
                     pos,
                     heightmaps: Cow::Owned(heightmaps),
                     blocks_and_biomes: &blocks_and_biomes,
                     block_entities: Cow::Owned(block_entities),
-                    sky_light_mask: Cow::Borrowed(&[]),
-                    block_light_mask: Cow::Borrowed(&[]),
+                    sky_light_mask: Cow::Borrowed(&sky_light_mask.into_data()),
+                    block_light_mask: Cow::Borrowed(&block_light_mask.into_data()),
                     empty_sky_light_mask: Cow::Borrowed(&[]),
                     empty_block_light_mask: Cow::Borrowed(&[]),
-                    sky_light_arrays: Cow::Borrowed(&[]),
-                    block_light_arrays: Cow::Borrowed(&[]),
+                    sky_light_arrays: Cow::Borrowed(&sky_light_arrays),
+                    block_light_arrays: Cow::Borrowed(&block_light_arrays),
                 },
             )
         }

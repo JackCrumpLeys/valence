@@ -1,6 +1,6 @@
 use std::borrow::Cow;
-use std::collections::HashMap;
 
+use indexmap::IndexMap;
 use valence_ident::Ident;
 use valence_nbt::Compound;
 
@@ -14,5 +14,5 @@ pub struct RegistryDataS2c<'a> {
     // The id of the registry
     pub id: Ident<Cow<'a, str>>,
     // The id of the entries and the entry data itself
-    pub entries: HashMap<Ident<Cow<'a, str>>, Option<Compound>>,
+    pub entries: IndexMap<Ident<Cow<'a, str>>, Option<Compound>>,
 }
