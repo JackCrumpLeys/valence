@@ -472,6 +472,12 @@ pub mod play {
     pub use set_time_s2c::SetTimeS2c;
     pub mod set_cursor_item_s2c;
     pub use set_cursor_item_s2c::SetCursorItemS2c;
+    pub mod set_test_block_c2s;
+    pub use set_test_block_c2s::SetTestBlockC2s;
+    pub mod test_instance_block_action_c2s;
+    pub use test_instance_block_action_c2s::TestInstanceBlockActionC2s;
+    pub mod test_instance_block_status_s2c;
+    pub use test_instance_block_status_s2c::TestInstanceBlockStatusS2c;
 }
 
 pub mod status {
