@@ -90,7 +90,7 @@ fn init_clients(
         visible_chunk_layer.0 = layer;
         visible_entity_layers.0.insert(layer);
         pos.set([0.5, f64::from(SPAWN_Y) + 1.0, 0.5]);
-        let pickaxe = ItemStack::new(ItemKind::WoodenPickaxe, 1, None);
+        let pickaxe = ItemStack::new(ItemKind::WoodenPickaxe, 1);
         inv.set_slot(main_slot.slot(), pickaxe);
         client
             .send_chat_message("Use `add` and `center` chat messages to change the world border.");

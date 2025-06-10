@@ -357,7 +357,8 @@ async fn handle_login(
             id: id.into(),
             entries: entries
                 .into_iter()
-                .map(|value| (value.name.into(), None))
+                // TODO: use registrycodec resource
+                .map(|value| (value.name.into(), Some(value.element)))
                 .collect(),
         })
         .await?;

@@ -17,7 +17,7 @@ pub struct LoginS2c<'a> {
     pub reduced_debug_info: bool,
     pub enable_respawn_screen: bool,
     pub do_limited_crafting: bool,
-    pub dimension_type: VarInt, // from the dimention type registry
+    pub dimension_type: VarInt, // from the dimension type registry
     pub dimension_name: Ident<Cow<'a, str>>,
     pub hashed_seed: i64,
     pub game_mode: GameMode,

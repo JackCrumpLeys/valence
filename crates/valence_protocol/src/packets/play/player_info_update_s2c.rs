@@ -49,7 +49,7 @@ pub struct ChatData<'a> {
     pub public_key_signature: &'a [u8],
 }
 
-impl<'a> Encode for PlayerInfoUpdateS2c<'a> {
+impl Encode for PlayerInfoUpdateS2c<'_> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         self.actions.0.encode(&mut w)?;
 

@@ -30,7 +30,7 @@ pub enum MessageFilterType {
     PartiallyFiltered,
 }
 
-impl<'a> Encode for ChatMessageS2c<'a> {
+impl Encode for PlayerChatS2c<'_> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         self.sender.encode(&mut w)?;
         self.index.encode(&mut w)?;

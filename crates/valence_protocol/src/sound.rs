@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 pub use valence_generated::sound::Sound;
 use valence_ident::Ident;
 

@@ -9,7 +9,6 @@ use bytes::{Buf, BufMut, BytesMut};
 use uuid::Uuid;
 use valence_ident::ident;
 use valence_network::NetworkPlugin;
-use valence_registry::dimension_type::DimensionTypeId;
 use valence_registry::{BiomeRegistry, DimensionTypeRegistry};
 use valence_server::client::{ClientBundle, ClientBundleArgs, ClientConnection, ReceivedPacket};
 use valence_server::keepalive::KeepaliveSettings;

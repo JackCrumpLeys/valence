@@ -5,9 +5,11 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use parking_lot::Mutex; // Using nonstandard mutex to avoid poisoning API.
 use valence_generated::block::{PropName, PropValue};
-use valence_nbt::{compound, Compound, Value};
+use valence_nbt::Compound;
 use valence_protocol::encode::{PacketWriter, WritePacket};
-use valence_protocol::packets::play::level_chunk_with_light_s2c::ChunkDataBlockEntity;
+use valence_protocol::packets::play::level_chunk_with_light_s2c::{
+    ChunkDataBlockEntity, HeightMap, HeightMapKind,
+};
 use valence_protocol::packets::play::section_blocks_update_s2c::ChunkDeltaUpdateEntry;
 use valence_protocol::packets::play::{
     BlockEntityDataS2c, BlockUpdateS2c, LevelChunkWithLightS2c, SectionBlocksUpdateS2c,
@@ -348,7 +350,7 @@ impl LoadedChunk {
     /// and the last long will be
     ///
     /// 0 000000000 000000000 000000000 000000100 000000100 000000100 000000100.
-    fn encode_heightmap(heightmap: Vec<Vec<u32>>) -> Value {
+    fn encode_heightmap(heightmap: Vec<Vec<u32>>) -> Vec<i64> {
         const BITS_PER_ENTRY: u32 = 9;
         const ENTRIES_PER_LONG: u32 = i64::BITS / BITS_PER_ENTRY;
 
@@ -357,10 +359,10 @@ impl LoadedChunk {
         const LONGS_PER_PACKET: u32 =
             16 * 16 / ENTRIES_PER_LONG + (16 * 16 % ENTRIES_PER_LONG != 0) as u32;
 
-        let mut encoded: Vec<i64> = vec![0; LONGS_PER_PACKET as usize];
+        let mut data: Vec<i64> = vec![0; LONGS_PER_PACKET as usize];
         let mut iter = heightmap.into_iter().flatten();
 
-        for long in &mut encoded {
+        for long in &mut data {
             for j in 0..ENTRIES_PER_LONG {
                 match iter.next() {
                     None => break,
@@ -369,7 +371,7 @@ impl LoadedChunk {
             }
         }
 
-        Value::LongArray(encoded)
+        data
     }
 
     /// Writes the packet data needed to initialize this chunk.
@@ -382,11 +384,20 @@ impl LoadedChunk {
         let mut init_packets = self.cached_init_packets.lock();
 
         if init_packets.is_empty() {
-            let heightmaps = compound! {
-                "MOTION_BLOCKING" => LoadedChunk::encode_heightmap(self.motion_blocking()),
-                // TODO Implement `WORLD_SURFACE` (or explain why we don't need it)
-                // "WORLD_SURFACE" => self.encode_heightmap(self.world_surface()),
-            };
+            let heightmaps = vec![
+                HeightMap {
+                    kind: HeightMapKind::MotionBlocking,
+                    data: LoadedChunk::encode_heightmap(self.motion_blocking()),
+                },
+                // HeightMap {
+                //     kind: HeightMapKind::WorldSurface,
+                //     data: vec![],
+                // },
+                // HeightMap {
+                //     kind: HeightMapKind::MotionBlockingNoLeaves,
+                //     data: vec![],
+                // },
+            ];
 
             let mut blocks_and_biomes: Vec<u8> = vec![];
 
@@ -698,7 +709,8 @@ impl Chunk for LoadedChunk {
 
 #[cfg(test)]
 mod tests {
-    use valence_protocol::{ident, CompressionThreshold};
+    use valence_nbt::compound;
+    use valence_protocol::CompressionThreshold;
     use valence_registry::dimension_type::DimensionTypeId;
 
     use super::*;

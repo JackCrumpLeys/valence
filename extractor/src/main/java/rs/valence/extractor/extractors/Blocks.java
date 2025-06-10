@@ -82,7 +82,7 @@ public class Blocks implements Main.Extractor {
                 stateJson.addProperty("luminance", state.getLuminance());
                 stateJson.addProperty("opaque", state.isOpaque());
                 stateJson.addProperty("replaceable", state.isReplaceable());
-                // This uses a depricated api, but minecraft uses the same depricated api, so we use it for now
+                // This uses a deprecated api, but minecraft uses the same deprecated api, so we use it for now
                 stateJson.addProperty("blocks_motion", state.blocksMovement());
 
                 if (block.getDefaultState().equals(state)) {

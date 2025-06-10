@@ -4,7 +4,6 @@ use std::str::FromStr;
 use anyhow::{ensure, Context};
 use serde::{Deserialize, Serialize};
 use valence_nbt::serde::ser::CompoundSerializer;
-use valence_nbt::Compound;
 use valence_text::{JsonText, Text};
 
 use crate::{Bounded, Decode, Encode, VarInt};

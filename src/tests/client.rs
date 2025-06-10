@@ -1,3 +1,5 @@
+use valence_server::protocol::movement_flags::MovementFlags;
+
 use crate::abilities::PlayerAbilitiesFlags;
 use crate::layer::chunk::UnloadedChunk;
 use crate::layer::ChunkLayer;
@@ -50,7 +52,7 @@ fn client_teleport_and_move() {
         position: DVec3::new(1.0, 0.0, 0.0),
         yaw: 0.0,
         pitch: 0.0,
-        on_ground: true,
+        flags: MovementFlags::new().with_on_ground(true),
     });
 
     app.update();

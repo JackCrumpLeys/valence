@@ -172,7 +172,7 @@ impl Decode<'_> for EntityAttributeOperation {
 
 impl Encode for EntityAttribute {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {
-        VarInt(self.get_id() as i32).encode(w)?;
+        VarInt(i32::from(self.get_id())).encode(w)?;
         Ok(())
     }
 }

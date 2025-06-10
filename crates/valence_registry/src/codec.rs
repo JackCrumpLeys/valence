@@ -75,12 +75,9 @@ impl Default for RegistryCodec {
                     }
                 };
 
-                let value = match v {
-                    Value::Compound(c) => c,
-                    _ => {
-                        error!("registry value {name} is not a compound");
-                        continue;
-                    }
+                let Value::Compound(value) = v else {
+                    error!("registry value {name} is not a compound");
+                    continue;
                 };
 
                 reg_values.push(RegistryValue {

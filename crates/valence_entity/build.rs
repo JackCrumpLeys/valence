@@ -202,7 +202,7 @@ impl Value {
                 assert!(t.is_none());
                 quote!(None)
             }
-            Value::ItemStack(stack) => {
+            Value::ItemStack(_stack) => {
                 quote!(valence_protocol::ItemStack::default())
             }
             Value::Boolean(b) => quote!(#b),

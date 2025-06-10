@@ -30,7 +30,6 @@ impl<T: Encode + Clone + Debug + PartialEq> Encode for IdOr<T> {
                 0.encode(&mut buf).unwrap();
                 value.encode(&mut buf)
             }
-            _ => Ok(()),
         }
     }
 }

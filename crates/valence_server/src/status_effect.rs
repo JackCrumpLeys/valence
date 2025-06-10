@@ -144,7 +144,7 @@ fn set_swirl(
 /// Used to set the color of the swirls in the potion effect.
 ///
 /// Equivalent to net.minecraft.potion.PotionUtil#getColor
-fn get_color(effects: &ActiveStatusEffects) -> i32 {
+fn _get_color(effects: &ActiveStatusEffects) -> i32 {
     if effects.no_effects() {
         // vanilla mc seems to return 0x385dc6 if there are no effects
         // dunno why

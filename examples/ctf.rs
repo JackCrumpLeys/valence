@@ -491,7 +491,7 @@ fn digging(
                     let count = inv.slot(slot).count;
                     inv.set_slot_amount(slot, count + 1);
                 } else {
-                    let stack = ItemStack::new(kind, 1, None);
+                    let stack = ItemStack::new(kind, 1);
                     if let Some(empty_slot) = inv.first_empty_slot_in(9..45) {
                         inv.set_slot(empty_slot, stack);
                     } else {
@@ -596,7 +596,7 @@ fn do_team_selector_portals(
         if let Some(team) = team {
             *game_mode = GameMode::Survival;
             let mut inventory = Inventory::new(InventoryKind::Player);
-            inventory.set_slot(36, ItemStack::new(ItemKind::WoodenSword, 1, None));
+            inventory.set_slot(36, ItemStack::new(ItemKind::WoodenSword, 1));
             inventory.set_slot(
                 37,
                 ItemStack::new(
@@ -605,7 +605,6 @@ fn do_team_selector_portals(
                         Team::Blue => ItemKind::BlueWool,
                     },
                     64,
-                    None,
                 ),
             );
             let combat_state = CombatState::default();

@@ -93,7 +93,7 @@ impl UpdateAdvancementCachedBytesQuery<'_, '_> {
         a_identifier: &Advancement,
         a_requirements: &AdvancementRequirements,
         a_display: Option<&AdvancementDisplay>,
-        a_children: Option<&Children>,
+        _a_children: Option<&Children>,
         a_parent: Option<&Parent>,
         w: impl Write,
     ) -> anyhow::Result<()> {
@@ -213,6 +213,7 @@ impl Encode for AdvancementUpdateEncodeS2c<'_, '_, '_> {
             advancement_mapping: vec![],
             identifiers: vec![],
             progress_mapping: vec![],
+            show_advancements: false,
         };
 
         for new_advancement in new_advancements {
@@ -400,6 +401,7 @@ pub struct AdvancementClientUpdate {
     /// Also with this flag, client will not show a toast for advancements,
     /// which are completed. When the packet is sent, turns to false
     pub reset: bool,
+    // TODO handle toasts
 }
 
 impl Default for AdvancementClientUpdate {

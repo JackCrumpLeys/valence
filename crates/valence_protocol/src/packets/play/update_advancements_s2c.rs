@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::io::Write;
 
 use valence_ident::Ident;
-use valence_text::{JsonText, Text};
+use valence_text::Text;
 
 use crate::{packet_id, Decode, Encode, ItemStack, Packet, VarInt};
 
@@ -18,6 +18,7 @@ pub struct GenericUpdateAdvancementsS2c<'a, AM: 'a> {
     pub advancement_mapping: Vec<AM>,
     pub identifiers: Vec<Ident<Cow<'a, str>>>,
     pub progress_mapping: Vec<(Ident<Cow<'a, str>>, Vec<AdvancementCriteria<'a>>)>,
+    pub show_advancements: bool,
 }
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]

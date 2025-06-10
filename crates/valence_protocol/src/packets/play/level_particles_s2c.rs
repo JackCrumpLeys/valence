@@ -410,7 +410,7 @@ impl<'a> Particle {
 }
 
 /// Encodes the particle without an ID.
-impl<'a> Encode for Particle {
+impl Encode for Particle {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         VarInt(self.id()).encode(&mut w)?;
         match self {

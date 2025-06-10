@@ -160,29 +160,25 @@ impl EntityAttributeInstance {
             modifiers: self
                 .add_modifiers
                 .iter()
-                .map(|(&ref id, &amount)| TrackedAttributeModifier {
+                .map(|(id, &amount)| TrackedAttributeModifier {
                     id: id.to_string(),
                     amount,
                     operation: 0,
                 })
-                .chain(
-                    self.multiply_base_modifiers
-                        .iter()
-                        .map(|(&ref id, &amount)| TrackedAttributeModifier {
-                            id: id.to_string(),
-                            amount,
-                            operation: 1,
-                        }),
-                )
-                .chain(
-                    self.multiply_total_modifiers
-                        .iter()
-                        .map(|(&ref id, &amount)| TrackedAttributeModifier {
-                            id: id.to_string(),
-                            amount,
-                            operation: 2,
-                        }),
-                )
+                .chain(self.multiply_base_modifiers.iter().map(|(id, &amount)| {
+                    TrackedAttributeModifier {
+                        id: id.to_string(),
+                        amount,
+                        operation: 1,
+                    }
+                }))
+                .chain(self.multiply_total_modifiers.iter().map(|(id, &amount)| {
+                    TrackedAttributeModifier {
+                        id: id.to_string(),
+                        amount,
+                        operation: 2,
+                    }
+                }))
                 .collect(),
         }
     }
@@ -440,13 +436,13 @@ mod tests {
 
     #[test]
     fn test_compute_value() {
-        let add_id = "my_attr".to_string();
+        let add_id = "my_attr".to_owned();
         let mut attributes = EntityAttributes::new();
         attributes.set_base_value(EntityAttribute::MaxHealth, 20.0);
         attributes.set_add_modifier(EntityAttribute::MaxHealth, &add_id, 10.0);
-        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, &"1".to_string(), 0.2);
-        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, &"2".to_string(), 0.2);
-        attributes.set_multiply_total_modifier(EntityAttribute::MaxHealth, &"3".to_string(), 0.5);
+        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, &"1".to_owned(), 0.2);
+        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, &"2".to_owned(), 0.2);
+        attributes.set_multiply_total_modifier(EntityAttribute::MaxHealth, &"3".to_owned(), 0.5);
 
         assert_eq!(
             attributes.get_compute_value(EntityAttribute::MaxHealth),

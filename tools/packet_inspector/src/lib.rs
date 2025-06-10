@@ -1,6 +1,7 @@
 mod packet_io;
 mod packet_registry;
 
+use std::borrow::Cow;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -20,7 +21,8 @@ use valence_protocol::packets::{configuration, play};
 use valence_protocol::text::color::NamedColor;
 use valence_protocol::text::{Color, IntoText};
 use valence_protocol::{
-    CompressionThreshold, Decode, Encode, Packet as ValencePacket, PacketSide, PacketState,
+    CompressionThreshold, Decode, Encode, JsonText, Packet as ValencePacket, PacketSide,
+    PacketState,
 };
 
 use crate::packet_io::PacketIo;
@@ -203,23 +205,23 @@ impl Proxy {
 
                 if state == PacketState::Handshake {
                     if let Some(handshake) = extrapolate_packet::<IntentionC2s>(&packet) {
-                        *state_lock.write().await = match handshake.next_state {
+                        *state_lock.write().await = match handshake.intent {
                             HandShakeIntent::Status => PacketState::Status,
                             HandShakeIntent::Login => PacketState::Login,
+                            HandShakeIntent::Transfer => panic!("transfer intent is not supported"),
                         };
                     }
                 }
-                if state == PacketState::Play {
-                    if extrapolate_packet::<play::ConfigurationAcknowledgedC2s>(&packet).is_some() {
-                        *state_lock.write().await = PacketState::Configuration;
-                    }
+                if state == PacketState::Play
+                    && extrapolate_packet::<play::ConfigurationAcknowledgedC2s>(&packet).is_some()
+                {
+                    *state_lock.write().await = PacketState::Configuration;
                 }
-                if state == PacketState::Configuration {
-                    if extrapolate_packet::<configuration::FinishConfigurationC2s>(&packet)
+                if state == PacketState::Configuration
+                    && extrapolate_packet::<configuration::FinishConfigurationC2s>(&packet)
                         .is_some()
-                    {
-                        *state_lock.write().await = PacketState::Play;
-                    }
+                {
+                    *state_lock.write().await = PacketState::Play;
                 }
 
                 server_writer.send_packet_raw(&packet).await?;
@@ -270,11 +272,12 @@ impl Proxy {
                     // The server is requesting encryption, we can't support that
 
                     let disconnect_packet = LoginDisconnectS2c {
-                        reason: "This server is running in online mode, which is unsupported by \
-                                 the Packet Inspector."
-                            .into_text()
-                            .color(Color::Named(NamedColor::Red))
-                            .into_cow_text(),
+                        reason: Cow::Owned(JsonText(
+                            "This server is running in online mode, which is unsupported by the \
+                             Packet Inspector."
+                                .into_text()
+                                .color(Color::Named(NamedColor::Red)),
+                        )),
                     };
 
                     client_writer

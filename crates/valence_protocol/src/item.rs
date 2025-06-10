@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::io::Write;
 
 use valence_generated::attributes::{EntityAttribute, EntityAttributeOperation};
@@ -502,17 +501,17 @@ pub enum ItemComponent {
     },
     /// The biome variant of a villager.
     VillagerVariant {
-        /// An ID in the minecraft:villager_type registry.
+        /// An ID in the `minecraft:villager_type` registry.
         variant: VarInt,
     },
     /// The variant of a wolf.
     WolfVariant {
-        /// An ID in the minecraft:wolf_variant registry.
+        /// An ID in the `minecraft:wolf_variant` registry.
         variant: VarInt,
     },
     /// The type of sounds that a wolf makes.
     WolfSoundVariant {
-        /// An ID in the minecraft:wolf_sound_variant registry.
+        /// An ID in the `minecraft:wolf_sound_variant` registry.
         variant: VarInt,
     },
     /// The dye color of the wolf's collar.
@@ -531,7 +530,7 @@ pub enum ItemComponent {
     },
     /// The variant of a parrot.
     ParrotVariant {
-        /// An ID in the minecraft:parrot_type registry.
+        /// An ID in the `minecraft:parrot_type` registry.
         variant: VarInt,
     },
     /// The pattern of a tropical fish.
@@ -559,14 +558,14 @@ pub enum ItemComponent {
         // 0: brown, 1: white, 2: black, 3: white splotched, 4: gold, 5: salt, 6: evil.
         variant: VarInt, // TODO: enum?
     },
-    /// An ID in the minecraft:pig_variant registry.
+    /// An ID in the `minecraft:pig_variant` registry.
     PigVariant {
-        /// An ID in the minecraft:pig_variant registry.
+        /// An ID in the `minecraft:pig_variant` registry.
         variant: VarInt,
     },
     /// The variant of a cow.
     CowVariant {
-        /// An ID in the minecraft:cow_variant registry.
+        /// An ID in the `minecraft:cow_variant` registry.
         variant: VarInt,
     },
     /// The variant of a chicken.
@@ -575,7 +574,7 @@ pub enum ItemComponent {
     },
     /// The variant of a frog.
     FrogVariant {
-        /// An ID in the minecraft:frog_variant registry.
+        /// An ID in the `minecraft:frog_variant` registry.
         variant: VarInt,
     },
     /// The variant of a horse.
@@ -600,7 +599,7 @@ pub enum ItemComponent {
     },
     /// The variant of a cat.
     CatVariant {
-        /// An ID in the minecraft:cat_variant registry.
+        /// An ID in the `minecraft:cat_variant` registry.
         variant: VarInt, // TODO: enum?
     },
     /// The dye color of the cat's collar.
@@ -768,7 +767,7 @@ impl ItemComponent {
             ItemComponent::MaxStackSize { .. } => 1,
             ItemComponent::MaxDamage { .. } => 2,
             ItemComponent::Damage { .. } => 3,
-            ItemComponent::Unbreakable { .. } => 4,
+            ItemComponent::Unbreakable => 4,
             ItemComponent::CustomName { .. } => 5,
             ItemComponent::ItemName { .. } => 6,
             ItemComponent::ItemModel { .. } => 7,
@@ -781,9 +780,9 @@ impl ItemComponent {
             ItemComponent::CustomModelData { .. } => 14,
             ItemComponent::TooltipDisplay { .. } => 15,
             ItemComponent::RepairCost { .. } => 16,
-            ItemComponent::CreativeSlotLock { .. } => 17,
+            ItemComponent::CreativeSlotLock => 17,
             ItemComponent::EnchantmentGlintOverride { .. } => 18,
-            ItemComponent::IntangibleProjectile { .. } => 19,
+            ItemComponent::IntangibleProjectile => 19,
             ItemComponent::Food { .. } => 20,
             ItemComponent::Consumable { .. } => 21,
             ItemComponent::UseRemainder { .. } => 22,
@@ -794,10 +793,10 @@ impl ItemComponent {
             ItemComponent::Enchantable { .. } => 27,
             ItemComponent::Equippable { .. } => 28,
             ItemComponent::Repairable { .. } => 29,
-            ItemComponent::Glider { .. } => 30,
+            ItemComponent::Glider => 30,
             ItemComponent::TooltipStyle { .. } => 31,
             ItemComponent::DeathProtection { .. } => 32,
-            ItemComponent::BlocksAttacks { .. } => 33,
+            ItemComponent::BlocksAttacks => 33,
             ItemComponent::StoredEnchantments { .. } => 34,
             ItemComponent::DyedColor { .. } => 35,
             ItemComponent::MapColor { .. } => 36,
@@ -817,7 +816,7 @@ impl ItemComponent {
             ItemComponent::BucketEntityData { .. } => 50,
             ItemComponent::BlockEntityData { .. } => 51,
             ItemComponent::Instrument { .. } => 52,
-            ItemComponent::ProvidesTrimMaterial { .. } => 53,
+            ItemComponent::ProvidesTrimMaterial => 53,
             ItemComponent::OminousBottleAmplifier { .. } => 54,
             ItemComponent::JukeboxPlayable { .. } => 55,
             ItemComponent::ProvidesBannerPatterns { .. } => 56,
@@ -942,7 +941,7 @@ impl ItemStack {
     pub fn get_component(&self, id: impl Into<usize>) -> Option<&ItemComponent> {
         let id = id.into();
         if id < NUM_ITEM_COMPONENTS {
-            self.components[id].as_ref().map(|boxed| &**boxed)
+            self.components[id].as_deref()
         } else {
             None
         }
@@ -985,7 +984,7 @@ impl Encode for ItemStack {
         if self.is_empty() {
             VarInt(0).encode(&mut w)
         } else {
-            VarInt(self.count as i32).encode(&mut w)?;
+            VarInt(i32::from(self.count)).encode(&mut w)?;
             self.item.encode(&mut w)?;
 
             let default_components = self.item.default_components();

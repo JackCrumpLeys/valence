@@ -166,9 +166,6 @@ impl<T: Copy + Eq + Default, const LEN: usize, const HALF_LEN: usize>
 
                 // Palette
                 VarInt(to_bits(*val) as i32).encode(&mut writer)?;
-
-                // Number of longs
-                VarInt(0).encode(writer)?;
             }
             Self::Indirect(ind) => {
                 let bits_per_entry = min_indirect_bits.max(bit_width(ind.palette.len() - 1));
@@ -178,8 +175,6 @@ impl<T: Copy + Eq + Default, const LEN: usize, const HALF_LEN: usize>
                     // Bits per entry
                     (direct_bits as u8).encode(&mut writer)?;
 
-                    // Number of longs in data array.
-                    VarInt(compact_u64s_len(LEN, direct_bits) as i32).encode(&mut writer)?;
                     // Data array
                     encode_compact_u64s(
                         writer,
@@ -197,8 +192,6 @@ impl<T: Copy + Eq + Default, const LEN: usize, const HALF_LEN: usize>
                         VarInt(to_bits(*val) as i32).encode(&mut writer)?;
                     }
 
-                    // Number of longs in data array.
-                    VarInt(compact_u64s_len(LEN, bits_per_entry) as i32).encode(&mut writer)?;
                     // Data array
                     encode_compact_u64s(
                         writer,
@@ -216,8 +209,6 @@ impl<T: Copy + Eq + Default, const LEN: usize, const HALF_LEN: usize>
                 // Bits per entry
                 (direct_bits as u8).encode(&mut writer)?;
 
-                // Number of longs in data array.
-                VarInt(compact_u64s_len(LEN, direct_bits) as i32).encode(&mut writer)?;
                 // Data array
                 encode_compact_u64s(writer, dir.iter().copied().map(to_bits), direct_bits)?;
             }
@@ -255,12 +246,6 @@ impl<T: Copy + Eq + Default, const LEN: usize, const HALF_LEN: usize> Indirect<T
         *u8 = (*u8 & !(0b1111 << shift)) | ((palette_idx as u8) << shift);
         Some(old_val)
     }
-}
-
-#[inline]
-fn compact_u64s_len(vals_count: usize, bits_per_val: usize) -> usize {
-    let vals_per_u64 = 64 / bits_per_val;
-    vals_count.div_ceil(vals_per_u64)
 }
 
 #[inline]

@@ -112,10 +112,10 @@ impl RegistryIdx for BiomeId {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Biome {
-    pub downfall: f32,
-    pub effects: BiomeEffects,
     pub has_precipitation: bool,
     pub temperature: f32,
+    pub downfall: f32,
+    pub effects: BiomeEffects,
     // TODO: more stuff.
 }
 
