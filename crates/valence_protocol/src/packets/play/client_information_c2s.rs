@@ -1,11 +1,11 @@
 use bitfield_struct::bitfield;
 
 use crate::packets::configuration::client_information_c2s::ParticleMode;
-use crate::{Decode, Encode, Packet};
+use crate::{Bounded, Decode, Encode, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ClientInformationC2s<'a> {
-    pub locale: &'a str,
+    pub locale: Bounded<&'a str, 16>,
     pub view_distance: u8,
     pub chat_mode: ChatMode,
     pub chat_colors: bool,

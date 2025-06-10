@@ -12,4 +12,5 @@ pub struct ChatC2s<'a> {
     // of the last 20 messages received and whether or not
     // the message was acknowledged by the client
     pub acknowledgement: FixedBitSet<20, 3>,
+    pub checksum: i8,
 }

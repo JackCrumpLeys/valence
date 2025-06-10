@@ -1,10 +1,10 @@
 use crate::packets::play::client_information_c2s::{ChatMode, DisplayedSkinParts, MainArm};
-use crate::{Decode, Encode, Packet, PacketState};
+use crate::{Bounded, Decode, Encode, Packet, PacketState};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Configuration)]
 pub struct ClientInformationC2s<'a> {
-    pub locale: &'a str,
+    pub locale: Bounded<&'a str, 16>,
     pub view_distance: u8,
     pub chat_mode: ChatMode,
     pub chat_colors: bool,

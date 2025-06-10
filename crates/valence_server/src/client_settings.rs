@@ -41,7 +41,7 @@ fn handle_client_settings(
             {
                 view_dist.set_if_neq(ViewDistance::new(pkt.view_distance));
 
-                settings.locale = pkt.locale.into();
+                settings.locale = pkt.locale.0.into();
                 settings.chat_mode = pkt.chat_mode;
                 settings.chat_colors = pkt.chat_colors;
                 settings.enable_text_filtering = pkt.enable_text_filtering;
