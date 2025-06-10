@@ -39,6 +39,7 @@ fn handle_client_settings(
             if let Ok((mut view_dist, mut settings, mut model_parts, mut main_arm)) =
                 clients.get_mut(packet.client)
             {
+                // TODO: set a server max view distance
                 view_dist.set_if_neq(ViewDistance::new(pkt.view_distance));
 
                 settings.locale = pkt.locale.0.into();

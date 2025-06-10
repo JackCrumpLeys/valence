@@ -190,6 +190,8 @@ pub struct NewClientInfo {
     pub uuid: Uuid,
     /// The remote address of the new client.
     pub ip: IpAddr,
+    /// The requested view distance of the new client.
+    pub view_distance: u8,
     /// The client's properties from the game profile. Typically contains a
     /// `textures` property with the skin and cape of the player.
     pub properties: Properties,

@@ -406,8 +406,8 @@ fn calculate_net_item_delta(
 #[cfg(test)]
 mod tests {
     use valence_server::item::ItemComponent;
-    use valence_server::nbt::Compound;
-    use valence_server::nbt::Value::Int;
+    
+    
     use valence_server::protocol::packets::play::container_click_c2s::SlotChange;
     use valence_server::protocol::VarInt;
     use valence_server::{ItemKind, ItemStack};

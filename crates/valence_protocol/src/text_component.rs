@@ -11,6 +11,7 @@ use valence_text::{IntoText, Text};
 use crate::{Decode, Encode};
 
 /// A wrapper around `Text` that encodes and decodes as an NBT Compound.
+// TODO: this can probably be removed as the `Text` is now always serialized as a compound.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NbtCompoundText(pub Text);
 
@@ -32,7 +33,7 @@ impl Decode<'_> for NbtCompoundText {
 
 impl Encode for NbtStringText {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
-        w.write(&[Tag::String as u8])?;
+        let _ = w.write(&[Tag::String as u8])?;
 
         let string = self.0.to_legacy_lossy();
         let len = string.modified_uf8_len();

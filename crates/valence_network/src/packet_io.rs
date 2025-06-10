@@ -210,6 +210,8 @@ impl PacketIo {
             username: info.username,
             uuid: info.uuid,
             ip: info.ip,
+            // TODO: limit this by the server
+            view_distance: info.view_distance,
             properties: info.properties.0,
             conn: Box::new(RealClientConnection {
                 send: outgoing_sender,

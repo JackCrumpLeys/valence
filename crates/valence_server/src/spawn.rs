@@ -111,6 +111,8 @@ pub(super) fn initial_join(
             position: *pos,
         });
 
+        println!("PLAYER VIEW DISTANCE: {}", spawn.view_distance.get());
+
         // The login packet is prepended so that it's sent before all the other packets.
         // Some packets don't work correctly when sent before the game join packet.
         _ = client.enc.prepend_packet(&LoginS2c {

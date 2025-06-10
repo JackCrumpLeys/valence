@@ -7,7 +7,7 @@ use crate::{BlockPos, Decode, Encode, Packet, VarInt};
 pub struct TestInstanceBlockActionC2s {
     pub position: BlockPos,
     pub action: TestInstanceBlockAction,
-    /// ID in the minecraft:test_instance_kind registry.
+    /// ID in the `minecraft:test_instance_kind` registry.
     pub test: Option<VarInt>,
     pub size_x: VarInt,
     pub size_y: VarInt,

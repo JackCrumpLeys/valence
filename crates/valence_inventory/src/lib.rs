@@ -696,7 +696,7 @@ fn update_open_inventories(
             open_inventory.client_changed = 0;
 
             client.write_packet(&OpenScreenS2c {
-                window_id: inv_state.window_id.into(),
+                window_id: inv_state.window_id,
                 window_type: WindowType::from(inventory.kind),
                 window_title: Cow::Borrowed(&inventory.title),
             });

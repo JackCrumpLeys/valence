@@ -255,7 +255,7 @@ impl Encode for AdvancementUpdateEncodeS2c<'_, '_, '_> {
     }
 }
 
-impl<'w, 's, 'a> Packet for AdvancementUpdateEncodeS2c<'w, 's, 'a> {
+impl Packet for AdvancementUpdateEncodeS2c<'_, '_, '_> {
     const ID: i32 = packet_id::PLAY_UPDATE_ADVANCEMENTS_S2C;
     const NAME: &'static str = "AdvancementUpdateEncodeS2c";
     const SIDE: PacketSide = PacketSide::Clientbound;

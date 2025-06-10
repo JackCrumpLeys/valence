@@ -161,7 +161,7 @@ impl ClientBundle {
             respawn_pos: Default::default(),
             op_level: Default::default(),
             action_sequence: Default::default(),
-            view_distance: Default::default(),
+            view_distance: ViewDistance(args.view_distance),
             old_view_distance: OldViewDistance(2),
             visible_chunk_layer: Default::default(),
             old_visible_chunk_layer: OldVisibleChunkLayer(Entity::PLACEHOLDER),
@@ -203,6 +203,8 @@ pub struct ClientBundleArgs {
     pub properties: Vec<Property>,
     /// The abstract socket connection.
     pub conn: Box<dyn ClientConnection>,
+    /// The view distance of the client.
+    pub view_distance: u8,
     /// The packet encoder to use. This should be in sync with [`Self::conn`].
     pub enc: PacketEncoder,
 }

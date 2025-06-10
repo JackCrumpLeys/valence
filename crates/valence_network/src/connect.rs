@@ -289,7 +289,7 @@ async fn handle_login(
 
     let username = username.0.to_owned();
 
-    let info = match shared.connection_mode() {
+    let mut info = match shared.connection_mode() {
         ConnectionMode::Online { .. } => login_online(shared, io, remote_addr, username).await?,
         ConnectionMode::Offline => login_offline(remote_addr, username)?,
         ConnectionMode::BungeeCord => {
@@ -328,7 +328,9 @@ async fn handle_login(
 
     let LoginAcknowledgedC2s {} = io.recv_packet().await?;
     let _: CustomQueryAnswerC2s = io.recv_packet().await?;
-    let _: ClientInformationC2s = io.recv_packet().await?;
+    let client_info: ClientInformationC2s = io.recv_packet().await?;
+
+    info.view_distance = client_info.view_distance;
 
     io.send_packet(&CustomPayloadS2c {
         channel: Ident::new("minecraft:brand").unwrap(),
@@ -352,7 +354,7 @@ async fn handle_login(
 
     let _: SelectKnownPacksC2s = io.recv_packet().await?;
 
-    for (id, entries) in RegistryCodec::default().registries.into_iter() {
+    for (id, entries) in RegistryCodec::default().registries {
         io.send_packet(&RegistryDataS2c {
             id: id.into(),
             entries: entries
@@ -468,6 +470,7 @@ async fn login_online(
         username,
         ip: remote_addr.ip(),
         properties: Properties(profile.properties),
+        view_distance: 0, // Will be changed later.
     })
 }
 
@@ -487,6 +490,7 @@ fn login_offline(remote_addr: SocketAddr, username: String) -> anyhow::Result<Ne
         username,
         properties: Default::default(),
         ip: remote_addr.ip(),
+        view_distance: 0, // Will be changed later.
     })
 }
 
@@ -525,6 +529,7 @@ fn login_bungeecord(
         username,
         properties: Properties(properties),
         ip,
+        view_distance: 0, // Will be changed later.
     })
 }
 
@@ -599,6 +604,7 @@ async fn login_velocity(
         username,
         properties: Properties(properties),
         ip: remote_addr,
+        view_distance: 0, // Will be changed later.
     })
 }
 

@@ -91,6 +91,7 @@ pub fn create_mock_client<N: Into<String>>(name: N) -> (ClientBundle, MockClient
         ip: IpAddr::V4(Ipv4Addr::LOCALHOST),
         properties: Default::default(),
         conn: Box::new(conn.clone()),
+        view_distance: 2,
         enc: PacketEncoder::new(),
     });
 
