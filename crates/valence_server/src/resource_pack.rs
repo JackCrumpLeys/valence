@@ -62,11 +62,11 @@ impl Client {
     /// * `uuid` - The UUID to identify the resource pack.
     /// * `url` - The URL of the resource pack file.
     /// * `hash` - The SHA-1 hash of the resource pack file. The value must be a
-    ///  40-character hexadecimal string.
+    ///   40-character hexadecimal string.
     /// * `forced` - Whether a client should be kicked from the server upon
-    /// declining the pack (this is enforced client-side)
+    ///   declining the pack (this is enforced client-side)
     /// * `prompt_message` - A message to be displayed with the resource pack
-    /// dialog.
+    ///   dialog.
     pub fn set_resource_pack_with_uuid(
         &mut self,
         uuid: Uuid,

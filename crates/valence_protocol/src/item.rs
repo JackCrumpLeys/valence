@@ -523,7 +523,7 @@ pub enum ItemComponent {
         /// 0: red, 1: snow.
         variant: VarInt,
     },
-    ///
+    /// The size of a salmon.
     SalmonSize {
         /// 0: small, 1: medium, 2: large.
         size: VarInt,
@@ -656,13 +656,13 @@ impl Encode for Property {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         self.name.encode(&mut w)?;
         self.is_exact_match.encode(&mut w)?;
-        if let Some(ref exact_value) = self.exact_value {
+        if let Some(exact_value) = &self.exact_value {
             exact_value.encode(&mut w)?;
         }
-        if let Some(ref min_value) = self.min_value {
+        if let Some(min_value) = &self.min_value {
             min_value.encode(&mut w)?;
         }
-        if let Some(ref max_value) = self.max_value {
+        if let Some(max_value) = &self.max_value {
             max_value.encode(&mut w)?;
         }
         Ok(())
@@ -928,7 +928,7 @@ impl ItemStack {
     /// [`ItemComponent::id`].
     ///
     /// Returns the removed component if it was present, otherwise `None`.
-    pub fn remove_component(&mut self, id: impl Into<usize>) -> Option<ItemComponent> {
+    pub fn remove_component<I: Into<usize>>(&mut self, id: I) -> Option<ItemComponent> {
         let id = id.into();
         if id < NUM_ITEM_COMPONENTS {
             self.components[id].take().map(|boxed| *boxed)
@@ -938,7 +938,7 @@ impl ItemStack {
     }
 
     /// Get a specific component by its ID, see [`ItemComponent::id`].
-    pub fn get_component(&self, id: impl Into<usize>) -> Option<&ItemComponent> {
+    pub fn get_component<I: Into<usize>>(&self, id: I) -> Option<&ItemComponent> {
         let id = id.into();
         if id < NUM_ITEM_COMPONENTS {
             self.components[id].as_deref()
@@ -992,6 +992,8 @@ impl Encode for ItemStack {
             let (components_added, components_removed) = {
                 let mut removed = Vec::new();
                 let mut added = Vec::new();
+
+                #[allow(clippy::needless_range_loop)]
                 for i in 0..self.components.len() {
                     if self.components[i] != default_components[i] {
                         removed.push(i as u32);

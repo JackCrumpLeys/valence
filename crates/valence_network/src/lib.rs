@@ -52,6 +52,7 @@ impl Plugin for NetworkPlugin {
 }
 
 // World state required during a client's login process.
+#[allow(clippy::struct_field_names)]
 #[derive(SystemParam)]
 struct WorldLoginStateParam<'w> {
     biome_registry: Res<'w, BiomeRegistry>,
@@ -59,6 +60,7 @@ struct WorldLoginStateParam<'w> {
     tag_registry: Res<'w, TagsRegistry>,
 }
 
+#[allow(clippy::struct_field_names)]
 #[derive(Debug, Clone)]
 pub(crate) struct WorldLoginState {
     pub biome_registry: Registry<BiomeId, Biome>,

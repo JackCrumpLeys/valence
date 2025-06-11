@@ -13,7 +13,7 @@ pub enum IdOr<T: Encode + Clone + Debug + PartialEq> {
 }
 
 impl<T: Encode + Clone + Debug + PartialEq> IdOr<T> {
-    pub fn id(id: impl Into<RegistryId>) -> Self {
+    pub fn id<I: Into<RegistryId>>(id: I) -> Self {
         Self::Id(id.into())
     }
 

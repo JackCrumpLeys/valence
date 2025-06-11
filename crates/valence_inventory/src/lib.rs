@@ -630,6 +630,8 @@ fn update_player_inventories(
 
             inventory.changed = 0;
             inv_state.slots_changed = 0;
+            // Skip updating the cursor item because we just updated the whole
+            // inventory.
         } else if inventory.changed != 0 {
             // Send the modified slots.
 

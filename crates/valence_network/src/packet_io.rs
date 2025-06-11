@@ -73,7 +73,7 @@ impl PacketIo {
             self.dec.queue_bytes(buf);
         }
     }
-    pub(crate) async fn _try_recv_packet<'a>(&'a mut self) -> anyhow::Result<PacketFrame> {
+    pub(crate) async fn _try_recv_packet(&mut self) -> anyhow::Result<PacketFrame> {
         loop {
             if let Some(frame) = self.dec.try_next_packet()? {
                 self.frame = frame;
