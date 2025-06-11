@@ -496,11 +496,6 @@ impl LoadedChunk {
                 })
                 .collect();
 
-            println!(
-                "Writing init packets for chunk at {pos:?} with {} block entities",
-                block_entities.len()
-            );
-
             PacketWriter::new(&mut init_packets, info.threshold).write_packet(
                 &LevelChunkWithLightS2c {
                     pos,

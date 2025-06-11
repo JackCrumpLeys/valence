@@ -326,8 +326,10 @@ fn parse_chunk(
                 return Err(ParseChunkError::MissingBlockEntityIdent);
             };
 
-            if let Err(e) = Ident::new(ident) {
-                return Err(ParseChunkError::InvalidBlockEntityName(e.0));
+            if ident != "DUMMY" {
+                if let Err(e) = Ident::new(ident) {
+                    return Err(ParseChunkError::InvalidBlockEntityName(e.0));
+                }
             }
 
             let Some(Value::Int(x)) = comp.remove("x") else {
