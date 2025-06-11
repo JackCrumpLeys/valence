@@ -18,7 +18,7 @@
 //!
 //! let mut buf = vec![];
 //!
-//! to_binary(&c, &mut buf, "").unwrap();
+//! to_binary(&c, &mut buf, Some("")).unwrap();
 //! ```
 //!
 //! Decode NBT data from its binary form.
@@ -35,7 +35,7 @@
 //! let (nbt, root_name) = from_binary(&mut some_bytes.as_slice()).unwrap();
 //!
 //! assert_eq!(nbt, expected_value);
-//! assert_eq!(root_name, "");
+//! assert_eq!(root_name, Some("".to_string()));
 //! ```
 
 mod decode;

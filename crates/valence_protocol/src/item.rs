@@ -876,10 +876,7 @@ impl ItemStack {
         components: [const { None }; NUM_ITEM_COMPONENTS],
     };
 
-    /// Creates a new item stack.
-    ///
-    /// If `components` is `None` then the default components of the
-    /// [`ItemKind`] will be used (see [`ItemKind::components`]).]
+    /// Creates a new item stack without any components.
     #[must_use]
     pub const fn new(item: ItemKind, count: i8) -> Self {
         Self {
