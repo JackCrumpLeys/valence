@@ -12,7 +12,7 @@ use hmac::{Hmac, Mac};
 use num_bigint::BigInt;
 use reqwest::StatusCode;
 use rsa::Pkcs1v15Encrypt;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha1::Sha1;
 use sha2::{Digest, Sha256};
@@ -24,6 +24,7 @@ use valence_protocol::packets::configuration::select_known_packs_s2c::KnownPack;
 use valence_protocol::packets::configuration::{
     ClientInformationC2s, CustomPayloadS2c, FinishConfigurationC2s, FinishConfigurationS2c,
     RegistryDataS2c, SelectKnownPacksC2s, SelectKnownPacksS2c, UpdateEnabledFeaturesS2c,
+    UpdateTagsS2c,
 };
 use valence_protocol::packets::login::{LoginAcknowledgedC2s, LoginFinishedS2c};
 use valence_protocol::packets::status::{
@@ -32,6 +33,7 @@ use valence_protocol::packets::status::{
 use valence_protocol::profile::Property;
 use valence_protocol::{Bounded, Decode, JsonText};
 use valence_server::client::Properties;
+use valence_server::nbt::serde::ser::CompoundSerializer;
 use valence_server::protocol::packets::handshake::intention_c2s::HandShakeIntent;
 use valence_server::protocol::packets::handshake::IntentionC2s;
 use valence_server::protocol::packets::login::{
@@ -39,16 +41,19 @@ use valence_server::protocol::packets::login::{
     LoginDisconnectS2c,
 };
 use valence_server::protocol::{PacketDecoder, PacketEncoder, RawBytes, VarInt};
-use valence_server::registry::{RegistryCodec, TagsRegistry};
+use valence_server::registry::{BiomeRegistry, DimensionTypeRegistry, RegistryCodec};
 use valence_server::text::{Color, IntoText};
 use valence_server::{ident, Ident, Text, MINECRAFT_VERSION, PROTOCOL_VERSION};
 
 use crate::legacy_ping::try_handle_legacy_ping;
 use crate::packet_io::PacketIo;
-use crate::{CleanupOnDrop, ConnectionMode, NewClientInfo, ServerListPing, SharedNetworkState};
+use crate::{
+    CleanupOnDrop, ConnectionMode, NewClientInfo, ServerListPing, SharedNetworkState,
+    WorldLoginState,
+};
 
 /// Accepts new connections to the server as they occur.
-pub(super) async fn do_accept_loop(shared: SharedNetworkState) {
+pub(super) async fn do_accept_loop(shared: SharedNetworkState, world_state: WorldLoginState) {
     let listener = match TcpListener::bind(shared.0.address).await {
         Ok(listener) => listener,
         Err(e) => {
@@ -60,15 +65,15 @@ pub(super) async fn do_accept_loop(shared: SharedNetworkState) {
     let timeout = Duration::from_secs(5);
 
     loop {
+        let world_state = world_state.clone();
         match shared.0.connection_sema.clone().acquire_owned().await {
             Ok(permit) => match listener.accept().await {
                 Ok((stream, remote_addr)) => {
                     let shared = shared.clone();
-
                     tokio::spawn(async move {
                         if let Err(e) = tokio::time::timeout(
                             timeout,
-                            handle_connection(shared, stream, remote_addr),
+                            handle_connection(shared, stream, remote_addr, world_state),
                         )
                         .await
                         {
@@ -92,6 +97,7 @@ async fn handle_connection(
     shared: SharedNetworkState,
     mut stream: TcpStream,
     remote_addr: SocketAddr,
+    world_state: WorldLoginState,
 ) {
     trace!("handling connection");
 
@@ -110,7 +116,7 @@ async fn handle_connection(
 
     let io = PacketIo::new(stream, PacketEncoder::new(), PacketDecoder::new());
 
-    if let Err(e) = handle_handshake(shared, io, remote_addr).await {
+    if let Err(e) = handle_handshake(shared, io, remote_addr, world_state).await {
         // EOF can happen if the client disconnects while joining, which isn't
         // very erroneous.
         if let Some(e) = e.downcast_ref::<io::Error>() {
@@ -138,6 +144,7 @@ async fn handle_handshake(
     shared: SharedNetworkState,
     mut io: PacketIo,
     remote_addr: SocketAddr,
+    world_state: WorldLoginState,
 ) -> anyhow::Result<()> {
     let handshake = io.recv_packet::<IntentionC2s>().await?;
 
@@ -161,7 +168,7 @@ async fn handle_handshake(
             .await
             .context("handling status"),
         HandShakeIntent::Login => {
-            match handle_login(&shared, &mut io, remote_addr, handshake)
+            match handle_login(&shared, &mut io, remote_addr, handshake, world_state)
                 .await
                 .context("handling login")?
             {
@@ -268,6 +275,7 @@ async fn handle_login(
     io: &mut PacketIo,
     remote_addr: SocketAddr,
     handshake: HandshakeData,
+    world_state: WorldLoginState,
 ) -> anyhow::Result<Option<(NewClientInfo, CleanupOnDrop)>> {
     if handshake.protocol_version != PROTOCOL_VERSION {
         io.send_packet(&LoginDisconnectS2c {
@@ -354,19 +362,74 @@ async fn handle_login(
 
     let _: SelectKnownPacksC2s = io.recv_packet().await?;
 
+    // We have valence support for the `worldgen/biome` and `dimension_type`
+    // registries, therefore we use the current state of these registries here
+    // (instead of the default values) This means the server can add/remove
+    // biomes and dimensions at runtime.
+
+    // BiomeRegistry
+    io.send_packet(&RegistryDataS2c {
+        id: BiomeRegistry::KEY.into(),
+        entries: world_state
+            .biome_registry
+            .iter()
+            .map(|(_, biome_ident, biome)| {
+                (
+                    biome_ident.into(),
+                    Some(
+                        biome
+                            .serialize(CompoundSerializer)
+                            .expect("failed to serialize biome"),
+                    ),
+                )
+            })
+            .collect(),
+    })
+    .await?;
+
+    // DimensionTypeRegistry
+    io.send_packet(&RegistryDataS2c {
+        id: DimensionTypeRegistry::KEY.into(),
+        entries: world_state
+            .dimension_registry
+            .iter()
+            .map(|(_, dimension_ident, dimension_type)| {
+                (
+                    dimension_ident.into(),
+                    Some(
+                        dimension_type
+                            .serialize(CompoundSerializer)
+                            .expect("failed to serialize dimension type"),
+                    ),
+                )
+            })
+            .collect(),
+    })
+    .await?;
+
+    // Send all other registries.
     for (id, entries) in RegistryCodec::default().registries {
+        if id == ident!("worldgen/biome") || id == ident!("dimension_type") {
+            // We already sent these registries.
+            continue;
+        }
+
         io.send_packet(&RegistryDataS2c {
             id: id.into(),
             entries: entries
                 .into_iter()
-                // TODO: use registrycodec resource
-                .map(|value| (value.name.into(), Some(value.element)))
+                .map(|value| (value.name.into(), None))
                 .collect(),
         })
         .await?;
     }
 
-    io.send_packet(&TagsRegistry::default_tags()).await?;
+    // TagsRegistry
+    io.send_packet(&UpdateTagsS2c {
+        groups: Cow::Owned(world_state.tag_registry),
+    })
+    .await?;
+
     io.send_packet(&FinishConfigurationS2c {}).await?;
 
     let _: FinishConfigurationC2s = io.recv_packet().await?;

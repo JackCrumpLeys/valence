@@ -116,39 +116,108 @@ pub struct Biome {
     pub temperature: f32,
     pub downfall: f32,
     pub effects: BiomeEffects,
-    // TODO: more stuff.
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BiomeEffects {
-    pub fog_color: u32,
-    pub sky_color: u32,
-    pub water_color: u32,
-    pub water_fog_color: u32,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grass_color: Option<u32>,
-    // TODO: more stuff.
 }
 
 impl Default for Biome {
+    /// Default will be the same as the `minecraft:plains` biome.
     fn default() -> Self {
         Self {
-            downfall: 0.4,
-            effects: BiomeEffects::default(),
             has_precipitation: true,
             temperature: 0.8,
+            downfall: 0.4,
+            effects: BiomeEffects::default(),
         }
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BiomeEffects {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mood_sound: Option<BiomeMoodSound>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub additions_sound: Option<BiomeAdditionsSound>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub music: Vec<BiomeMusic>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub music_volume: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub particle: Option<BiomeParticle>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sky_color: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub foliage_color: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grass_color: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fog_color: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub water_color: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub water_fog_color: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grass_color_modifier: Option<String>,
+}
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BiomeMoodSound {
+    pub sound: Ident<String>,
+    pub tick_delay: u32,
+    pub block_search_extent: u32,
+    pub offset: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BiomeMusic {
+    pub data: BiomeMusicData,
+    pub weight: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BiomeMusicData {
+    pub sound: Ident<String>,
+    pub min_delay: u32,
+    pub max_delay: u32,
+    pub replace_current_music: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BiomeAdditionsSound {
+    pub sound: Ident<String>,
+    pub tick_chance: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BiomeParticle {
+    pub options: BiomeParticleOptions,
+    pub probability: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BiomeParticleOptions {
+    #[serde(rename = "type")]
+    pub kind: Ident<String>,
+}
+
 impl Default for BiomeEffects {
+    /// Default will be the same as the `minecraft:plains` biome.
     fn default() -> Self {
         Self {
-            fog_color: 12638463,
-            sky_color: 7907327,
-            water_color: 4159204,
-            water_fog_color: 329011,
+            mood_sound: Some(BiomeMoodSound {
+                sound: ident!("minecraft:ambient.cave").into(),
+                tick_delay: 6000,
+                block_search_extent: 8,
+                offset: 2.0,
+            }),
+            music_volume: Some(1.0),
+            sky_color: Some(7907327),
+            fog_color: Some(12638463),
+            water_color: Some(4159204),
+            water_fog_color: Some(329011),
+            additions_sound: None,
+            music: Vec::new(),
+            particle: None,
+            foliage_color: None,
             grass_color: None,
+            grass_color_modifier: None,
         }
     }
 }

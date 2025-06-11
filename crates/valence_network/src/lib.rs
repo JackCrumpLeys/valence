@@ -6,6 +6,7 @@ mod legacy_ping;
 mod packet_io;
 
 use std::borrow::Cow;
+use std::collections::BTreeMap;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -15,6 +16,7 @@ use anyhow::Context;
 pub use async_trait::async_trait;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
+use bevy_ecs::system::SystemParam;
 use connect::do_accept_loop;
 pub use connect::HandshakeData;
 use flume::{Receiver, Sender};
@@ -30,8 +32,14 @@ use tokio::time;
 use tracing::error;
 use uuid::Uuid;
 use valence_protocol::text::IntoText;
+use valence_protocol::VarInt;
 use valence_server::client::{ClientBundle, ClientBundleArgs, Properties, SpawnClientsSet};
-use valence_server::{CompressionThreshold, Server, Text, MINECRAFT_VERSION, PROTOCOL_VERSION};
+use valence_server::registry::biome::{Biome, BiomeId};
+use valence_server::registry::dimension_type::{DimensionType, DimensionTypeId};
+use valence_server::registry::{BiomeRegistry, DimensionTypeRegistry, Registry, TagsRegistry};
+use valence_server::{
+    CompressionThreshold, Ident, Server, Text, MINECRAFT_VERSION, PROTOCOL_VERSION,
+};
 
 pub struct NetworkPlugin;
 
@@ -41,6 +49,21 @@ impl Plugin for NetworkPlugin {
             error!("failed to build network plugin: {e:#}");
         }
     }
+}
+
+// World state required during a client's login process.
+#[derive(SystemParam)]
+struct WorldLoginStateParam<'w> {
+    biome_registry: Res<'w, BiomeRegistry>,
+    dimension_registry: Res<'w, DimensionTypeRegistry>,
+    tag_registry: Res<'w, TagsRegistry>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct WorldLoginState {
+    pub biome_registry: Registry<BiomeId, Biome>,
+    pub dimension_registry: Registry<DimensionTypeId, DimensionType>,
+    pub tag_registry: BTreeMap<Ident<String>, BTreeMap<Ident<String>, Vec<VarInt>>>,
 }
 
 fn build_plugin(app: &mut App) -> anyhow::Result<()> {
@@ -98,11 +121,17 @@ fn build_plugin(app: &mut App) -> anyhow::Result<()> {
     app.insert_resource(shared.clone());
 
     // System for starting the accept loop.
-    let start_accept_loop = move |shared: Res<SharedNetworkState>| {
+    let start_accept_loop = move |shared: Res<SharedNetworkState>,
+                                  world_state: WorldLoginStateParam| {
         let _guard = shared.0.tokio_handle.enter();
+        let world_login_state = WorldLoginState {
+            biome_registry: world_state.biome_registry.clone(),
+            dimension_registry: world_state.dimension_registry.clone(),
+            tag_registry: world_state.tag_registry.registries.clone(),
+        };
 
         // Start accepting new connections.
-        tokio::spawn(do_accept_loop(shared.clone()));
+        tokio::spawn(do_accept_loop(shared.clone(), world_login_state));
     };
 
     let start_broadcast_to_lan_loop = move |shared: Res<SharedNetworkState>| {

@@ -51,6 +51,10 @@ impl RegistryCodec {
 
 impl Default for RegistryCodec {
     fn default() -> Self {
+        // TODO: we might want to reorder the biome registry so that the
+        // biome ID match with the actual biomes see https://minecraft.fandom.com/wiki/Biome/ID
+        // maybe this could be handled in the extractor or we just ignore it, since
+        // biomes can be added/removed at runtime.
         let codec = include_bytes!("../extracted/registry_codec.json");
         let compound = serde_json::from_slice::<Compound>(codec)
             .expect("failed to decode vanilla registry codec");
