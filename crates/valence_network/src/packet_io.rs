@@ -242,7 +242,8 @@ impl ClientConnection for RealClientConnection {
         match self.send.try_send(bytes) {
             Ok(()) => Ok(()),
             Err(TrySendError::Full(_)) => bail!(
-                "reached configured outgoing limit of {} bytes. If compression is disabled, consider enabling it.",
+                "reached configured outgoing limit of {} bytes. If compression is disabled, \
+                 consider enabling it.",
                 self.send.limit()
             ),
             Err(TrySendError::Disconnected(_)) => bail!("client disconnected"),

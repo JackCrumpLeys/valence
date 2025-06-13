@@ -9,7 +9,8 @@ use serde::de::Visitor;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 use valence_ident::Ident;
-use valence_nbt::Value;
+use valence_nbt::serde::ser::CompoundSerializer;
+use valence_nbt::{Compound, Value};
 
 pub mod color;
 mod into_text;
@@ -61,7 +62,6 @@ pub struct JsonText(pub Text);
 
 /// Text data and formatting.
 #[derive(Clone, PartialEq, Default, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct TextInner {
     #[serde(flatten)]
     pub content: TextContent,
@@ -189,32 +189,32 @@ pub struct ScoreboardValueContent {
 
 /// Action to take on click of the text.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[serde(tag = "action", content = "value", rename_all = "snake_case")]
+#[serde(tag = "action", rename_all = "snake_case")]
 pub enum ClickEvent {
-    /// Opens an URL
-    OpenUrl(Cow<'static, str>),
+    /// Opens an URL. it must start with `http://` or `https://`.
+    OpenUrl { url: Cow<'static, str> },
     /// Only usable by internal servers for security reasons.
-    OpenFile(Cow<'static, str>),
+    OpenFile { value: Cow<'static, str> },
     /// Sends a chat command. Doesn't actually have to be a command, can be a
     /// normal chat message.
-    RunCommand(Cow<'static, str>),
+    RunCommand { command: Cow<'static, str> },
     /// Replaces the contents of the chat box with the text, not necessarily a
     /// command.
-    SuggestCommand(Cow<'static, str>),
+    SuggestCommand { command: Cow<'static, str> },
     /// Only usable within written books. Changes the page of the book. Indexing
     /// starts at 1.
-    ChangePage(i32),
+    ChangePage { page: i32 },
     /// Copies the given text to clipboard
-    CopyToClipboard(Cow<'static, str>),
+    CopyToClipboard { value: Cow<'static, str> },
 }
 
 /// Action to take when mouse-hovering on the text.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[serde(tag = "action", content = "contents", rename_all = "snake_case")]
+#[serde(tag = "action", rename_all = "snake_case")]
 #[allow(clippy::enum_variant_names)]
 pub enum HoverEvent {
     /// Displays a tooltip with the given text.
-    ShowText(Text),
+    ShowText { value: Text },
     /// Shows an item.
     ShowItem {
         /// Resource identifier of the item
@@ -227,11 +227,10 @@ pub enum HoverEvent {
     /// Shows an entity.
     ShowEntity {
         /// The entity's UUID
-        id: Uuid,
+        uuid: Uuid,
         /// Resource identifier of the entity
-        #[serde(rename = "type")]
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        kind: Option<Ident<Cow<'static, str>>>,
+        id: Option<Ident<Cow<'static, str>>>,
         /// Optional custom name for the entity
         #[serde(default, skip_serializing_if = "Option::is_none")]
         name: Option<Text>,
@@ -591,6 +590,13 @@ impl From<Text> for String {
 impl From<Text> for Value {
     fn from(value: Text) -> Self {
         Value::String(value.into())
+    }
+}
+
+impl From<Text> for Compound {
+    fn from(val: Text) -> Self {
+        val.serialize(CompoundSerializer)
+            .expect("serializing text as compound")
     }
 }
 

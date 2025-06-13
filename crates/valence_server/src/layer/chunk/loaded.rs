@@ -81,7 +81,7 @@ impl Section {
     }
 
     /// Create a fully lit section
-    pub(crate) fn with_full_light() -> Self {
+    pub(crate) fn _with_full_light() -> Self {
         Self {
             sky_light: [0xff; 2048],
             block_light: [0xff; 2048],
