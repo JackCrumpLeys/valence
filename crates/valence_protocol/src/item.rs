@@ -990,13 +990,13 @@ impl Encode for ItemStack {
                 let mut removed = Vec::new();
                 let mut added = Vec::new();
 
-                #[allow(clippy::needless_range_loop)]
-                for i in 0..self.components.len() {
-                    if self.components[i] != default_components[i] {
-                        removed.push(i as u32);
-                        if let Some(component) = &self.components[i] {
-                            added.push(component);
+                for (i, component) in self.components.iter().enumerate() {
+                    if let Some(component) = component {
+                        if Some(component) != default_components[i].as_ref() {
+                            added.push(component.clone());
                         }
+                    } else {
+                        removed.push(VarInt(i as i32));
                     }
                 }
 
