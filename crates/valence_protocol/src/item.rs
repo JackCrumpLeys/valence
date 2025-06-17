@@ -987,7 +987,7 @@ impl Encode for ItemStack {
             let default_components = self.item.default_components();
 
             let (components_added, components_removed) = {
-                let mut removed = Vec::new();
+                let removed: Vec<VarInt> = Vec::new();
                 let mut added = Vec::new();
 
                 for (i, component) in self.components.iter().enumerate() {
@@ -996,7 +996,9 @@ impl Encode for ItemStack {
                             added.push(component.clone());
                         }
                     } else {
-                        removed.push(VarInt(i as i32));
+                        // Dont do this for know because we dont have default
+                        // components implemented yet.
+                        // removed.push(VarInt(i as i32));
                     }
                 }
 
@@ -1041,7 +1043,7 @@ impl<'a> Decode<'a> for ItemStack {
         }
 
         for _ in 0..components_removed_count {
-            let id = u32::decode(r)?;
+            let id = VarInt::decode(r)?.0 as u32;
             components_removed.push(id);
         }
 
