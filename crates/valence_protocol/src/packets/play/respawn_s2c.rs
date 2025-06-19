@@ -17,6 +17,7 @@ pub struct RespawnS2c<'a> {
     pub is_flat: bool,
     pub last_death_location: Option<GlobalPos<'a>>,
     pub portal_cooldown: VarInt,
+    pub sea_level: VarInt,
     pub data_kept: DataKeptFlags,
 }
 #[bitfield(u8)]
