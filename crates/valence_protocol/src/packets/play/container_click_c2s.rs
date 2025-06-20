@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{Decode, Encode, ItemStack, Packet, VarInt};
+use crate::{item::HashedItemStack, Decode, Encode, ItemStack, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ContainerClickC2s<'a> {
@@ -12,7 +12,7 @@ pub struct ContainerClickC2s<'a> {
     pub button: i8,
     pub mode: ClickMode,
     pub slot_changes: Cow<'a, [SlotChange]>,
-    pub carried_item: ItemStack,
+    pub carried_item: HashedItemStack,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Encode, Decode)]
@@ -29,5 +29,5 @@ pub enum ClickMode {
 #[derive(Clone, Debug, Encode, Decode)]
 pub struct SlotChange {
     pub idx: i16,
-    pub stack: ItemStack,
+    pub stack: HashedItemStack,
 }

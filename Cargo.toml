@@ -72,6 +72,7 @@ valence_server.workspace = true
 valence_text.workspace = true
 valence_weather = { workspace = true, optional = true }
 valence_world_border = { workspace = true, optional = true }
+crc32c = { workspace = true }
 
 [dev-dependencies]
 anyhow.workspace = true
@@ -218,6 +219,7 @@ valence_weather = { path = "crates/valence_weather", version = "0.2.0-alpha.1" }
 valence_world_border = { path = "crates/valence_world_border", version = "0.2.0-alpha.1" }
 vek = "0.17.1"
 zip = "2.2.0"
+crc32c = "0.6.8"
 
 [workspace.lints.rust]
 # missing_debug_implementations = "warn" # TODO: enable me.`

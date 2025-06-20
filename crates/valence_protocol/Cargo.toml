@@ -39,6 +39,7 @@ cfb8 = { workspace = true, optional = true }
 flate2 = { workspace = true, optional = true }
 aes = { workspace = true, optional = true }
 indexmap.workspace = true
+crc32c.workspace = true
 
 [dev-dependencies]
 rand.workspace = true

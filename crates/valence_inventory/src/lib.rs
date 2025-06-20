@@ -884,32 +884,32 @@ fn handle_click_slot(
             .as_ref()
             .and_then(|open| inventories.get_mut(open.entity).ok());
 
-        if let Err(e) = validate::validate_click_slot_packet(
-            &pkt,
-            &client_inv,
-            open_inv.as_deref(),
-            &cursor_item,
-        ) {
-            debug!(
-                "failed to validate click slot packet for client {:#?}: \"{e:#}\" {pkt:#?}",
-                packet.client
-            );
+        // if let Err(e) = validate::validate_click_slot_packet(
+        //     &pkt,
+        //     &client_inv,
+        //     open_inv.as_deref(),
+        //     &cursor_item,
+        // ) {
+        //     debug!(
+        //         "failed to validate click slot packet for client {:#?}: \"{e:#}\" {pkt:#?}",
+        //         packet.client
+        //     );
 
-            // Resync the inventory.
+        //     // Resync the inventory.
 
-            client.write_packet(&ContainerSetContentS2c {
-                window_id: if open_inv.is_some() {
-                    inv_state.window_id
-                } else {
-                    VarInt(0)
-                },
-                state_id: VarInt(inv_state.state_id.0),
-                slots: Cow::Borrowed(open_inv.unwrap_or(client_inv).slot_slice()),
-                carried_item: Cow::Borrowed(&cursor_item.0),
-            });
+        //     client.write_packet(&ContainerSetContentS2c {
+        //         window_id: if open_inv.is_some() {
+        //             inv_state.window_id
+        //         } else {
+        //             VarInt(0)
+        //         },
+        //         state_id: VarInt(inv_state.state_id.0),
+        //         slots: Cow::Borrowed(open_inv.unwrap_or(client_inv).slot_slice()),
+        //         carried_item: Cow::Borrowed(&cursor_item.0),
+        //     });
 
-            continue;
-        }
+        //     continue;
+        // }
 
         if pkt.slot_idx == -999 && pkt.mode == ClickMode::Click {
             // The client is dropping the cursor item by clicking outside the window.
@@ -1123,30 +1123,30 @@ fn handle_click_slot(
                         if (client_inv.readonly && transferred_between_inventories)
                             || target_inventory.readonly
                         {
-                            new_cursor = cursor_item.0.clone();
+                            // new_cursor = cursor_item.0.clone();
                             continue;
                         }
 
-                        target_inventory.set_slot(slot.idx as u16, slot.stack.clone());
+                        // target_inventory.set_slot(slot.idx as u16, slot.stack.clone());
                         open_inventory.client_changed |= 1 << slot.idx;
                     } else {
                         if (target_inventory.readonly && transferred_between_inventories)
                             || client_inv.readonly
                         {
-                            new_cursor = cursor_item.0.clone();
+                            // new_cursor = cursor_item.0.clone();
                             continue;
                         }
 
                         // The client is interacting with a slot in their own inventory.
                         let slot_id =
                             convert_to_player_slot_id(target_inventory.kind, slot.idx as u16);
-                        client_inv.set_slot(slot_id, slot.stack.clone());
+                        // client_inv.set_slot(slot_id, slot.stack.clone());
                         inv_state.slots_changed |= 1 << slot_id;
                     }
                 }
 
-                cursor_item.set_if_neq(CursorItem(new_cursor.clone()));
-                inv_state.client_updated_cursor_item = Some(new_cursor);
+                // cursor_item.set_if_neq(CursorItem(new_cursor.clone()));
+                // inv_state.client_updated_cursor_item = Some(new_cursor);
 
                 if target_inventory.readonly || client_inv.readonly {
                     // resync the target inventory
@@ -1190,10 +1190,10 @@ fn handle_click_slot(
                 for slot in pkt.slot_changes.iter() {
                     if (0_i16..client_inv.slot_count() as i16).contains(&slot.idx) {
                         if client_inv.readonly {
-                            new_cursor = cursor_item.0.clone();
+                            // new_cursor = cursor_item.0.clone();
                             continue;
                         }
-                        client_inv.set_slot(slot.idx as u16, slot.stack.clone());
+                        // client_inv.set_slot(slot.idx as u16, slot.stack.clone());
                         inv_state.slots_changed |= 1 << slot.idx;
                     } else {
                         // The client is trying to interact with a slot that does not exist,
@@ -1205,8 +1205,8 @@ fn handle_click_slot(
                     }
                 }
 
-                cursor_item.set_if_neq(CursorItem(new_cursor.clone()));
-                inv_state.client_updated_cursor_item = Some(new_cursor);
+                // cursor_item.set_if_neq(CursorItem(new_cursor.clone()));
+                // inv_state.client_updated_cursor_item = Some(new_cursor);
 
                 if client_inv.readonly {
                     // resync the client inventory
@@ -1227,7 +1227,7 @@ fn handle_click_slot(
                 button: pkt.button,
                 mode: pkt.mode,
                 slot_changes: pkt.slot_changes.into(),
-                carried_item: pkt.carried_item,
+                carried_item: ItemStack::EMPTY,
             });
         }
     }
