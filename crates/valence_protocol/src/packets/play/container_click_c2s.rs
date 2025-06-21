@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{item::HashedItemStack, Decode, Encode, ItemStack, Packet, VarInt};
+use crate::{item::HashedItemStack, Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ContainerClickC2s<'a> {

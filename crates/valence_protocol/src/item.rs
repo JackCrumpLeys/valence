@@ -9,8 +9,8 @@ use valence_nbt::Compound;
 use valence_text::color::RgbColor;
 use valence_text::Text;
 
-use crate::sound::SoundId;
-use crate::{decode, hash_utils, Decode, Encode, IDSet, VarInt};
+use crate::sound::{SoundDirect, SoundId};
+use crate::{Decode, Encode, IDSet, VarInt};
 
 const NUM_ITEM_COMPONENTS: usize = 96;
 
@@ -116,12 +116,14 @@ pub enum ItemComponent {
     },
     /// Marks the item as non-interactive on the creative inventory (the first 5
     /// rows of items).
+    /// TODO: when we send this to the client it crashes !?
     CreativeSlotLock,
     /// Overrides the item glint resulted from enchantments.
     EnchantmentGlintOverride {
         has_glint: bool,
     },
     /// Marks the projectile as intangible (cannot be picked-up).
+    /// needs to be encoded with a empty compound tag.
     IntangibleProjectile,
     /// Makes the item restore players hunger when eaten.
     Food {
@@ -142,15 +144,13 @@ pub enum ItemComponent {
         sound: SoundId,
         /// Whether the item has consume particles.
         has_consume_particles: bool,
-        /// Number of elements in the following array.
-        number_of_effects: VarInt,
         /// The effects.
-        effects: Vec<u8>, // TODO
+        effects: Vec<ConsumeEffect>
     },
     /// This specifies the item produced after using the current item.
     UseRemainder {
         /// The remainder item.
-        // FIX: remainder: ItemStack,
+        /// TODO: Fix
         remainder: u8,
     },
     /// Cooldown to apply on use of the item.
@@ -193,12 +193,12 @@ pub enum ItemComponent {
         /// The equip sound event.
         equip_sound: SoundId,
         /// The model identifier.
-        model: Option<String>,
+        model: Option<StrIdent>,
         /// The camera overlay identifier.
-        camera_overlay: Option<String>,
+        camera_overlay: Option<StrIdent>,
         /// Whether the item has allowed entities.
         /// The allowed entities.
-        allowed_entities: IDSet,
+        allowed_entities: Option<IDSet>,
         /// Whether the item is dispensable.
         dispensable: bool,
         /// Whether the item is swappable.
@@ -221,9 +221,19 @@ pub enum ItemComponent {
     /// Makes the item function like a totem of undying.
     DeathProtection {
         /// The effects.
-        effects: Vec<u64>, // TODO
+        effects: Vec<ConsumeEffect>,
     },
-    BlocksAttacks, // marked as TODO on minecraft.wiki
+    BlocksAttacks {
+        blocks_delay_seconds: f32,
+        disable_cooldown_scale: f32,
+        damage_reductions: Vec<DamageReduction>,
+        item_damage_threshold: f32,
+        item_damage_base: f32,
+        item_damage_factor: f32,
+        bypassed_by: Option<StrIdent>,
+        block_sound: Option<SoundId>,
+        disable_sound: Option<SoundId>,
+    },
     /// The enchantments stored in this enchanted book.
     StoredEnchantments {
         /// The enchantments. The first element is the enchantment ID, the
@@ -262,7 +272,7 @@ pub enum ItemComponent {
     ChargedProjectiles {
         /// The projectiles.
         // FIX: projectiles: Vec<ItemStack>,
-        projectiles: Vec<u8>,
+        projectiles: u8,
     },
     /// Contents of a bundle.
     BundleContents {
@@ -277,19 +287,11 @@ pub enum ItemComponent {
         /// The RGB components of the color, encoded as an integer.
         custom_color: Option<RgbColor>,
         /// Any custom effects the potion might have.
-        custom_effects: Vec<(
-            VarInt,
-            VarInt,
-            bool,
-            bool,
-            bool,
-            bool,
-            Option<(VarInt, VarInt, bool, bool, bool, bool)>,
-        )>,
+        custom_effects: Vec<PotionEffect>,
         /// Custom name for the potion.
         custom_name: String,
     },
-    // description marked as TODO on minecraft.wiki
+    // A duration multiplier for items that also have the `minecraft:potion_contents` component. 
     PotionDurationScale {
         effects_multiplier: f32,
     },
@@ -387,7 +389,7 @@ pub enum ItemComponent {
     /// marked as TODO on minecraft.wiki
     ProvidesBannerPatterns {
         /// A pattern identifier like `#minecraft:pattern_item/globe`.
-        key: Ident<String>,
+        key: StrIdent,
     },
     /// The recipes this knowledge book unlocks.
     Recipes {
@@ -469,7 +471,7 @@ pub enum ItemComponent {
         number_of_items: VarInt,
         /// The items.
         // FIX: items: Vec<ItemStack>,
-        items: Vec<u8>,
+        items: u8,
     },
     /// State of a block.
     BlockState {
@@ -636,7 +638,7 @@ impl HashedItemStack {
 }
 
 impl Encode for HashedItemStack {
-    fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
         // if self.is_empty() {
         //     false.encode(&mut w)
         // } else {
@@ -653,7 +655,7 @@ impl Decode<'_> for HashedItemStack {
     fn decode(r: &mut &'_ [u8]) -> anyhow::Result<Self> {
         let has_item = bool::decode(r)?;
         if !has_item {
-            return Ok(Self::EMPTY);
+            Ok(Self::EMPTY)
         } else {
             let item = ItemKind::decode(r)?;
             let item_count = VarInt::decode(r)?;
@@ -706,6 +708,57 @@ impl Rarity {
             _ => None,
         }
     }
+}
+
+#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+pub enum ConsumeEffect {
+    ApplyEffects {
+        effects: Vec<PotionEffect>,
+        probability: f32,
+    },
+    RemoveEffects {
+        effects: IDSet,
+    },
+    ClearAllEffects,
+    TeleportRandomly {
+        diameter: f32,
+    },
+    PlaySound {
+        sound: SoundDirect,
+    },
+}
+
+/// Describes all the aspects of a potion effect. 
+// TODO: move this somewhere else
+#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+pub struct PotionEffect {
+    /// The ID of the effect in the potion effect type registry.
+    pub id: VarInt,
+    pub details: PotionEffectDetails,
+
+}
+
+#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+pub struct PotionEffectDetails {
+    pub amplifier: VarInt,
+    /// -1 for infinite.
+    pub duration: VarInt,
+    /// Produces more translucent particle effects if true.
+    pub ambient: bool,
+    /// Completely hides effect particles if false. 
+    pub show_particles: bool, 
+    /// Shows the potion icon in the inventory screen if true. 
+    pub show_icon: bool,
+    // pub hidden_effect: Option<Box<PotionEffectDetails>>,
+}
+
+#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+pub struct DamageReduction {
+    pub horizontal_blocking_angle: f32,
+    /// IDs in the `minecraft:damage_kind` registry.
+    pub kind: Option<IDSet>,
+    pub base: f32,
+    pub factor: f32,
 }
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
@@ -770,6 +823,7 @@ impl<'a> Decode<'a> for Property {
     }
 }
 
+// TODO: this is wrong
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct ItemAttribute {
     pub effect: EntityAttribute,
@@ -868,7 +922,7 @@ impl ItemComponent {
             ItemComponent::Glider => 30,
             ItemComponent::TooltipStyle { .. } => 31,
             ItemComponent::DeathProtection { .. } => 32,
-            ItemComponent::BlocksAttacks => 33,
+            ItemComponent::BlocksAttacks { .. } => 33,
             ItemComponent::StoredEnchantments { .. } => 34,
             ItemComponent::DyedColor { .. } => 35,
             ItemComponent::MapColor { .. } => 36,
