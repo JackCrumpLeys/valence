@@ -3,6 +3,7 @@
 use std::fmt;
 
 use valence::prelude::*;
+use valence::protocol::packets::play::level_particles_s2c::VibrationSourceType;
 
 const SPAWN_Y: i32 = 64;
 
@@ -93,7 +94,7 @@ fn manage_particles(
 
     let mut layer = layers.single_mut();
 
-    layer.play_particle(particle, true, pos, offset, 0.1, 100);
+    layer.play_particle(particle, true, true, pos, offset, 0.1, 100);
     layer.set_action_bar(name.bold());
 }
 
@@ -122,27 +123,39 @@ fn create_particle_vec() -> Vec<Particle> {
         Particle::DrippingWater,
         Particle::FallingWater,
         Particle::Dust {
-            rgb: Vec3::new(1.0, 1.0, 0.0),
+            color: 0x00ffff00, // red
             scale: 2.0,
         },
         Particle::DustColorTransition {
-            from_rgb: Vec3::new(1.0, 0.0, 0.0),
+            from_color: 0x00ff0000, // red
+            to_color: 0x0000ff00,   // green
             scale: 2.0,
-            to_rgb: Vec3::new(0.0, 1.0, 0.0),
         },
         Particle::Effect,
         Particle::ElderGuardian,
         Particle::EnchantedHit,
         Particle::Enchant,
         Particle::EndRod,
+        Particle::EntityEffect {
+            color: 0xffff0000u32 as i32, // red
+        },
         Particle::ExplosionEmitter,
         Particle::Explosion,
+        Particle::Gust,
+        Particle::SmallGust,
+        Particle::GustEmitterLarge,
+        Particle::GustEmitterSmall,
         Particle::SonicBoom,
         Particle::FallingDust(BlockState::RED_SAND),
         Particle::Firework,
         Particle::Fishing,
         Particle::Flame,
+        Particle::Infested,
         Particle::CherryLeaves,
+        Particle::PaleOakLeaves,
+        Particle::TintedLeaves {
+            color: 0xffff00ffu32 as i32, // magenta
+        },
         Particle::SculkSoul,
         Particle::SculkCharge { roll: 1.0 },
         Particle::SculkChargePop,
@@ -153,18 +166,27 @@ fn create_particle_vec() -> Vec<Particle> {
         Particle::Composter,
         Particle::Heart,
         Particle::InstantEffect,
-        Particle::Item(ItemStack::EMPTY),
-        Particle::Item(ItemStack::new(ItemKind::IronPickaxe, 1)),
-        Particle::VibrationBlock {
-            block_pos: [0, SPAWN_Y, 0].into(),
-            ticks: 50,
+        Particle::Item(Box::new(ItemStack::new(ItemKind::IronPickaxe, 1))),
+        Particle::Vibration {
+            source: VibrationSourceType::Block {
+                block_pos: [0, SPAWN_Y, 0].into(),
+            },
+            ticks: 50.into(),
         },
-        Particle::VibrationEntity {
-            entity_id: 0,
-            entity_eye_height: 1.0,
-            ticks: 50,
+        Particle::Vibration {
+            source: VibrationSourceType::Entity {
+                kind: 0.into(),
+                eye_height: 1.0,
+            },
+            ticks: 50.into(),
+        },
+        Particle::Trail {
+            position: [0.0, f64::from(SPAWN_Y) + 1.0, 0.0].into(),
+            color: 0x00ff0000, // red
+            duration: 50.into(),
         },
         Particle::ItemSlime,
+        Particle::ItemCobweb,
         Particle::ItemSnowball,
         Particle::LargeSmoke,
         Particle::Lava,
@@ -174,6 +196,7 @@ fn create_particle_vec() -> Vec<Particle> {
         Particle::Portal,
         Particle::Rain,
         Particle::Smoke,
+        Particle::WhiteSmoke,
         Particle::Sneeze,
         Particle::Spit,
         Particle::SquidInk,
@@ -215,15 +238,17 @@ fn create_particle_vec() -> Vec<Particle> {
         Particle::WaxOff,
         Particle::ElectricSpark,
         Particle::Scrape,
-        Particle::Shriek { delay: 0 },
+        Particle::Shriek { delay: 0.into() },
         Particle::EggCrack,
         Particle::DustPlume,
         Particle::TrialSpawnerDetection,
         Particle::TrialSpawnerDetectionOminous,
         Particle::VaultConnection,
-        Particle::DustPillar(BlockState::STONE),
+        Particle::DustPillar(BlockState::SAND),
         Particle::OminousSpawning,
         Particle::RaidOmen,
         Particle::TrialOmen,
+        Particle::BlockCrumble(BlockState::STONE),
+        Particle::Firefly,
     ]
 }

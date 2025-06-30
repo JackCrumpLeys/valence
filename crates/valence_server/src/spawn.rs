@@ -198,7 +198,7 @@ pub(super) fn respawn(
             is_flat: is_flat.0,
             last_death_location,
             portal_cooldown: VarInt(0), // TODO
-            sea_level: VarInt(0), // TODO
+            sea_level: VarInt(0),       // TODO
             data_kept: DataKeptFlags::new(),
         });
     }

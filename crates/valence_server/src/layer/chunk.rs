@@ -387,6 +387,7 @@ impl ChunkLayer {
         &mut self,
         particle: &Particle,
         long_distance: bool,
+        always_visible: bool,
         position: P,
         offset: O,
         max_speed: f32,
@@ -400,6 +401,7 @@ impl ChunkLayer {
         self.view_writer(position).write_packet(&LevelParticlesS2c {
             particle: particle.clone(),
             long_distance,
+            always_visible,
             position,
             offset: offset.into(),
             max_speed,

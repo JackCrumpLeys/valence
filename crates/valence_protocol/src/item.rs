@@ -145,7 +145,7 @@ pub enum ItemComponent {
         /// Whether the item has consume particles.
         has_consume_particles: bool,
         /// The effects.
-        effects: Vec<ConsumeEffect>
+        effects: Vec<ConsumeEffect>,
     },
     /// This specifies the item produced after using the current item.
     UseRemainder {
@@ -291,7 +291,7 @@ pub enum ItemComponent {
         /// Custom name for the potion.
         custom_name: String,
     },
-    // A duration multiplier for items that also have the `minecraft:potion_contents` component. 
+    // A duration multiplier for items that also have the `minecraft:potion_contents` component.
     PotionDurationScale {
         effects_multiplier: f32,
     },
@@ -728,14 +728,13 @@ pub enum ConsumeEffect {
     },
 }
 
-/// Describes all the aspects of a potion effect. 
+/// Describes all the aspects of a potion effect.
 // TODO: move this somewhere else
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct PotionEffect {
     /// The ID of the effect in the potion effect type registry.
     pub id: VarInt,
     pub details: PotionEffectDetails,
-
 }
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
@@ -745,9 +744,9 @@ pub struct PotionEffectDetails {
     pub duration: VarInt,
     /// Produces more translucent particle effects if true.
     pub ambient: bool,
-    /// Completely hides effect particles if false. 
-    pub show_particles: bool, 
-    /// Shows the potion icon in the inventory screen if true. 
+    /// Completely hides effect particles if false.
+    pub show_particles: bool,
+    /// Shows the potion icon in the inventory screen if true.
     pub show_icon: bool,
     // pub hidden_effect: Option<Box<PotionEffectDetails>>,
 }

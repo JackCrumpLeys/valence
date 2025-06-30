@@ -891,8 +891,8 @@ fn handle_click_slot(
         //     &cursor_item,
         // ) {
         //     debug!(
-        //         "failed to validate click slot packet for client {:#?}: \"{e:#}\" {pkt:#?}",
-        //         packet.client
+        //         "failed to validate click slot packet for client {:#?}: \"{e:#}\"
+        // {pkt:#?}",         packet.client
         //     );
 
         //     // Resync the inventory.
@@ -1089,7 +1089,7 @@ fn handle_click_slot(
                 // The player is interacting with an inventory that is
                 // open or has an inventory open while interacting with their own inventory.
 
-                let Ok(mut target_inventory) = inventories.get_mut(open_inventory.entity) else {
+                let Ok(target_inventory) = inventories.get_mut(open_inventory.entity) else {
                     // The inventory does not exist, ignore.
                     continue;
                 };
@@ -1111,7 +1111,7 @@ fn handle_click_slot(
                     continue;
                 }
 
-                let mut new_cursor = pkt.carried_item.clone();
+                let new_cursor = pkt.carried_item.clone();
 
                 for slot in pkt.slot_changes.iter() {
                     let transferred_between_inventories =
@@ -1185,7 +1185,7 @@ fn handle_click_slot(
                     continue;
                 }
 
-                let mut new_cursor = pkt.carried_item.clone();
+                let new_cursor = pkt.carried_item.clone();
 
                 for slot in pkt.slot_changes.iter() {
                     if (0_i16..client_inv.slot_count() as i16).contains(&slot.idx) {

@@ -815,6 +815,7 @@ fn visualize_triggers(globals: Res<CtfGlobals>, mut layers: Query<&mut ChunkLaye
             layer.play_particle(
                 &Particle::Crit,
                 false,
+                false,
                 [
                     f64::from(pos.x) + 0.5,
                     f64::from(pos.y) + 0.5,
