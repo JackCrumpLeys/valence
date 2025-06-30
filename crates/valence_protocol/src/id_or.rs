@@ -27,7 +27,7 @@ impl<T: Encode + Clone + Debug + PartialEq> Encode for IdOr<T> {
         match self {
             Self::Id(id) => (id.id() + 1).encode(buf),
             Self::Inline(value) => {
-                0.encode(&mut buf).unwrap();
+                VarInt(0 as i32).encode(&mut buf).unwrap();
                 value.encode(&mut buf)
             }
         }
