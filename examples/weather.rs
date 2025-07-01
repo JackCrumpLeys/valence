@@ -44,7 +44,7 @@ fn setup(
             state: BlockState::OAK_SIGN.set(PropName::Rotation, PropValue::_8),
             nbt: Some(compound! {
                 "front_text" => compound! {
-                    "messages" => List::String(vec![
+                    "messages" => List::Compound(vec![
                         "Some blocks do".into_text().into(),
                         "not block motion".into_text().into(),
                         "such as rain.".into_text().into(),
@@ -62,7 +62,7 @@ fn setup(
             state: BlockState::OAK_SIGN.set(PropName::Rotation, PropValue::_8),
             nbt: Some(compound! {
                 "front_text" => compound! {
-                    "messages" => List::String(vec![
+                    "messages" => List::Compound(vec![
                         "However, liquids".into_text().into(),
                         "and waterlogged".into_text().into(),
                         "blocks do.".into_text().into(),
