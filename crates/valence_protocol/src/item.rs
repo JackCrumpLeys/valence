@@ -14,12 +14,39 @@ use crate::{Decode, Encode, IDSet, VarInt};
 
 const NUM_ITEM_COMPONENTS: usize = 96;
 
+#[derive(Clone, PartialEq, Debug, Copy)]
+enum Patchable<T> {
+    Default(T),
+    /// `T`, `crc32c hash`
+    Added((T, i32)),
+    Removed,
+    None,
+}
+
+impl<T> Patchable<T> {
+    fn to_option(self) -> Option<T> {
+        match self {
+            Patchable::Default(t) => Some(t),
+            Patchable::Added((t, _)) => Some(t),
+            _ => None,
+        }
+    }
+
+    fn to_option_ref(&self) -> Option<&T> {
+        match self {
+            Patchable::Default(t) => Some(t),
+            Patchable::Added((t, _)) => Some(t),
+            _ => None,
+        }
+    }
+}
+
 /// A stack of items in an inventory.
 #[derive(Clone, PartialEq, Debug)]
 pub struct ItemStack {
     pub item: ItemKind,
     pub count: i8,
-    components: [Option<Box<ItemComponent>>; NUM_ITEM_COMPONENTS],
+    components: [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS],
 }
 
 impl Default for ItemStack {
@@ -622,14 +649,14 @@ pub enum ItemComponent {
 pub struct HashedItemStack {
     pub item: ItemKind,
     pub count: i8,
-    components: [Option<i32>; NUM_ITEM_COMPONENTS],
+    components: [Patchable<()>; NUM_ITEM_COMPONENTS],
 }
 
 impl HashedItemStack {
     pub const EMPTY: Self = Self {
         item: ItemKind::Air,
         count: 0,
-        components: [const { None }; NUM_ITEM_COMPONENTS],
+        components: [const { Patchable::None }; NUM_ITEM_COMPONENTS],
     };
 
     pub const fn is_empty(&self) -> bool {
@@ -660,7 +687,7 @@ impl Decode<'_> for HashedItemStack {
             let item = ItemKind::decode(r)?;
             let item_count = VarInt::decode(r)?;
 
-            let mut components = [None; NUM_ITEM_COMPONENTS];
+            let mut components = [Patchable::None; NUM_ITEM_COMPONENTS];
 
             let components_added: Vec<(VarInt, i32)> = Vec::decode(r)?;
             let components_removed: Vec<VarInt> = Vec::decode(r)?;
@@ -670,7 +697,7 @@ impl Decode<'_> for HashedItemStack {
                 if id >= NUM_ITEM_COMPONENTS {
                     return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
                 }
-                components[id] = Some(hash);
+                components[id] = Patchable::Added(((), hash));
             }
 
             for id in components_removed {
@@ -678,7 +705,7 @@ impl Decode<'_> for HashedItemStack {
                 if id >= NUM_ITEM_COMPONENTS {
                     return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
                 }
-                components[id] = None;
+                components[id] = Patchable::Removed;
             }
 
             Ok(Self {
@@ -1002,7 +1029,7 @@ impl ItemStack {
     pub const EMPTY: ItemStack = ItemStack {
         item: ItemKind::Air,
         count: 0,
-        components: [const { None }; NUM_ITEM_COMPONENTS],
+        components: [const { Patchable::None }; NUM_ITEM_COMPONENTS],
     };
 
     /// Creates a new item stack without any components.
@@ -1011,7 +1038,7 @@ impl ItemStack {
         Self {
             item,
             count,
-            components: [const { None }; NUM_ITEM_COMPONENTS],
+            components: [const { Patchable::None }; NUM_ITEM_COMPONENTS],
         }
     }
 
@@ -1031,7 +1058,8 @@ impl ItemStack {
     pub fn components(&self) -> Vec<&ItemComponent> {
         self.components
             .iter()
-            .filter_map(|component| component.as_ref().map(|boxed| &**boxed))
+            .filter_map(|component| component.to_option_ref())
+            .map(|boxed| &**boxed)
             .collect()
     }
 
@@ -1040,14 +1068,23 @@ impl ItemStack {
         self.item
             .default_components()
             .iter()
-            .filter_map(|component| component.as_ref().map(|boxed| *boxed.clone()))
+            .filter_map(|component| component.to_option_ref().map(|b| &**b))
+            .cloned()
             .collect()
     }
 
     /// Attach a component to the item stack.
     pub fn insert_component(&mut self, component: ItemComponent) {
         let id = component.id() as usize;
-        self.components[id] = Some(Box::new(component));
+        if let Patchable::Default(default) = &self.components[id] {
+            // We don't need to add a components if its default for the item kind.
+            if **default == component {
+                return;
+            }
+        }
+
+        let hash = component.hash();
+        self.components[id] = Patchable::Added((Box::new(component), hash));
     }
 
     /// Remove a component from the item stack by its ID, see
@@ -1057,7 +1094,7 @@ impl ItemStack {
     pub fn remove_component<I: Into<usize>>(&mut self, id: I) -> Option<ItemComponent> {
         let id = id.into();
         if id < NUM_ITEM_COMPONENTS {
-            self.components[id].take().map(|boxed| *boxed)
+            std::mem::replace(&mut self.components[id],  Patchable::Removed).to_option().map(|boxed| *boxed)
         } else {
             None
         }
@@ -1067,7 +1104,11 @@ impl ItemStack {
     pub fn get_component<I: Into<usize>>(&self, id: I) -> Option<&ItemComponent> {
         let id = id.into();
         if id < NUM_ITEM_COMPONENTS {
-            self.components[id].as_deref()
+            match &self.components[id] {
+                Patchable::Added((component, _)) 
+                | Patchable::Default(component) => Some(&**component),
+                _ => None,
+            }
         } else {
             None
         }
@@ -1077,7 +1118,13 @@ impl ItemStack {
     pub fn components_iter_mut(&mut self) -> impl Iterator<Item = &mut ItemComponent> {
         self.components
             .iter_mut()
-            .filter_map(|component| component.as_mut().map(|boxed| &mut **boxed))
+            .filter_map(|component| match component {
+                // TODO: Does this need to always be `Added`?
+                // + How do we know if the component has actually been modified?
+                // It might be safer to not have this method
+                Patchable::Added((v, _)) => Some(&mut **v),
+                _ => None,
+            })
     }
 
     #[must_use]
@@ -1113,21 +1160,15 @@ impl Encode for ItemStack {
             VarInt(i32::from(self.count)).encode(&mut w)?;
             self.item.encode(&mut w)?;
 
-            let default_components = self.item.default_components();
-
             let (components_added, components_removed) = {
-                let removed: Vec<VarInt> = Vec::new();
+                let mut removed: Vec<VarInt> = Vec::new();
                 let mut added = Vec::new();
 
                 for (i, component) in self.components.iter().enumerate() {
-                    if let Some(component) = component {
-                        if Some(component) != default_components[i].as_ref() {
-                            added.push(component.clone());
-                        }
-                    } else {
-                        // Dont do this for know because we dont have default
-                        // components implemented yet.
-                        // removed.push(VarInt(i as i32));
+                    match component {
+                        Patchable::Added((component, _)) => added.push(component),
+                        Patchable::Removed => removed.push(VarInt(i as i32)),
+                        _ => {}
                     }
                 }
 
@@ -1183,12 +1224,13 @@ impl<'a> Decode<'a> for ItemStack {
             if id >= NUM_ITEM_COMPONENTS {
                 return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
             }
-            components[id] = None;
+            components[id] = Patchable::Removed;
         }
 
         for component in components_added {
             let id = component.id() as usize;
-            components[id] = Some(Box::new(component));
+            let hash = component.hash();
+            components[id] = Patchable::Added((Box::new(component), hash));
         }
 
         Ok(ItemStack {
@@ -1201,11 +1243,11 @@ impl<'a> Decode<'a> for ItemStack {
 
 pub trait ItemKindExt {
     /// Returns the default components for the [`ItemKind`].
-    fn default_components(&self) -> [Option<Box<ItemComponent>>; NUM_ITEM_COMPONENTS];
+    fn default_components(&self) -> [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS];
 }
 
 impl ItemKindExt for ItemKind {
-    fn default_components(&self) -> [Option<Box<ItemComponent>>; NUM_ITEM_COMPONENTS] {
+    fn default_components(&self) -> [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS] {
         //     let ser_default_components = self.ser_components();
         //     let mut components = [const { None }; NUM_ITEM_COMPONENTS];
 
@@ -1218,7 +1260,7 @@ impl ItemKindExt for ItemKind {
         //     components
         // }
 
-        [const { None }; NUM_ITEM_COMPONENTS]
+        [const { Patchable::None }; NUM_ITEM_COMPONENTS]
     }
 }
 
