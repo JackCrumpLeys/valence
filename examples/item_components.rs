@@ -67,7 +67,7 @@ fn init_clients(
         visible_chunk_layer.0 = layer;
         visible_entity_layers.0.insert(layer);
         pos.set([0.5, 65.0, 0.5]);
-        *game_mode = GameMode::Creative;
+        *game_mode = GameMode::Survival;
 
         inventory.set_slot(30, ItemStack::new(ItemKind::IronSword, 1).with_components(
             vec![
