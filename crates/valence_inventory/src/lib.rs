@@ -114,7 +114,7 @@ impl Inventory {
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// assert_eq!(inv.slot(0).item, ItemKind::Diamond);
     /// ```
-    /// 
+    ///
     /// # Panics
     /// If the slot index is out of bounds.
     #[track_caller]
@@ -893,7 +893,7 @@ fn handle_click_slot(
             .as_ref()
             .and_then(|open| inventories.get_mut(open.entity).ok());
 
-        let (new_cursor_item, new_slot_changes, ) = match validate::validate_click_slot_packet(
+        let (new_cursor_item, new_slot_changes) = match validate::validate_click_slot_packet(
             &pkt,
             &client_inv,
             open_inv.as_deref(),
@@ -901,9 +901,10 @@ fn handle_click_slot(
         ) {
             Ok(cursor_item) => cursor_item,
             Err(e) => {
-                    debug!(
+                debug!(
                     "failed to validate click slot packet for client {:#?}: \"{e:#}\"
-            {pkt:#?}",         packet.client
+            {pkt:#?}",
+                    packet.client
                 );
 
                 // Resync the inventory.
@@ -922,6 +923,7 @@ fn handle_click_slot(
             }
         };
 
+        println!("got cursor item: {:?}", new_cursor_item);
 
         if pkt.slot_idx == -999 && pkt.mode == ClickMode::Click {
             // The client is dropping the cursor item by clicking outside the window.
@@ -1062,6 +1064,9 @@ fn handle_click_slot(
                     // The player was just clicking outside the inventories without holding an item
                     continue;
                 }
+
+
+                // println!("dropping from slot {}", pkt.slot_idx);
                 let stack = client_inv.slot(pkt.slot_idx as u16);
 
                 if !stack.is_empty() {

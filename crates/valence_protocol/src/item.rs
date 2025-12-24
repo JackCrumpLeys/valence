@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::io::Write;
 
 use valence_generated::attributes::{EntityAttribute, EntityAttributeOperation};
@@ -42,7 +43,7 @@ impl<T> Patchable<T> {
 }
 
 /// A stack of items in an inventory.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq)]
 pub struct ItemStack {
     pub item: ItemKind,
     pub count: i8,
@@ -52,6 +53,24 @@ pub struct ItemStack {
 impl Default for ItemStack {
     fn default() -> Self {
         ItemStack::EMPTY
+    }
+}
+
+impl Debug for ItemStack {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ItemStack")
+            .field("item", &self.item)
+            .field("count", &self.count)
+            .field(
+                "components",
+                &self
+                    .components
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, c)| c.to_option_ref().map(|comp| (i, comp)))
+                    .collect::<Vec<_>>(),
+            )
+            .finish()
     }
 }
 
@@ -1094,7 +1113,9 @@ impl ItemStack {
     pub fn remove_component<I: Into<usize>>(&mut self, id: I) -> Option<ItemComponent> {
         let id = id.into();
         if id < NUM_ITEM_COMPONENTS {
-            std::mem::replace(&mut self.components[id],  Patchable::Removed).to_option().map(|boxed| *boxed)
+            std::mem::replace(&mut self.components[id], Patchable::Removed)
+                .to_option()
+                .map(|boxed| *boxed)
         } else {
             None
         }
@@ -1105,8 +1126,9 @@ impl ItemStack {
         let id = id.into();
         if id < NUM_ITEM_COMPONENTS {
             match &self.components[id] {
-                Patchable::Added((component, _)) 
-                | Patchable::Default(component) => Some(&**component),
+                Patchable::Added((component, _)) | Patchable::Default(component) => {
+                    Some(&**component)
+                }
                 _ => None,
             }
         } else {

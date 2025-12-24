@@ -1,4 +1,4 @@
-use crate::{Bounded, Decode, Encode, FixedBitSet, Packet, VarInt, RawBytes};
+use crate::{Bounded, Decode, Encode, FixedBitSet, Packet, RawBytes, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ChatCommandSignedC2s<'a> {

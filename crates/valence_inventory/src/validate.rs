@@ -1,15 +1,20 @@
-use valence_server::{protocol::{anyhow::{self, ensure}, packets::play::{container_click_c2s::{ClickMode, SlotChange}, ContainerClickC2s}, VarInt}, ItemStack};
+use valence_server::protocol::anyhow::{self, ensure};
+use valence_server::protocol::packets::play::container_click_c2s::{ClickMode, SlotChange};
+use valence_server::protocol::packets::play::ContainerClickC2s;
+use valence_server::protocol::VarInt;
+use valence_server::ItemStack;
 
-use crate::{player_inventory::PlayerInventory, CursorItem, Inventory, InventoryWindow};
+use crate::player_inventory::PlayerInventory;
 use crate::validate::anyhow::bail;
-/// This function simulates the "item click" action on the server 
+use crate::{CursorItem, Inventory, InventoryWindow};
+
+/// This function simulates the "item click" action on the server
 /// and validates it.
 /// If the action is valid: `Ok`,
 /// We return the updated cursor item and the slot changes.
-/// 
-/// We need to compute those values in the validation because the packet no longer 
-/// contains this data (item stacks are hashed now). 
-
+///
+/// We need to compute those values in the validation because the packet no
+/// longer contains this data (item stacks are hashed now).
 pub(super) fn validate_click_slot_packet(
     packet: &ContainerClickC2s,
     player_inventory: &Inventory,
@@ -17,13 +22,12 @@ pub(super) fn validate_click_slot_packet(
     cursor_item: &CursorItem,
 ) -> anyhow::Result<(ItemStack, Vec<SlotChange>)> {
     ensure!(
-            (packet.window_id == VarInt(0)) == open_inventory.is_none(),
-            "window id and open inventory mismatch: window_id: {} open_inventory: {}",
-            packet.window_id.0,
-            open_inventory.is_some()
-        );
+        (packet.window_id == VarInt(0)) == open_inventory.is_none(),
+        "window id and open inventory mismatch: window_id: {} open_inventory: {}",
+        packet.window_id.0,
+        open_inventory.is_some()
+    );
 
-    let mut new_cursor_stack = cursor_item.0.clone();
     let mut new_slot_changes = Vec::with_capacity(packet.slot_changes.len());
 
     let max_slot = if let Some(open_inv) = open_inventory {
@@ -375,9 +379,10 @@ pub(super) fn validate_click_slot_packet(
                     count_deltas
                 );
             } else {
-                ensure!(packet.slot_changes.is_empty() 
-                    && packet.carried_item.item == cursor_item.0.item 
-                    && packet.carried_item.count == cursor_item.0.count, 
+                ensure!(
+                    packet.slot_changes.is_empty()
+                        && packet.carried_item.item == cursor_item.0.item
+                        && packet.carried_item.count == cursor_item.0.count,
                     "invalid drag state"
                 );
             }
@@ -392,38 +397,103 @@ pub(super) fn validate_click_slot_packet(
         }
     }
 
-    // Preserve NBT data
+    // TODO: if we are able to compute hashes we can just search items by hash
 
-    // Here we want to change the `new_slot`'s + `new_cursor_stack` based on the 
-    // hashed slots in the original packet
+    // We find the unhashed itemstacks by searching the original items (based on the
+    // changed slots)
 
-    match packet.mode {
-        ClickMode::Click => {
+    for hashed_change in packet.slot_changes.iter() {
+        let slot_idx = hashed_change.idx as u16;
+        let hashed_stack = &hashed_change.stack;
 
-        },
-        ClickMode::ShiftClick => {
+        let actual_stack = if hashed_stack.is_empty() {
+            // Empty slot - no item to unhash
+            ItemStack::EMPTY
+        } else {
+            // For shift-click operations, the source is packet.slot_idx
+            if packet.mode == ClickMode::ShiftClick && packet.slot_idx >= 0 {
+                let source_slot = window.slot(packet.slot_idx as u16);
+                if source_slot.item == hashed_stack.item && !source_slot.is_empty() {
+                    // The item came from the shift-clicked slot
+                    source_slot.clone().with_count(hashed_stack.count)
+                } else {
+                    bail!("could not find unhashed shift-clicked item");
+                }
+            } else {
+                // Try to find a matching item in the current slot or cursor
+                let current_slot = window.slot(slot_idx);
 
-        },
-        ClickMode::Hotbar => {
+                if current_slot.item == hashed_stack.item && !current_slot.is_empty() {
+                    // The item is already in this slot, preserve its components
+                    current_slot.clone().with_count(hashed_stack.count)
+                } else if cursor_item.item == hashed_stack.item && !cursor_item.is_empty() {
+                    // The item came from the cursor, preserve its components
+                    cursor_item.0.clone().with_count(hashed_stack.count)
+                } else {
+                    // Look through other modified slots to find a source
+                    let source_stack = packet
+                        .slot_changes
+                        .iter()
+                        .find(|other| {
+                            other.idx != hashed_change.idx
+                                && other.stack.item == hashed_stack.item
+                                && !other.stack.is_empty()
+                        })
+                        .and_then(|other| {
+                            let other_slot_idx = other.idx;
+                            let other_slot = window.slot(other_slot_idx as u16);
+                            if other_slot.item == hashed_stack.item && !other_slot.is_empty() {
+                                Some((other_slot.clone(), other_slot_idx))
+                            } else {
+                                None
+                            }
+                        });
 
-        },
-        ClickMode::CreativeMiddleClick => {
+                    if let Some((source, _source_idx)) = source_stack {
+                        source.with_count(hashed_stack.count)
+                    } else {
+                        bail!("could not find unhashed modified slot item");
+                    }
+                }
+            }
+        };
 
-        },
-        ClickMode::DropKey => {
-
-        },
-        ClickMode::Drag => {
-
-        },
-        ClickMode::DoubleClick => {
-
-        },
+        new_slot_changes.push(SlotChange {
+            idx: hashed_change.idx,
+            stack: actual_stack,
+        });
     }
 
-    Ok(())
-}
+    // Unhash the cursor item
+    let new_cursor_stack = if !packet.carried_item.is_empty() {
+        let hashed_carried = &packet.carried_item;
 
+        if cursor_item.item == hashed_carried.item && !cursor_item.is_empty() {
+            // Preserve components
+            cursor_item.0.clone().with_count(hashed_carried.count)
+        } else {
+            // Look for the item in the modified slots
+            let source_stack = packet.slot_changes.iter().find_map(|change| {
+                let slot = window.slot(change.idx as u16);
+                if slot.item == hashed_carried.item && !slot.is_empty() {
+                    Some(slot.clone())
+                } else {
+                    None
+                }
+            });
+
+            if let Some(source) = source_stack {
+                source.with_count(hashed_carried.count)
+            } else {
+                bail!("could not unhash carried item");
+            }
+        }
+    } else {
+        ItemStack::EMPTY
+    };
+
+    Ok((new_cursor_stack, new_slot_changes))
+}
 
 /// Calculate the total difference in item counts if the changes in this packet
 /// were to be applied.

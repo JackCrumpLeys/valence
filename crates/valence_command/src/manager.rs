@@ -101,8 +101,8 @@ fn read_incoming_packets(
         } else if let Some(signed) = packet.decode::<ChatCommandSignedC2s>() {
             // TODO: verify command signatures.
             // As per this gist: https://gist.github.com/kennytv/ed783dd244ca0321bbd882c347892874
-            // It looks like the client only sends the signed version if a command requires it (in
-            // vanilla thats /say for example).
+            // It looks like the client only sends the signed version if a command requires
+            // it (in vanilla thats /say for example).
             event_writer.send(CommandExecutionEvent {
                 command: signed.command.to_string(),
                 executor: client,
