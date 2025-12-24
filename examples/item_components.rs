@@ -1,16 +1,11 @@
-use valence::{item::ItemComponent, prelude::*};
+use valence::item::ItemComponent;
+use valence::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(
-            Update,
-            (
-                init_clients,
-                despawn_disconnected_clients,
-            ),
-        )
+        .add_systems(Update, (init_clients, despawn_disconnected_clients))
         .run();
 }
 
@@ -36,7 +31,6 @@ fn setup(
 
     commands.spawn(layer);
 }
-
 
 fn init_clients(
     mut clients: Query<
@@ -69,11 +63,14 @@ fn init_clients(
         pos.set([0.5, 65.0, 0.5]);
         *game_mode = GameMode::Survival;
 
-        inventory.set_slot(30, ItemStack::new(ItemKind::IronSword, 1).with_components(
-            vec![
+        inventory.set_slot(
+            30,
+            ItemStack::new(ItemKind::IronSword, 1).with_components(vec![
                 ItemComponent::Unbreakable,
-                ItemComponent::CustomName { name: "Custom Item Name".into() },
-            ]
-        ));
+                ItemComponent::CustomName {
+                    name: "Custom Item Name".into(),
+                },
+            ]),
+        );
     }
 }
