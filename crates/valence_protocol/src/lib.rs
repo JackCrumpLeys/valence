@@ -73,6 +73,7 @@ pub use raw::RawBytes;
 use serde::{Deserialize, Serialize};
 pub use sound::Sound;
 pub use text::{JsonText, Text};
+pub use valence_generated::registry_id::RegistryId;
 pub use valence_generated::{block, packet_id, status_effects};
 pub use valence_ident::Ident;
 pub use valence_protocol_macros::{Decode, Encode, Packet};

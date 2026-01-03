@@ -80,7 +80,7 @@ impl HashOpsHashable for bool {
     fn hash(&self) -> u32 {
         let mut hasher = Crc32cHasher::default();
         hasher.write_u8(13);
-        hasher.write_u8(if *self { 1 } else { 0 });
+        hasher.write_u8(u8::from(*self));
         hasher.finish() as u32
     }
 }

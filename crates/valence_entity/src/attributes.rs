@@ -162,20 +162,20 @@ impl EntityAttributeInstance {
                 .add_modifiers
                 .iter()
                 .map(|(id, &amount)| TrackedAttributeModifier {
-                    id: id.to_string(),
+                    id: id.clone(),
                     amount,
                     operation: 0,
                 })
                 .chain(self.multiply_base_modifiers.iter().map(|(id, &amount)| {
                     TrackedAttributeModifier {
-                        id: id.to_string(),
+                        id: id.clone(),
                         amount,
                         operation: 1,
                     }
                 }))
                 .chain(self.multiply_total_modifiers.iter().map(|(id, &amount)| {
                     TrackedAttributeModifier {
-                        id: id.to_string(),
+                        id: id.clone(),
                         amount,
                         operation: 2,
                     }
