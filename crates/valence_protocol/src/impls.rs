@@ -14,7 +14,7 @@ use std::mem;
 
 /// Prevents preallocating too much memory in case we get a malicious or invalid
 /// sequence length.
-fn cautious_capacity<Element>(size_hint: usize) -> usize {
+pub(crate) fn cautious_capacity<Element>(size_hint: usize) -> usize {
     const MAX_PREALLOC_BYTES: usize = 1024 * 1024;
 
     if mem::size_of::<Element>() == 0 {

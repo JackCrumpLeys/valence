@@ -100,22 +100,20 @@ impl<const MAX_CHARS: usize> Decode<'_> for Bounded<Box<str>, MAX_CHARS> {
     }
 }
 
+impl Decode<'_> for Text {
+    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
+        let c = Compound::decode(r).context("decoding text from NBT")?;
+        Text::deserialize(c.into_deserializer()).context("deserializing text NBT")
+    }
+}
+
 impl Encode for Text {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {
         let c = self
             .serialize(CompoundSerializer)
             .context("serializing text as compound")?;
 
-        Bounded::<_, MAX_TEXT_CHARS>(c).encode(w)
-    }
-}
-
-impl Decode<'_> for Text {
-    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
-        let mut bytes = Bounded::<RawBytes<'_>, MAX_TEXT_CHARS>::decode(r)?.0;
-        let c = Compound::decode(&mut bytes).context("decoding text from NBT")?;
-
-        Text::deserialize(c.into_deserializer()).context("deserializing text from NBT compound")
+        c.encode(w)
     }
 }
 

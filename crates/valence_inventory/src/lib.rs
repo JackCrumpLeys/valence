@@ -894,7 +894,7 @@ fn handle_click_slot(
             }
         };
 
-        println!("got cursor item: {:?}", new_cursor_item);
+        println!("got cursor item: {new_cursor_item:?}");
 
         if pkt.slot_idx < 0 && pkt.mode == ClickMode::Click {
             // The client is dropping the cursor item by clicking outside the window.
@@ -1093,7 +1093,7 @@ fn handle_click_slot(
                 // Set the cursor based on what the validation returned
                 let mut new_cursor = new_cursor_item.clone();
 
-                for slot in new_slot_changes.iter() {
+                for slot in &new_slot_changes {
                     let transferred_between_inventories =
                         ((0_i16..target_inventory.slot_count() as i16).contains(&pkt.slot_idx)
                             && pkt.mode == ClickMode::Hotbar)
@@ -1167,7 +1167,7 @@ fn handle_click_slot(
 
                 let mut new_cursor = new_cursor_item.clone();
 
-                for slot in new_slot_changes.iter() {
+                for slot in &new_slot_changes {
                     if (0_i16..client_inv.slot_count() as i16).contains(&slot.idx) {
                         if client_inv.readonly {
                             new_cursor = cursor_item.0.clone();
@@ -1402,7 +1402,7 @@ pub struct UpdateSelectedSlotEvent {
 fn update_player_selected_slot(mut clients: Query<(&mut Client, &HeldItem), Changed<HeldItem>>) {
     for (mut client, held_item) in &mut clients {
         client.write_packet(&SetHeldSlotS2c {
-            slot: held_item.hotbar_idx(),
+            slot: i32::from(held_item.hotbar_idx()).into(),
         });
     }
 }

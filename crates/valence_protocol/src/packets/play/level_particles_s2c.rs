@@ -1,4 +1,3 @@
-use anyhow::bail;
 use valence_generated::block::BlockState;
 use valence_math::{DVec3, Vec3};
 

@@ -162,20 +162,20 @@ impl EntityAttributeInstance {
                 .add_modifiers
                 .iter()
                 .map(|(id, &amount)| TrackedAttributeModifier {
-                    id: id.to_string(),
+                    id: id.clone(),
                     amount,
                     operation: 0,
                 })
                 .chain(self.multiply_base_modifiers.iter().map(|(id, &amount)| {
                     TrackedAttributeModifier {
-                        id: id.to_string(),
+                        id: id.clone(),
                         amount,
                         operation: 1,
                     }
                 }))
                 .chain(self.multiply_total_modifiers.iter().map(|(id, &amount)| {
                     TrackedAttributeModifier {
-                        id: id.to_string(),
+                        id: id.clone(),
                         amount,
                         operation: 2,
                     }
@@ -353,7 +353,7 @@ impl EntityAttributes {
     /// **For internal use only.**
     ///
     /// Converts to a [`Vec`] of [`AttributeProperty`]s.
-    pub fn to_properties(&self) -> Vec<AttributeProperty> {
+    pub fn to_properties(&self) -> Vec<AttributeProperty<'_>> {
         self.attributes
             .iter()
             .filter(|(_, instance)| instance.attribute().tracked())

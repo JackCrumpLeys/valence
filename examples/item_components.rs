@@ -67,9 +67,7 @@ fn init_clients(
             30,
             ItemStack::new(ItemKind::IronSword, 1).with_components(vec![
                 ItemComponent::Unbreakable,
-                ItemComponent::CustomName {
-                    name: "Custom Item Name".into(),
-                },
+                ItemComponent::CustomName("Custom Item Name".into()),
             ]),
         );
     }
