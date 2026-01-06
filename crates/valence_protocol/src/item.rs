@@ -137,11 +137,7 @@ pub enum ItemComponent {
 
     /// Modifies the player's base attributes (like Attack Damage, Movement
     /// Speed, or Max Health) when this item is held or equipped.
-    AttributeModifiers {
-        modifiers: Vec<AttributeModifier>,
-        /// Whether the attribute changes should be visible in the item tooltip.
-        show_in_tooltip: bool,
-    },
+    AttributeModifiers { modifiers: Vec<AttributeModifier> },
 
     /// Advanced visual overrides for resource packs.
     CustomModelData {
@@ -681,7 +677,7 @@ pub struct AttributeModifier {
     /// A unique identifier for this modifier instance.
     /// Used to prevent stacking the same modifier multiple times from different
     /// sources.
-    pub modifier_id: String,
+    pub modifier_id: Ident<String>,
 
     /// The numerical amount to change the attribute by.
     pub value: f64,
@@ -1384,10 +1380,12 @@ impl ItemStack {
     pub const fn is_empty(&self) -> bool {
         matches!(self.item, ItemKind::Air) || self.count <= 0
     }
-}
 
-impl Encode for ItemStack {
-    fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
+    pub(crate) fn encode_recursive(
+        &self,
+        mut w: impl Write,
+        prefixed: bool,
+    ) -> Result<(), anyhow::Error> {
         if self.is_empty() {
             VarInt(0).encode(w)
         } else {
@@ -1414,7 +1412,39 @@ impl Encode for ItemStack {
 
             for (id, comp) in added {
                 VarInt(id as i32).encode(&mut *w)?;
-                comp.encode(&mut *w)?;
+                if prefixed {
+                    // We need to record the length of the component data.
+                    // Then we encode len then the data.
+                    //
+                    // We use a dummy writer to avoid allocator pressue at the cost of cpu.
+
+                    struct ByteCounter {
+                        count: usize,
+                    }
+
+                    impl Write for ByteCounter {
+                        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                            self.count += buf.len();
+                            Ok(buf.len())
+                        }
+
+                        fn flush(&mut self) -> std::io::Result<()> {
+                            Ok(())
+                        }
+                    }
+
+                    // Encode to the counter to determine the length
+                    let mut counter = ByteCounter { count: 0 };
+                    comp.encode(&mut counter)?;
+
+                    // Write the length prefix
+                    VarInt(counter.count as i32).encode(&mut *w)?;
+
+                    // Real run: Encode the data to the actual writer
+                    comp.encode(&mut *w)?;
+                } else {
+                    comp.encode(&mut *w)?;
+                }
             }
 
             for id in removed {
@@ -1423,6 +1453,12 @@ impl Encode for ItemStack {
 
             Ok(())
         }
+    }
+}
+
+impl Encode for ItemStack {
+    fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
+        self.encode_recursive(w, false)
     }
 }
 
@@ -1445,13 +1481,7 @@ impl Encode for ItemComponent {
             ItemComponent::Enchantments(v) => v.encode(w),
             ItemComponent::CanPlaceOn(v) => v.encode(w),
             ItemComponent::CanBreak(v) => v.encode(w),
-            ItemComponent::AttributeModifiers {
-                modifiers,
-                show_in_tooltip,
-            } => {
-                modifiers.encode(&mut *w)?;
-                show_in_tooltip.encode(w)
-            }
+            ItemComponent::AttributeModifiers { modifiers } => modifiers.encode(w),
             ItemComponent::CustomModelData {
                 floats,
                 flags,
@@ -1701,20 +1731,24 @@ impl Encode for ItemComponent {
 
 impl<'a> Decode<'a> for ItemStack {
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
-        decode_item_stack_recursive(r, 0)
+        decode_item_stack_recursive(r, 0, false)
     }
 }
 
-fn decode_item_stack_recursive<'a>(r: &mut &'a [u8], depth: usize) -> anyhow::Result<ItemStack> {
+pub(crate) fn decode_item_stack_recursive<'a>(
+    r: &mut &'a [u8],
+    depth: usize,
+    prefixed: bool,
+) -> anyhow::Result<ItemStack> {
     if depth > MAX_RECURSION_DEPTH {
         return Err(anyhow::anyhow!("ItemStack recursion limit exceeded"));
     }
 
-    let item = ItemKind::decode(r)?;
     let count = VarInt::decode(r)?.0;
     if count <= 0 {
         return Ok(ItemStack::EMPTY);
     }
+    let item = ItemKind::decode(r)?;
 
     let mut components = item.default_components();
 
@@ -1728,6 +1762,12 @@ fn decode_item_stack_recursive<'a>(r: &mut &'a [u8], depth: usize) -> anyhow::Re
         if id >= NUM_ITEM_COMPONENTS {
             return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
         }
+
+        let _prefix = if prefixed {
+            Some(VarInt::decode(r)?)
+        } else {
+            None
+        }; // TODO: Use prefix?
 
         let component = decode_item_component(r, id, depth)?;
         let hash = component.hash();
@@ -1809,7 +1849,6 @@ fn decode_item_component<'a>(
         }),
         13 => ItemComponent::AttributeModifiers {
             modifiers: Decode::decode(r)?,
-            show_in_tooltip: Decode::decode(r)?,
         },
         14 => ItemComponent::CustomModelData {
             floats: Decode::decode(r)?,
@@ -1837,7 +1876,9 @@ fn decode_item_component<'a>(
             has_consume_particles: Decode::decode(r)?,
             effects: Decode::decode(r)?,
         },
-        22 => ItemComponent::UseRemainder(Box::new(decode_item_stack_recursive(r, depth + 1)?)),
+        22 => {
+            ItemComponent::UseRemainder(Box::new(decode_item_stack_recursive(r, depth + 1, false)?))
+        }
         23 => ItemComponent::UseCooldown {
             seconds: Decode::decode(r)?,
             cooldown_group: Decode::decode(r)?,
@@ -1895,7 +1936,7 @@ fn decode_item_component<'a>(
             let count = VarInt::decode(r)?.0;
             let mut items = Vec::with_capacity(cautious_capacity::<ItemStack>(count as usize));
             for _ in 0..count {
-                items.push(decode_item_stack_recursive(r, depth + 1)?);
+                items.push(decode_item_stack_recursive(r, depth + 1, false)?);
             }
             ItemComponent::ChargedProjectiles(items)
         }
@@ -1903,7 +1944,7 @@ fn decode_item_component<'a>(
             let count = VarInt::decode(r)?.0;
             let mut items = Vec::with_capacity(cautious_capacity::<ItemStack>(count as usize));
             for _ in 0..count {
-                items.push(decode_item_stack_recursive(r, depth + 1)?);
+                items.push(decode_item_stack_recursive(r, depth + 1, false)?);
             }
             ItemComponent::BundleContents(items)
         }
@@ -1968,7 +2009,7 @@ fn decode_item_component<'a>(
             let count = VarInt::decode(r)?.0;
             let mut items = Vec::with_capacity(cautious_capacity::<ItemStack>(count as usize));
             for _ in 0..count {
-                items.push(decode_item_stack_recursive(r, depth + 1)?);
+                items.push(decode_item_stack_recursive(r, depth + 1, false)?);
             }
             ItemComponent::Container(items)
         }
@@ -2086,14 +2127,11 @@ pub trait ItemKindExt {
     // The reason we use two lifetimes is to tell the compiler that
     // the ref self is not the same as the ref for the returned ItemComponents
     // so we can drop Self
-    fn default_components<'a, 'b>(&'b self)
-        -> [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS];
+    fn default_components(&self) -> [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS];
 }
 
 impl ItemKindExt for ItemKind {
-    fn default_components<'a, 'b>(
-        &'b self,
-    ) -> [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS] {
+    fn default_components(&self) -> [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS] {
         //     let ser_default_components = self.ser_components();
         //     let mut components = [const { None }; NUM_ITEM_COMPONENTS];
 
@@ -2364,7 +2402,7 @@ mod tests {
     fn test_attribute_modifiers_serialization() {
         let modifier = AttributeModifier {
             attribute_id: RegistryId::new(0),
-            modifier_id: "test_mod".to_string(),
+            modifier_id: ident!("test_mod").into(),
             value: 5.0,
             operation: EntityAttributeOperation::Add,
             slot: AttributeSlot::MainHand,
@@ -2372,7 +2410,6 @@ mod tests {
 
         let comp = ItemComponent::AttributeModifiers {
             modifiers: vec![modifier],
-            show_in_tooltip: true,
         };
 
         let mut stack = ItemStack::new(ItemKind::NetheriteSword, 1);

@@ -30,35 +30,15 @@ pub struct HeightMap {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Encode, Decode)]
 pub enum HeightMapKind {
     /// All blocks other than air, cave air and void air.
-    WorldSurface = 1,
+    #[packet(tag = 1)]
+    WorldSurface,
     /// "Solid" blocks, except bamboo saplings and cactuses; fluids.
-    MotionBlocking = 4,
-    /// Same as `MOTION_BLOCKING`, excluding leaf blocks.
-    MotionBlockingNoLeaves = 5,
+    #[packet(tag = 4)]
+    MotionBlocking,
+    /// Same as MOTION_BLOCKING, excluding leaf blocks.
+    #[packet(tag = 5)]
+    MotionBlockingNoLeaves,
 }
-
-// impl Encode for HeightMapKind {
-//     fn encode(&self, mut w: impl std::io::Write) -> anyhow::Result<()> {
-//         let kind = match self {
-//             HeightMapKind::WorldSurface => 1,
-//             HeightMapKind::MotionBlocking => 4,
-//             HeightMapKind::MotionBlockingNoLeaves => 5,
-//         };
-//         VarInt(kind).encode(&mut w)
-//     }
-// }
-
-// impl Decode<'_> for HeightMapKind {
-//     fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
-//         let kind = VarInt::decode(r)?;
-//         match kind.0 {
-//             1 => Ok(HeightMapKind::WorldSurface),
-//             4 => Ok(HeightMapKind::MotionBlocking),
-//             5 => Ok(HeightMapKind::MotionBlockingNoLeaves),
-//             _ => Err(anyhow::anyhow!("unknown height map kind: {}", kind.0)),
-//         }
-//     }
-// }
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct ChunkDataBlockEntity<'a> {

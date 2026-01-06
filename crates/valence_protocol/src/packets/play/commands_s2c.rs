@@ -6,30 +6,32 @@ use byteorder::WriteBytesExt;
 use valence_ident::Ident;
 
 use crate::{Decode, Encode, Packet, VarInt};
-// TODO: check the internal structure of this
+
 #[derive(Clone, Debug, Encode, Decode, Packet)]
-pub struct CommandsS2c {
-    pub commands: Vec<Node>,
+pub struct CommandsS2c<'a> {
+    pub commands: Vec<Node<'a>>,
     pub root_index: VarInt,
 }
 
 #[derive(Clone, Debug)]
-pub struct Node {
-    pub data: NodeData,
+pub struct Node<'a> {
+    pub data: NodeData<'a>,
     pub executable: bool,
     pub children: Vec<VarInt>,
     pub redirect_node: Option<VarInt>,
+    /// Set if the node requires the player to have a permission level above 0.
+    pub is_restricted: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum NodeData {
+pub enum NodeData<'a> {
     Root,
     Literal {
-        name: String,
+        name: Cow<'a, str>,
     },
     Argument {
-        name: String,
-        parser: Parser,
+        name: Cow<'a, str>,
+        parser: Parser<'a>,
         suggestion: Option<Suggestion>,
     },
 }
@@ -39,12 +41,11 @@ pub enum Suggestion {
     AskServer,
     AllRecipes,
     AvailableSounds,
-    AvailableBiomes,
     SummonableEntities,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Parser {
+pub enum Parser<'a> {
     Bool,
     Float { min: Option<f32>, max: Option<f32> },
     Double { min: Option<f64>, max: Option<f64> },
@@ -63,6 +64,7 @@ pub enum Parser {
     ItemPredicate,
     Color,
     Component,
+    Style,
     Message,
     NbtCompoundTag,
     NbtTag,
@@ -78,6 +80,7 @@ pub enum Parser {
     Swizzle,
     Team,
     ItemSlot,
+    ItemSlots,
     ResourceLocation,
     Function,
     EntityAnchor,
@@ -85,13 +88,19 @@ pub enum Parser {
     FloatRange,
     Dimension,
     GameMode,
-    Time,
-    ResourceOrTag { registry: Ident<String> },
-    ResourceOrTagKey { registry: Ident<String> },
-    Resource { registry: Ident<String> },
-    ResourceKey { registry: Ident<String> },
+    Time { min: i32 },
+    ResourceOrTag { registry: Ident<Cow<'a, str>> },
+    ResourceOrTagKey { registry: Ident<Cow<'a, str>> },
+    Resource { registry: Ident<Cow<'a, str>> },
+    ResourceKey { registry: Ident<Cow<'a, str>> },
+    ResourceSelector { registry: Ident<Cow<'a, str>> },
     TemplateMirror,
     TemplateRotation,
+    Heightmap,
+    LootTable,
+    LootPredicate,
+    LootModifier,
+    Dialog,
     Uuid,
 }
 
@@ -102,7 +111,7 @@ pub enum StringArg {
     GreedyPhrase,
 }
 
-impl Encode for Node {
+impl Encode for Node<'_> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         let node_type = match &self.data {
             NodeData::Root => 0,
@@ -121,7 +130,8 @@ impl Encode for Node {
         let flags: u8 = node_type
             | (u8::from(self.executable) * 0x04)
             | (u8::from(self.redirect_node.is_some()) * 0x08)
-            | (u8::from(has_suggestion) * 0x10);
+            | (u8::from(has_suggestion) * 0x10)
+            | (u8::from(self.is_restricted) * 0x20);
 
         w.write_u8(flags)?;
 
@@ -146,11 +156,10 @@ impl Encode for Node {
 
                 if let Some(suggestion) = suggestion {
                     match suggestion {
-                        Suggestion::AskServer => "ask_server",
-                        Suggestion::AllRecipes => "all_recipes",
-                        Suggestion::AvailableSounds => "available_sounds",
-                        Suggestion::AvailableBiomes => "available_biomes",
-                        Suggestion::SummonableEntities => "summonable_entities",
+                        Suggestion::AskServer => "minecraft:ask_server",
+                        Suggestion::AllRecipes => "minecraft:all_recipes",
+                        Suggestion::AvailableSounds => "minecraft:available_sounds",
+                        Suggestion::SummonableEntities => "minecraft:summonable_entities",
                     }
                     .encode(&mut w)?;
                 }
@@ -161,7 +170,7 @@ impl Encode for Node {
     }
 }
 
-impl<'a> Decode<'a> for Node {
+impl<'a> Decode<'a> for Node<'a> {
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
         let flags = u8::decode(r)?;
 
@@ -176,17 +185,16 @@ impl<'a> Decode<'a> for Node {
         let node_data = match flags & 0x3 {
             0 => NodeData::Root,
             1 => NodeData::Literal {
-                name: <String>::decode(r)?,
+                name: <Cow<'a, str>>::decode(r)?,
             },
             2 => NodeData::Argument {
-                name: <String>::decode(r)?,
+                name: <Cow<'a, str>>::decode(r)?,
                 parser: Parser::decode(r)?,
                 suggestion: if flags & 0x10 != 0 {
                     Some(match Ident::<Cow<str>>::decode(r)?.as_str() {
                         "minecraft:ask_server" => Suggestion::AskServer,
                         "minecraft:all_recipes" => Suggestion::AllRecipes,
                         "minecraft:available_sounds" => Suggestion::AvailableSounds,
-                        "minecraft:available_biomes" => Suggestion::AvailableBiomes,
                         "minecraft:summonable_entities" => Suggestion::SummonableEntities,
                         other => bail!("unknown command suggestion type of \"{other}\""),
                     })
@@ -202,11 +210,12 @@ impl<'a> Decode<'a> for Node {
             data: node_data,
             executable: flags & 0x04 != 0,
             redirect_node,
+            is_restricted: flags & 0x20 != 0,
         })
     }
 }
 
-impl Encode for Parser {
+impl Encode for Parser<'_> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         match self {
             Parser::Bool => 0_u8.encode(&mut w)?,
@@ -284,58 +293,72 @@ impl Encode for Parser {
             Parser::ItemPredicate => 15_u8.encode(&mut w)?,
             Parser::Color => 16_u8.encode(&mut w)?,
             Parser::Component => 17_u8.encode(&mut w)?,
-            Parser::Message => 18_u8.encode(&mut w)?,
-            Parser::NbtCompoundTag => 19_u8.encode(&mut w)?,
-            Parser::NbtTag => 20_u8.encode(&mut w)?,
-            Parser::NbtPath => 21_u8.encode(&mut w)?,
-            Parser::Objective => 22_u8.encode(&mut w)?,
-            Parser::ObjectiveCriteria => 23_u8.encode(&mut w)?,
-            Parser::Operation => 24_u8.encode(&mut w)?,
-            Parser::Particle => 25_u8.encode(&mut w)?,
-            Parser::Angle => 26_u8.encode(&mut w)?,
-            Parser::Rotation => 27_u8.encode(&mut w)?,
-            Parser::ScoreboardSlot => 28_u8.encode(&mut w)?,
+            Parser::Style => 18_u8.encode(&mut w)?,
+            Parser::Message => 19_u8.encode(&mut w)?,
+            Parser::NbtCompoundTag => 20_u8.encode(&mut w)?,
+            Parser::NbtTag => 21_u8.encode(&mut w)?,
+            Parser::NbtPath => 22_u8.encode(&mut w)?,
+            Parser::Objective => 23_u8.encode(&mut w)?,
+            Parser::ObjectiveCriteria => 24_u8.encode(&mut w)?,
+            Parser::Operation => 25_u8.encode(&mut w)?,
+            Parser::Particle => 26_u8.encode(&mut w)?,
+            Parser::Angle => 27_u8.encode(&mut w)?,
+            Parser::Rotation => 28_u8.encode(&mut w)?,
+            Parser::ScoreboardSlot => 29_u8.encode(&mut w)?,
             Parser::ScoreHolder { allow_multiple } => {
-                29_u8.encode(&mut w)?;
+                30_u8.encode(&mut w)?;
                 allow_multiple.encode(&mut w)?;
             }
-            Parser::Swizzle => 30_u8.encode(&mut w)?,
-            Parser::Team => 31_u8.encode(&mut w)?,
-            Parser::ItemSlot => 32_u8.encode(&mut w)?,
-            Parser::ResourceLocation => 33_u8.encode(&mut w)?,
-            Parser::Function => 34_u8.encode(&mut w)?,
-            Parser::EntityAnchor => 35_u8.encode(&mut w)?,
-            Parser::IntRange => 36_u8.encode(&mut w)?,
-            Parser::FloatRange => 37_u8.encode(&mut w)?,
-            Parser::Dimension => 38_u8.encode(&mut w)?,
-            Parser::GameMode => 39_u8.encode(&mut w)?,
-            Parser::Time => 40_u8.encode(&mut w)?,
-            Parser::ResourceOrTag { registry } => {
-                41_u8.encode(&mut w)?;
-                registry.encode(&mut w)?;
-            }
-            Parser::ResourceOrTagKey { registry } => {
+            Parser::Swizzle => 31_u8.encode(&mut w)?,
+            Parser::Team => 32_u8.encode(&mut w)?,
+            Parser::ItemSlot => 33_u8.encode(&mut w)?,
+            Parser::ItemSlots => 34_u8.encode(&mut w)?,
+            Parser::ResourceLocation => 35_u8.encode(&mut w)?,
+            Parser::Function => 36_u8.encode(&mut w)?,
+            Parser::EntityAnchor => 37_u8.encode(&mut w)?,
+            Parser::IntRange => 38_u8.encode(&mut w)?,
+            Parser::FloatRange => 39_u8.encode(&mut w)?,
+            Parser::Dimension => 40_u8.encode(&mut w)?,
+            Parser::GameMode => 41_u8.encode(&mut w)?,
+            Parser::Time { min } => {
                 42_u8.encode(&mut w)?;
-                registry.encode(&mut w)?;
+                min.encode(&mut w)?;
             }
-            Parser::Resource { registry } => {
+            Parser::ResourceOrTag { registry } => {
                 43_u8.encode(&mut w)?;
                 registry.encode(&mut w)?;
             }
-            Parser::ResourceKey { registry } => {
+            Parser::ResourceOrTagKey { registry } => {
                 44_u8.encode(&mut w)?;
                 registry.encode(&mut w)?;
             }
-            Parser::TemplateMirror => 45_u8.encode(&mut w)?,
-            Parser::TemplateRotation => 46_u8.encode(&mut w)?,
-            Parser::Uuid => 47_u8.encode(&mut w)?,
+            Parser::Resource { registry } => {
+                45_u8.encode(&mut w)?;
+                registry.encode(&mut w)?;
+            }
+            Parser::ResourceKey { registry } => {
+                46_u8.encode(&mut w)?;
+                registry.encode(&mut w)?;
+            }
+            Parser::ResourceSelector { registry } => {
+                47_u8.encode(&mut w)?;
+                registry.encode(&mut w)?;
+            }
+            Parser::TemplateMirror => 48_u8.encode(&mut w)?,
+            Parser::TemplateRotation => 49_u8.encode(&mut w)?,
+            Parser::Heightmap => 50_u8.encode(&mut w)?,
+            Parser::LootTable => 51_u8.encode(&mut w)?,
+            Parser::LootPredicate => 52_u8.encode(&mut w)?,
+            Parser::LootModifier => 53_u8.encode(&mut w)?,
+            Parser::Dialog => 55_u8.encode(&mut w)?,
+            Parser::Uuid => 56_u8.encode(&mut w)?,
         }
 
         Ok(())
     }
 }
 
-impl<'a> Decode<'a> for Parser {
+impl<'a> Decode<'a> for Parser<'a> {
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
         fn decode_min_max<'a, T: Decode<'a>>(
             r: &mut &'a [u8],
@@ -394,46 +417,58 @@ impl<'a> Decode<'a> for Parser {
             15 => Self::ItemPredicate,
             16 => Self::Color,
             17 => Self::Component,
-            18 => Self::Message,
-            19 => Self::NbtCompoundTag,
-            20 => Self::NbtTag,
-            21 => Self::NbtPath,
-            22 => Self::Objective,
-            23 => Self::ObjectiveCriteria,
-            24 => Self::Operation,
-            25 => Self::Particle,
-            26 => Self::Angle,
-            27 => Self::Rotation,
-            28 => Self::ScoreboardSlot,
-            29 => Self::ScoreHolder {
+            18 => Self::Style,
+            19 => Self::Message,
+            20 => Self::NbtCompoundTag,
+            21 => Self::NbtTag,
+            22 => Self::NbtPath,
+            23 => Self::Objective,
+            24 => Self::ObjectiveCriteria,
+            25 => Self::Operation,
+            26 => Self::Particle,
+            27 => Self::Angle,
+            28 => Self::Rotation,
+            29 => Self::ScoreboardSlot,
+            30 => Self::ScoreHolder {
                 allow_multiple: bool::decode(r)?,
             },
-            30 => Self::Swizzle,
-            31 => Self::Team,
-            32 => Self::ItemSlot,
-            33 => Self::ResourceLocation,
-            34 => Self::Function,
-            35 => Self::EntityAnchor,
-            36 => Self::IntRange,
-            37 => Self::FloatRange,
-            38 => Self::Dimension,
-            39 => Self::GameMode,
-            40 => Self::Time,
-            41 => Self::ResourceOrTag {
+            31 => Self::Swizzle,
+            32 => Self::Team,
+            33 => Self::ItemSlot,
+            34 => Self::ItemSlots,
+            35 => Self::ResourceLocation,
+            36 => Self::Function,
+            37 => Self::EntityAnchor,
+            38 => Self::IntRange,
+            39 => Self::FloatRange,
+            40 => Self::Dimension,
+            41 => Self::GameMode,
+            42 => Self::Time {
+                min: i32::decode(r)?,
+            },
+            43 => Self::ResourceOrTag {
                 registry: Ident::decode(r)?,
             },
-            42 => Self::ResourceOrTagKey {
+            44 => Self::ResourceOrTagKey {
                 registry: Ident::decode(r)?,
             },
-            43 => Self::Resource {
+            45 => Self::Resource {
                 registry: Ident::decode(r)?,
             },
-            44 => Self::ResourceKey {
+            46 => Self::ResourceKey {
                 registry: Ident::decode(r)?,
             },
-            45 => Self::TemplateMirror,
-            46 => Self::TemplateRotation,
-            47 => Self::Uuid,
+            47 => Self::ResourceSelector {
+                registry: Ident::decode(r)?,
+            },
+            48 => Self::TemplateMirror,
+            49 => Self::TemplateRotation,
+            50 => Self::Heightmap,
+            51 => Self::LootTable,
+            52 => Self::LootPredicate,
+            53 => Self::LootModifier,
+            55 => Self::Dialog,
+            56 => Self::Uuid,
             n => bail!("unknown command parser ID of {n}"),
         })
     }

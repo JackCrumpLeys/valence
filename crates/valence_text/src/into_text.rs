@@ -216,7 +216,7 @@ pub trait IntoText<'a>: Sized {
     fn on_hover_show_text(self, text: impl IntoText<'static>) -> Text {
         let mut value = self.into_text();
         value.hover_event = Some(HoverEvent::ShowText {
-            value: text.into_text(),
+            text: text.into_text(),
         });
         value
     }

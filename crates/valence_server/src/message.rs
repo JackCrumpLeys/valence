@@ -27,14 +27,14 @@ pub trait SendMessage {
 impl<T: WritePacket> SendMessage for T {
     fn send_chat_message<'a>(&mut self, msg: impl IntoText<'a>) {
         self.write_packet(&SystemChatS2c {
-            chat: msg.into_cow_text(),
+            chat: msg.into_cow_text_component(),
             overlay: false,
         });
     }
 
     fn send_action_bar_message<'a>(&mut self, msg: impl IntoText<'a>) {
         self.write_packet(&SystemChatS2c {
-            chat: msg.into_cow_text(),
+            chat: msg.into_cow_text_component(),
             overlay: true,
         });
     }
