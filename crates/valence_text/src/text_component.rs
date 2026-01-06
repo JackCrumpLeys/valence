@@ -1,6 +1,4 @@
-use std::borrow::Cow;
 use std::io::Write;
-use std::ops::Deref;
 
 use anyhow::ensure;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
@@ -16,54 +14,6 @@ use crate::{Decode, Encode};
 pub enum TextComponent {
     Compound(Text),
     String(NbtStringText),
-}
-
-impl<'a> IntoText<'a> for TextComponent {
-    fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
-        match self {
-            TextComponent::Compound(text) => text,
-            TextComponent::String(s) => s.0,
-        }
-        .into_cow_text()
-    }
-}
-
-impl TextComponent {
-    pub fn as_text(&self) -> &Text {
-        match self {
-            TextComponent::Compound(text) => text,
-            TextComponent::String(s) => &s.0,
-        }
-    }
-}
-
-pub trait IntoTextComponent<'a> {
-    fn into_text_component(self) -> TextComponent;
-    fn into_cow_text_component(self) -> Cow<'a, Text>;
-}
-
-impl<'a, T: IntoText<'a>> IntoTextComponent<'a> for T {
-    fn into_text_component(self) -> TextComponent {
-        let text = self.into_cow_text();
-        if text.is_plain() {
-            TextComponent::String(NbtStringText(text.into_owned()))
-        } else {
-            TextComponent::Compound(text.into_owned())
-        }
-    }
-
-    fn into_cow_text_component(self) -> Cow<'a, Text> {
-        let text = self.into_cow_text();
-        if text.is_plain() {
-            Cow::Owned(
-                TextComponent::String(NbtStringText(text.into_owned()))
-                    .as_text()
-                    .clone(),
-            )
-        } else {
-            text
-        }
-    }
 }
 
 /// A wrapper around `Text` that encodes and decodes as an NBT String.
@@ -126,7 +76,7 @@ impl Encode for TextComponent {
 
 impl Decode<'_> for TextComponent {
     fn decode(r: &mut &'_ [u8]) -> anyhow::Result<Self> {
-        let tag_id = r.read_u8()?;
+        let tag_id = dbg!(r.read_u8()?);
 
         match tag_id {
             x if x == Tag::String as u8 => {

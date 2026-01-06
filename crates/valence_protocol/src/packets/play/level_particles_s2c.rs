@@ -16,6 +16,7 @@ pub struct LevelParticlesS2c {
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub enum Particle {
+    // TODO: Move to registry?
     AngryVillager,
     Block(BlockState),
     BlockMarker(BlockState),
@@ -31,17 +32,16 @@ pub enum Particle {
     FallingWater,
     Dust {
         /// The color, encoded as 0xRRGGBB; top bits are ignored.
-        /// TODO: Does valence have a type for this?
         color: i32,
         //// The scale, will be clamped between 0.01 and 4.
         scale: f32,
     },
     DustColorTransition {
         /// The color to transition from, encoded as 0xRRGGBB; top bits are
-        /// ignored. TODO: Does valence have a type for this?
+        /// ignored.
         from_color: i32,
         /// The color to transition from, encoded as 0xRRGGBB; top bits are
-        /// ignored. TODO: Does valence have a type for this?
+        /// ignored.
         to_color: i32,
         /// The scale, will be clamped between 0.01 and 4.
         scale: f32,
@@ -53,7 +53,6 @@ pub enum Particle {
     EndRod,
     EntityEffect {
         /// The ARGB components of the color encoded as an Int
-        /// TODO: proper type
         color: i32,
     },
     ExplosionEmitter,
@@ -72,7 +71,6 @@ pub enum Particle {
     PaleOakLeaves,
     TintedLeaves {
         /// The ARGB components of the color encoded as an Int
-        /// TODO: type
         color: i32,
     },
     SculkSoul,
@@ -89,7 +87,6 @@ pub enum Particle {
     Heart,
     InstantEffect,
     /// If the item is air or its count is 0, the client might crash.
-    // TODO: add check when encoding maybe?
     Item(Box<ItemStack>),
     Vibration {
         /// The type of the vibration source defined by the
@@ -184,9 +181,9 @@ pub enum VibrationSourceType {
     },
     Entity {
         /// The ID of the entity the vibration originated from.
-        // Based on the context im assuming this is not a EntityKind but a reference to a living
-        // entity, do we have access to this from valence?
-        kind: VarInt,
+        ///
+        /// See `EntityId`.
+        id: VarInt,
         /// Entity eye height.
         eye_height: f32,
     },

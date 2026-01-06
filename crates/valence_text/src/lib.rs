@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 
+use std::any::type_name;
 use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
@@ -16,9 +17,12 @@ pub mod color;
 mod into_text;
 #[cfg(test)]
 mod tests;
+// pub mod text_component;
 
 pub use color::Color;
 pub use into_text::IntoText;
+
+// use crate::text_component::TextComponent;
 
 /// Represents formatted text in Minecraft's JSON text format.
 ///
@@ -105,7 +109,11 @@ pub struct TextInner {
 #[serde(untagged)]
 pub enum TextContent {
     /// Normal text
-    Text { text: Cow<'static, str> },
+    Text {
+        #[serde(deserialize_with = "deserialize_cow_str_from_any")]
+        #[serde(alias = "")]
+        text: Cow<'static, str>,
+    },
     /// A piece of text that will be translated on the client based on the
     /// client language. If no corresponding translation can be found, the
     /// identifier itself is used as the translated text.
@@ -113,6 +121,10 @@ pub enum TextContent {
         /// A translation identifier, corresponding to the identifiers found in
         /// loaded language files.
         translate: Cow<'static, str>,
+        /// Optional fallback text if the translation is missing.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[serde(alias = "")]
+        fallback: Option<Cow<'static, str>>,
         /// Optional list of text components to be inserted into slots in the
         /// translation text. Ignored if `translate` is not present.
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -194,7 +206,7 @@ pub enum ClickEvent {
     /// Opens an URL. it must start with `http://` or `https://`.
     OpenUrl { url: Cow<'static, str> },
     /// Only usable by internal servers for security reasons.
-    OpenFile { value: Cow<'static, str> },
+    OpenFile { path: Cow<'static, str> },
     /// Sends a chat command. Doesn't actually have to be a command, can be a
     /// normal chat message.
     RunCommand { command: Cow<'static, str> },
@@ -208,13 +220,45 @@ pub enum ClickEvent {
     CopyToClipboard { value: Cow<'static, str> },
 }
 
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct NBTUuid([i32; 4]); // TODO: Is this ok?
+
+impl From<Uuid> for NBTUuid {
+    #[inline]
+    fn from(value: Uuid) -> Self {
+        let bytes = value.as_bytes();
+
+        Self([
+            i32::from_be_bytes(bytes[0..4].try_into().unwrap()),
+            i32::from_be_bytes(bytes[4..8].try_into().unwrap()),
+            i32::from_be_bytes(bytes[8..12].try_into().unwrap()),
+            i32::from_be_bytes(bytes[12..16].try_into().unwrap()),
+        ])
+    }
+}
+
+impl From<NBTUuid> for Uuid {
+    #[inline]
+    fn from(value: NBTUuid) -> Self {
+        let mut bytes = [0u8; 16];
+
+        bytes[0..4].copy_from_slice(&value.0[0].to_be_bytes());
+        bytes[4..8].copy_from_slice(&value.0[1].to_be_bytes());
+        bytes[8..12].copy_from_slice(&value.0[2].to_be_bytes());
+        bytes[12..16].copy_from_slice(&value.0[3].to_be_bytes());
+
+        Uuid::from_bytes(bytes)
+    }
+}
+
 /// Action to take when mouse-hovering on the text.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
 #[allow(clippy::enum_variant_names)]
 pub enum HoverEvent {
     /// Displays a tooltip with the given text.
-    ShowText { value: Text },
+    ShowText { text: Text },
     /// Shows an item.
     ShowItem {
         /// Resource identifier of the item
@@ -222,13 +266,15 @@ pub enum HoverEvent {
         /// Number of the items in the stack
         count: Option<i32>,
         /// NBT information about the item (sNBT format)
-        tag: Cow<'static, str>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        components: Option<Cow<'static, Compound>>, /* TODO: Kinda botch, can we actually decode
+                                                     * itemstack here? */
     },
     /// Shows an entity.
     ShowEntity {
         /// The entity's UUID
-        uuid: Uuid,
-        /// Resource identifier of the entity
+        uuid: NBTUuid,
+        /// Resource iuentifier of the entity
         #[serde(default, skip_serializing_if = "Option::is_none")]
         id: Option<Ident<Cow<'static, str>>>,
         /// Optional custom name for the entity
@@ -264,17 +310,36 @@ impl Text {
         }))
     }
 
+    /// Is this a simple text object without any extra children or formatting?
+    /// (No options set and only TextContent::Text)
+    pub fn is_plain(&self) -> bool {
+        self.extra.is_empty()
+            && self.color.is_none()
+            && self.font.is_none()
+            && self.bold.is_none()
+            && self.italic.is_none()
+            && self.underlined.is_none()
+            && self.strikethrough.is_none()
+            && self.obfuscated.is_none()
+            && self.insertion.is_none()
+            && self.click_event.is_none()
+            && self.hover_event.is_none()
+            && matches!(self.content, TextContent::Text { .. })
+    }
+
     /// Create translated text based on the given translation key, with extra
     /// text components to be inserted into the slots of the translation text.
-    pub fn translate<K, W>(key: K, with: W) -> Self
+    pub fn translate<K, W, F>(key: K, with: W, fallback: F) -> Self
     where
         K: Into<Cow<'static, str>>,
         W: Into<Vec<Text>>,
+        F: Into<Option<Cow<'static, str>>>,
     {
         Self(Box::new(TextInner {
             content: TextContent::Translate {
                 translate: key.into(),
                 with: with.into(),
+                fallback: fallback.into(),
             },
             ..Default::default()
         }))
@@ -623,6 +688,54 @@ impl Default for TextContent {
     fn default() -> Self {
         Self::Text { text: "".into() }
     }
+}
+
+fn deserialize_cow_str_from_any<'de, D>(deserializer: D) -> Result<Cow<'static, str>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct AnyVisitor;
+
+    impl<'de> Visitor<'de> for AnyVisitor {
+        type Value = Cow<'static, str>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("string or scalar value")
+        }
+
+        fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+            dbg!(&v);
+            Ok(Cow::Owned(v.to_owned()))
+        }
+
+        fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
+            dbg!(&v);
+            Ok(Cow::Owned(v))
+        }
+
+        // Handle integers (e.g. { "": 1 })
+        fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
+            dbg!(&v);
+            Ok(Cow::Owned(v.to_string()))
+        }
+
+        fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
+            dbg!(&v);
+            Ok(Cow::Owned(v.to_string()))
+        }
+
+        fn visit_f64<E: de::Error>(self, v: f64) -> Result<Self::Value, E> {
+            dbg!(&v);
+            Ok(Cow::Owned(v.to_string()))
+        }
+
+        fn visit_bool<E: de::Error>(self, v: bool) -> Result<Self::Value, E> {
+            dbg!(&v);
+            Ok(Cow::Owned(v.to_string()))
+        }
+    }
+
+    deserializer.deserialize_any(AnyVisitor)
 }
 
 impl<'de> Deserialize<'de> for Text {

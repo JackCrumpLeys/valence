@@ -9,6 +9,7 @@ use valence_generated::block::{BlockEntityKind, BlockKind, BlockState};
 use valence_generated::item::ItemKind;
 use valence_generated::registry_id::RegistryId;
 use valence_ident::{Ident, IdentError};
+use valence_nbt::compound::NetworkCompound;
 use valence_nbt::Compound;
 use valence_text::color::RgbColor;
 
@@ -65,6 +66,20 @@ impl Decode<'_> for Compound {
         // TODO: consider if we need to bound the input slice or add some other
         // mitigation to prevent excessive memory usage on hostile input.
         Ok(valence_nbt::from_binary(r)?.0)
+    }
+}
+
+impl Encode for NetworkCompound {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        Ok(valence_nbt::to_network_binary(&self.compound, w)?)
+    }
+}
+
+impl Decode<'_> for NetworkCompound {
+    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
+        Ok(NetworkCompound {
+            compound: valence_nbt::from_network_binary(r)?,
+        })
     }
 }
 

@@ -16,7 +16,7 @@ encryption = ["dep:aes", "dep:cfb8"]
 compression = ["dep:flate2"]
 
 [dependencies]
-bevy_ecs.workspace = true                                 # TODO: make this optional
+bevy_ecs.workspace = true # TODO: make this optional
 valence_math.workspace = true
 valence_generated.workspace = true
 valence_text.workspace = true
@@ -34,7 +34,13 @@ serde_json.workspace = true
 tracing.workspace = true
 bytes.workspace = true
 bitfield-struct.workspace = true
-derive_more = { workspace = true, features = ["from", "into", "deref", "deref_mut", "as_ref"] }
+derive_more = { workspace = true, features = [
+  "from",
+  "into",
+  "deref",
+  "deref_mut",
+  "as_ref",
+] }
 cfb8 = { workspace = true, optional = true }
 flate2 = { workspace = true, optional = true }
 aes = { workspace = true, optional = true }

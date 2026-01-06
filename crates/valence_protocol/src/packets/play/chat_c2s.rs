@@ -1,7 +1,6 @@
 use crate::{Bounded, Decode, Encode, FixedBitSet, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
-
 pub struct ChatC2s<'a> {
     pub message: Bounded<&'a str, 256>,
     pub timestamp: u64,

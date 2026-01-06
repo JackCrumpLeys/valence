@@ -3,6 +3,7 @@ use std::io::Write;
 use anyhow::{ensure, Context};
 use serde::de::IntoDeserializer;
 use serde::{Deserialize, Serialize};
+use valence_nbt::compound::NetworkCompound;
 use valence_nbt::serde::ser::CompoundSerializer;
 use valence_nbt::Compound;
 use valence_text::{JsonText, Text};
@@ -102,7 +103,10 @@ impl<const MAX_CHARS: usize> Decode<'_> for Bounded<Box<str>, MAX_CHARS> {
 
 impl Decode<'_> for Text {
     fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
-        let c = Compound::decode(r).context("decoding text from NBT")?;
+        let c = NetworkCompound::decode(r)
+            .context("decoding text from NBT")?
+            .compound;
+        dbg!(&c);
         Text::deserialize(c.into_deserializer()).context("deserializing text NBT")
     }
 }
@@ -113,7 +117,7 @@ impl Encode for Text {
             .serialize(CompoundSerializer)
             .context("serializing text as compound")?;
 
-        c.encode(w)
+        NetworkCompound::from(c).encode(w)
     }
 }
 

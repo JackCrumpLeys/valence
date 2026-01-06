@@ -1,19 +1,62 @@
-use crate::{Decode, Encode, Packet, VarInt};
+use valence_generated::registry_id::RegistryId;
+
+use crate::packets::play::update_recipes_s2c::SlotDisplay;
+use crate::{Decode, Encode, IDSet, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
-pub struct RecipeBookAddS2c {
-    pub recipe_count: VarInt,
-    pub recipes: Vec<Recipe>,
+pub struct RecipeBookAddS2c<'a> {
+    pub recipes: Vec<RecipeEntry<'a>>,
+    pub replace: bool,
 }
 
 #[derive(Clone, Debug, Encode, Decode)]
-pub struct Recipe {
-    pub recipe_id: VarInt,
-    pub display_id: VarInt,
-    pub group_id: Option<VarInt>,
-    pub category_id: VarInt,
-    pub has_ingredients: bool,
-    pub ingredients: Option<Vec<VarInt>>,
+pub struct RecipeEntry<'a> {
+    pub id: VarInt,
+    pub display: RecipeDisplay<'a>,
+    pub group: RegistryId,
+    pub category: RegistryId,
+    pub ingredients: Option<Vec<IDSet>>,
+    // 0x01: show notification; 0x02: highlight as new
     pub flags: u8,
-    pub replace: bool,
+}
+
+#[derive(Clone, Debug, Encode, Decode)]
+pub struct RecipeDisplay<'a> {
+    pub kind: RecipeDisplayKind<'a>,
+}
+
+#[derive(Clone, Debug, Encode, Decode)]
+pub enum RecipeDisplayKind<'a> {
+    CraftingShapeless {
+        ingredients: Vec<SlotDisplay<'a>>,
+        result: SlotDisplay<'a>,
+        crafting_station: SlotDisplay<'a>,
+    },
+    CraftingShaped {
+        width: VarInt,
+        height: VarInt,
+        ingredients: Vec<SlotDisplay<'a>>,
+        result: SlotDisplay<'a>,
+        crafting_station: SlotDisplay<'a>,
+    },
+    Furnace {
+        ingredient: SlotDisplay<'a>,
+        fuel: SlotDisplay<'a>,
+        result: SlotDisplay<'a>,
+        crafting_station: SlotDisplay<'a>,
+        duration: VarInt,
+        experience: f32,
+    },
+    Stonecutter {
+        ingredient: SlotDisplay<'a>,
+        result: SlotDisplay<'a>,
+        crafting_station: SlotDisplay<'a>,
+    },
+    Smithing {
+        template: SlotDisplay<'a>,
+        base: SlotDisplay<'a>,
+        addition: SlotDisplay<'a>,
+        result: SlotDisplay<'a>,
+        crafting_station: SlotDisplay<'a>,
+    },
 }

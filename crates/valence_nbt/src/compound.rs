@@ -2,7 +2,7 @@ use std::borrow::{Borrow, Cow};
 use std::fmt;
 use std::hash::Hash;
 use std::iter::FusedIterator;
-use std::ops::{Index, IndexMut};
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 use crate::Value;
 
@@ -10,6 +10,31 @@ use crate::Value;
 #[derive(Clone, Default)]
 pub struct Compound<S = String> {
     map: Map<S>,
+}
+
+/// A wrapper around Compound that encodes and decodes as network NBT
+#[derive(Clone, Default)]
+pub struct NetworkCompound<S = String> {
+    pub compound: Compound<S>,
+}
+
+impl<S> NetworkCompound<S> {
+    pub fn from(inner: Compound<S>) -> NetworkCompound<S> {
+        NetworkCompound::<S> { compound: inner }
+    }
+}
+
+impl<S> Deref for NetworkCompound<S> {
+    type Target = Compound<S>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.compound
+    }
+}
+impl<S> DerefMut for NetworkCompound<S> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.compound
+    }
 }
 
 #[cfg(not(feature = "preserve_order"))]
