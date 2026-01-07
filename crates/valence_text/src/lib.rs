@@ -1,6 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-use std::any::type_name;
 use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
@@ -241,7 +240,7 @@ impl From<Uuid> for NBTUuid {
 impl From<NBTUuid> for Uuid {
     #[inline]
     fn from(value: NBTUuid) -> Self {
-        let mut bytes = [0u8; 16];
+        let mut bytes = [0_u8; 16];
 
         bytes[0..4].copy_from_slice(&value.0[0].to_be_bytes());
         bytes[4..8].copy_from_slice(&value.0[1].to_be_bytes());
@@ -258,7 +257,10 @@ impl From<NBTUuid> for Uuid {
 #[allow(clippy::enum_variant_names)]
 pub enum HoverEvent {
     /// Displays a tooltip with the given text.
-    ShowText { text: Text },
+    ShowText {
+        #[serde(alias = "value", alias = "contents")]
+        text: Text,
+    },
     /// Shows an item.
     ShowItem {
         /// Resource identifier of the item
@@ -311,7 +313,7 @@ impl Text {
     }
 
     /// Is this a simple text object without any extra children or formatting?
-    /// (No options set and only TextContent::Text)
+    /// (No options set and only `TextContent::Text`)
     pub fn is_plain(&self) -> bool {
         self.extra.is_empty()
             && self.color.is_none()
@@ -704,33 +706,33 @@ where
         }
 
         fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
-            dbg!(&v);
+            &v;
             Ok(Cow::Owned(v.to_owned()))
         }
 
         fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
-            dbg!(&v);
+            &v;
             Ok(Cow::Owned(v))
         }
 
         // Handle integers (e.g. { "": 1 })
         fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
-            dbg!(&v);
+            &v;
             Ok(Cow::Owned(v.to_string()))
         }
 
         fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
-            dbg!(&v);
+            &v;
             Ok(Cow::Owned(v.to_string()))
         }
 
         fn visit_f64<E: de::Error>(self, v: f64) -> Result<Self::Value, E> {
-            dbg!(&v);
+            &v;
             Ok(Cow::Owned(v.to_string()))
         }
 
         fn visit_bool<E: de::Error>(self, v: bool) -> Result<Self::Value, E> {
-            dbg!(&v);
+            &v;
             Ok(Cow::Owned(v.to_string()))
         }
     }

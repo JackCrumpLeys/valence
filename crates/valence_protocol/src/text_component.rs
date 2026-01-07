@@ -1,23 +1,19 @@
 use std::borrow::Cow;
 use std::io::Write;
-use std::ops::Deref;
 
 use anyhow::ensure;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use serde::{Deserialize, Serialize};
 use valence_nbt::binary::{FromModifiedUtf8, ToModifiedUtf8};
-use valence_nbt::serde::ser::CompoundSerializer;
-use valence_nbt::{Compound, Tag};
+use valence_nbt::Tag;
 use valence_text::{IntoText, Text};
 
 use crate::{Decode, Encode};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TextComponent {
     Compound(Text),
     String(NbtStringText),
 }
-
 impl<'a> IntoText<'a> for TextComponent {
     fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
         match self {
@@ -67,7 +63,7 @@ impl<'a, T: IntoText<'a>> IntoTextComponent<'a> for T {
 }
 
 /// A wrapper around `Text` that encodes and decodes as an NBT String.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NbtStringText(pub Text);
 
 impl Encode for NbtStringText {
@@ -82,7 +78,7 @@ impl Encode for NbtStringText {
             Err(_) => {
                 return Err(anyhow::anyhow!(
                     "string of length {len} exceeds maximum of u16::MAX"
-                ))
+                ));
             }
         }
 
@@ -127,7 +123,6 @@ impl Encode for TextComponent {
 impl Decode<'_> for TextComponent {
     fn decode(r: &mut &'_ [u8]) -> anyhow::Result<Self> {
         let tag_id = r.read_u8()?;
-
         match tag_id {
             x if x == Tag::String as u8 => {
                 let nbt_string_text = NbtStringText::decode(r)?;
