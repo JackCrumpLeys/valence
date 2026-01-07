@@ -5,10 +5,9 @@ use serde::de::IntoDeserializer;
 use serde::{Deserialize, Serialize};
 use valence_nbt::compound::NetworkCompound;
 use valence_nbt::serde::ser::CompoundSerializer;
-use valence_nbt::Compound;
 use valence_text::{JsonText, Text};
 
-use crate::{Bounded, Decode, Encode, RawBytes, VarInt};
+use crate::{Bounded, Decode, Encode, VarInt};
 
 const DEFAULT_MAX_STRING_CHARS: usize = 32767;
 const MAX_TEXT_CHARS: usize = 262144;
@@ -106,7 +105,7 @@ impl Decode<'_> for Text {
         let c = NetworkCompound::decode(r)
             .context("decoding text from NBT")?
             .compound;
-        dbg!(&c);
+        &c;
         Text::deserialize(c.into_deserializer()).context("deserializing text NBT")
     }
 }
