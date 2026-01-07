@@ -331,17 +331,16 @@ impl Text {
 
     /// Create translated text based on the given translation key, with extra
     /// text components to be inserted into the slots of the translation text.
-    pub fn translate<K, W, F>(key: K, with: W, fallback: F) -> Self
+    pub fn translate<K, W>(key: K, with: W, fallback: Option<Cow<'static, str>>) -> Self
     where
         K: Into<Cow<'static, str>>,
         W: Into<Vec<Text>>,
-        F: Into<Option<Cow<'static, str>>>,
     {
         Self(Box::new(TextInner {
             content: TextContent::Translate {
                 translate: key.into(),
                 with: with.into(),
-                fallback: fallback.into(),
+                fallback,
             },
             ..Default::default()
         }))

@@ -586,6 +586,10 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
         pub struct BlockState(u16);
 
+        static SHAPES: &[Aabb; #shape_count] = &[
+            #(#shapes,)*
+        ];
+
         impl BlockState {
             /// Returns the default block state for a given block type.
             pub const fn from_kind(kind: BlockKind) -> Self {
@@ -691,9 +695,6 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                     _ => false,
                 }
             }
-            const SHAPES: [Aabb; #shape_count] = [
-                #(#shapes,)*
-            ];
 
             pub fn collision_shapes(self) -> impl ExactSizeIterator<Item = Aabb> + FusedIterator + Clone {
                 let shape_idxs: &'static [u16] = match self.0 {
@@ -701,7 +702,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                     _ => &[],
                 };
 
-                shape_idxs.into_iter().map(|idx| Self::SHAPES[*idx as usize])
+                shape_idxs.into_iter().map(|idx| SHAPES[*idx as usize])
             }
 
             pub const fn luminance(self) -> u8 {

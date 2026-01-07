@@ -38,3 +38,12 @@ pub struct SlotChange {
     pub idx: i16,
     pub stack: ItemStack,
 }
+
+impl From<SlotChange> for HashedSlotChange {
+    fn from(value: SlotChange) -> Self {
+        HashedSlotChange {
+            idx: value.idx,
+            stack: value.stack.into(),
+        }
+    }
+}

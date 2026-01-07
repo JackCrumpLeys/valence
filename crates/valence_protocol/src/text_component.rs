@@ -14,6 +14,7 @@ pub enum TextComponent {
     Compound(Text),
     String(NbtStringText),
 }
+
 impl<'a> IntoText<'a> for TextComponent {
     fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
         match self {
@@ -35,7 +36,7 @@ impl TextComponent {
 
 pub trait IntoTextComponent<'a> {
     fn into_text_component(self) -> TextComponent;
-    fn into_cow_text_component(self) -> Cow<'a, Text>;
+    fn into_cow_text_component(self) -> Cow<'a, TextComponent>;
 }
 
 impl<'a, T: IntoText<'a>> IntoTextComponent<'a> for T {
@@ -48,17 +49,14 @@ impl<'a, T: IntoText<'a>> IntoTextComponent<'a> for T {
         }
     }
 
-    fn into_cow_text_component(self) -> Cow<'a, Text> {
-        let text = self.into_cow_text();
-        if text.is_plain() {
-            Cow::Owned(
-                TextComponent::String(NbtStringText(text.into_owned()))
-                    .as_text()
-                    .clone(),
-            )
-        } else {
-            text
-        }
+    fn into_cow_text_component(self) -> Cow<'a, TextComponent> {
+        Cow::Owned(self.into_text_component())
+    }
+}
+
+impl From<Text> for TextComponent {
+    fn from(value: Text) -> Self {
+        value.into_text_component()
     }
 }
 
@@ -114,7 +112,11 @@ impl Decode<'_> for NbtStringText {
 impl Encode for TextComponent {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         match self {
-            TextComponent::Compound(text) => text.encode(&mut w),
+            TextComponent::Compound(text) => {
+                w.write_u8(Tag::Compound as u8)?;
+
+                text.encode(&mut w)
+            }
             TextComponent::String(nbt_string_text) => nbt_string_text.encode(&mut w),
         }
     }

@@ -18,6 +18,7 @@ use valence_server::client::{Client, FlushPacketsSet, SpawnClientsSet};
 use valence_server::protocol::packets::play::{
     update_advancements_s2c as packet, SelectAdvancementsTabS2c,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::protocol::{
     anyhow, packet_id, Encode, Packet, PacketSide, PacketState, RawBytes, VarInt, WritePacket,
 };
@@ -116,8 +117,8 @@ impl UpdateAdvancementCachedBytesQuery<'_, '_> {
 
         if let Some(a_display) = a_display {
             pkt.display_data = Some(packet::AdvancementDisplay {
-                title: Cow::Borrowed(&a_display.title),
-                description: Cow::Borrowed(&a_display.description),
+                title: a_display.title.clone().into_cow_text_component(),
+                description: a_display.title.clone().into_cow_text_component(),
                 icon: &a_display.icon,
                 frame_type: VarInt(a_display.frame_type as i32),
                 flags: a_display.flags(),

@@ -25,7 +25,7 @@ pub struct CommandSystemSet;
 #[derive(Resource, Default)]
 #[allow(clippy::type_complexity)]
 pub struct CommandRegistry {
-    pub graph: CommandGraph,
+    pub graph: CommandGraph<'static>,
     pub parsers: HashMap<NodeIndex, fn(&mut ParseInput) -> bool>,
     pub modifiers: HashMap<NodeIndex, fn(String, &mut HashMap<ModifierValue, ModifierValue>)>,
     pub executables: HashSet<NodeIndex>,

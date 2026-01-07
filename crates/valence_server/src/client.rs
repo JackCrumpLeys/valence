@@ -35,6 +35,7 @@ use valence_protocol::packets::play::{
 use valence_protocol::profile::Property;
 use valence_protocol::sound::{Sound, SoundCategory, SoundDirect, SoundId};
 use valence_protocol::text::{IntoText, Text};
+use valence_protocol::text_component::IntoTextComponent;
 use valence_protocol::var_int::VarInt;
 use valence_protocol::{BlockPos, ChunkPos, Encode, GameMode, Packet};
 use valence_registry::RegistrySet;
@@ -303,7 +304,7 @@ impl Client {
     pub fn kill<'a, M: IntoText<'a>>(&mut self, message: M) {
         self.write_packet(&PlayerCombatKillS2c {
             player_id: VarInt(0),
-            message: message.into_cow_text(),
+            message: message.into_cow_text_component(),
         });
     }
 

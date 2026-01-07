@@ -9,7 +9,7 @@ pub enum Time {
 }
 
 impl CommandArg for Time {
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let mut number_str = String::new();
         while let Some(c) = input.pop() {
@@ -58,8 +58,8 @@ impl CommandArg for Time {
         })
     }
 
-    fn display() -> Parser {
-        Parser::Time
+    fn display() -> Parser<'static> {
+        Parser::Time { min: 0 }
     }
 }
 

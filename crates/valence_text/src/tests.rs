@@ -34,12 +34,13 @@ fn translate() {
     let txt = Text::translate(
         "chat.type.advancement.task",
         ["arg1".into_text(), "arg2".into_text()],
+        Some("Hello World!".into()),
     );
     let serialized = txt.to_string();
     let deserialized = Text::from_str(&serialized).unwrap();
     assert_eq!(
         serialized,
-        r#"{"translate":"chat.type.advancement.task","with":[{"text":"arg1"},{"text":"arg2"}]}"#
+        r#"{"translate":"chat.type.advancement.task","with":[{"text":"arg1"},{"text":"arg2"}],"fallback":"Hello World!"}"#
     );
     assert_eq!(txt, deserialized);
 }

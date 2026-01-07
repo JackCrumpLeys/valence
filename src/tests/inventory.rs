@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 
@@ -156,12 +158,15 @@ fn test_should_modify_player_inventory_click_slot() {
         mode: ClickMode::Click,
         state_id: VarInt(state_id.0),
         slot_idx: 20,
-        slot_changes: vec![SlotChange {
-            idx: 20,
-            stack: ItemStack::EMPTY,
-        }]
-        .into(),
-        carried_item: ItemStack::new(ItemKind::Diamond, 2),
+        slot_changes: Cow::Borrowed(
+            [SlotChange {
+                idx: 20,
+                stack: ItemStack::EMPTY,
+            }
+            .into()]
+            .as_slice(),
+        ),
+        carried_item: ItemStack::new(ItemKind::Diamond, 2).into(),
     });
 
     app.update();
@@ -302,9 +307,10 @@ fn test_should_modify_open_inventory_click_slot() {
         slot_changes: vec![SlotChange {
             idx: 20,
             stack: ItemStack::EMPTY,
-        }]
+        }
+        .into()]
         .into(),
-        carried_item: ItemStack::new(ItemKind::Diamond, 2),
+        carried_item: ItemStack::new(ItemKind::Diamond, 2).into(),
     });
 
     app.update();
@@ -371,9 +377,10 @@ fn test_prevent_modify_open_inventory_click_slot_readonly_inventory() {
         slot_changes: vec![SlotChange {
             idx: 20,
             stack: ItemStack::EMPTY,
-        }]
+        }
+        .into()]
         .into(),
-        carried_item: ItemStack::new(ItemKind::Diamond, 2),
+        carried_item: ItemStack::new(ItemKind::Diamond, 2).into(),
     });
 
     app.update();
@@ -491,17 +498,19 @@ fn test_hotbar_item_swap_container() {
             SlotChange {
                 idx: 0,
                 stack: ItemStack::new(ItemKind::Diamond, 1),
-            },
+            }
+            .into(),
             SlotChange {
                 // 54 is the players hotbar slot 1, when the 9x3 inventory is opnened.
                 idx: 54,
                 stack: ItemStack::new(ItemKind::IronIngot, 10),
-            },
+            }
+            .into(),
             // The second one is the slot in the open inventory, after the ClickSlot action
             // source slot.
         ]
         .into(),
-        carried_item: ItemStack::EMPTY,
+        carried_item: ItemStack::EMPTY.into(),
     });
 
     app.update();
@@ -592,17 +601,19 @@ fn test_prevent_hotbar_item_click_container_readonly_inventory() {
             SlotChange {
                 idx: 0,
                 stack: ItemStack::new(ItemKind::Diamond, 1),
-            },
+            }
+            .into(),
             // The second one is the slot in the open inventory, after the ClickSlot action
             // source slot.
             SlotChange {
                 // 54 is the players hotbar slot 1, when the 9x3 inventory is opnened.
                 idx: 54,
                 stack: ItemStack::new(ItemKind::IronIngot, 10),
-            },
+            }
+            .into(),
         ]
         .into(),
-        carried_item: ItemStack::EMPTY,
+        carried_item: ItemStack::EMPTY.into(),
     });
 
     app.update();
@@ -690,14 +701,16 @@ fn test_still_allow_hotbar_item_click_in_own_inventory_if_container_readonly_inv
             SlotChange {
                 idx: 27,
                 stack: ItemStack::new(ItemKind::Diamond, 10),
-            },
+            }
+            .into(),
             SlotChange {
                 idx: 54,
                 stack: ItemStack::EMPTY,
-            },
+            }
+            .into(),
         ]
         .into(),
-        carried_item: ItemStack::EMPTY,
+        carried_item: ItemStack::EMPTY.into(),
     });
 
     app.update();
@@ -771,15 +784,17 @@ fn test_prevent_shift_item_click_container_readonly_inventory() {
             SlotChange {
                 idx: 0,
                 stack: ItemStack::new(ItemKind::Diamond, 64),
-            },
+            }
+            .into(),
             // source
             SlotChange {
                 idx: 27,
                 stack: ItemStack::EMPTY,
-            },
+            }
+            .into(),
         ]
         .into(),
-        carried_item: ItemStack::EMPTY,
+        carried_item: ItemStack::EMPTY.into(),
     });
 
     app.update();
@@ -1316,7 +1331,7 @@ mod dropping_items {
             button: 0,
             mode: ClickMode::Click,
             slot_changes: vec![].into(),
-            carried_item: ItemStack::EMPTY,
+            carried_item: ItemStack::EMPTY.into(),
         });
 
         app.update();
@@ -1378,9 +1393,10 @@ mod dropping_items {
             slot_changes: vec![SlotChange {
                 idx: 40,
                 stack: ItemStack::new(ItemKind::IronIngot, 31),
-            }]
+            }
+            .into()]
             .into(),
-            carried_item: ItemStack::EMPTY,
+            carried_item: ItemStack::EMPTY.into(),
         });
 
         app.update();
@@ -1436,9 +1452,10 @@ mod dropping_items {
             slot_changes: vec![SlotChange {
                 idx: 40,
                 stack: ItemStack::new(ItemKind::IronIngot, 31),
-            }]
+            }
+            .into()]
             .into(),
-            carried_item: ItemStack::EMPTY,
+            carried_item: ItemStack::EMPTY.into(),
         });
 
         app.update();
@@ -1502,9 +1519,10 @@ mod dropping_items {
             slot_changes: vec![SlotChange {
                 idx: 40,
                 stack: ItemStack::EMPTY,
-            }]
+            }
+            .into()]
             .into(),
-            carried_item: ItemStack::EMPTY,
+            carried_item: ItemStack::EMPTY.into(),
         });
 
         app.update();
@@ -1560,9 +1578,10 @@ mod dropping_items {
             slot_changes: vec![SlotChange {
                 idx: 40,
                 stack: ItemStack::EMPTY,
-            }]
+            }
+            .into()]
             .into(),
-            carried_item: ItemStack::EMPTY,
+            carried_item: ItemStack::EMPTY.into(),
         });
 
         app.update();
@@ -1637,9 +1656,10 @@ mod dropping_items {
             slot_changes: vec![SlotChange {
                 idx: 50,
                 stack: ItemStack::new(ItemKind::IronIngot, 31),
-            }]
+            }
+            .into()]
             .into(),
-            carried_item: ItemStack::EMPTY,
+            carried_item: ItemStack::EMPTY.into(),
         });
 
         app.update();
@@ -1720,9 +1740,10 @@ mod dropping_items {
             slot_changes: vec![SlotChange {
                 idx: 50,
                 stack: ItemStack::new(ItemKind::IronIngot, 31),
-            }]
+            }
+            .into()]
             .into(),
-            carried_item: ItemStack::EMPTY,
+            carried_item: ItemStack::EMPTY.into(),
         });
 
         app.update();
@@ -1799,9 +1820,10 @@ fn should_drop_item_stack_player_open_inventory_with_dropkey() {
         slot_changes: vec![SlotChange {
             idx: 50,
             stack: ItemStack::EMPTY,
-        }]
+        }
+        .into()]
         .into(),
-        carried_item: ItemStack::EMPTY,
+        carried_item: ItemStack::EMPTY.into(),
     });
 
     app.update();
@@ -1865,18 +1887,21 @@ fn dragging_items() {
             SlotChange {
                 idx: 9,
                 stack: ItemStack::new(ItemKind::Diamond, 21),
-            },
+            }
+            .into(),
             SlotChange {
                 idx: 10,
                 stack: ItemStack::new(ItemKind::Diamond, 21),
-            },
+            }
+            .into(),
             SlotChange {
                 idx: 11,
                 stack: ItemStack::new(ItemKind::Diamond, 21),
-            },
+            }
+            .into(),
         ]
         .into(),
-        carried_item: ItemStack::new(ItemKind::Diamond, 1),
+        carried_item: ItemStack::new(ItemKind::Diamond, 1).into(),
     };
     helper.send(&drag_packet);
 

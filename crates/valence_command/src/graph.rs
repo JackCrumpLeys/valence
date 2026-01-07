@@ -86,12 +86,12 @@ use crate::{CommandRegistry, CommandScopeRegistry};
 /// This struct is used to store the command graph. (see module level docs for
 /// more info)
 #[derive(Debug, Clone)]
-pub struct CommandGraph {
-    pub graph: Graph<CommandNode, CommandEdgeType>,
+pub struct CommandGraph<'a> {
+    pub graph: Graph<CommandNode<'a>, CommandEdgeType>,
     pub root: NodeIndex,
 }
 
-impl Default for CommandGraph {
+impl Default for CommandGraph<'_> {
     fn default() -> Self {
         Self::new()
     }
@@ -99,13 +99,13 @@ impl Default for CommandGraph {
 
 /// Output the graph in graphviz dot format to do visual debugging. (this was
 /// used to make the cool graph in the module level docs)
-impl Display for CommandGraph {
+impl Display for CommandGraph<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", Dot::new(&self.graph))
     }
 }
 
-impl CommandGraph {
+impl CommandGraph<'_> {
     pub fn new() -> Self {
         let mut graph = Graph::<CommandNode, CommandEdgeType>::new();
         let root = graph.add_node(CommandNode {
@@ -120,13 +120,13 @@ impl CommandGraph {
 
 /// Data for the nodes in the graph (see module level docs for more info)
 #[derive(Clone, Debug, PartialEq)]
-pub struct CommandNode {
+pub struct CommandNode<'a> {
     pub executable: bool,
-    pub data: NodeData,
+    pub data: NodeData<'a>,
     pub scopes: Vec<String>,
 }
 
-impl Display for CommandNode {
+impl Display for CommandNode<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.data {
             NodeData::Root => write!(f, "Root"),
@@ -151,19 +151,20 @@ impl Display for CommandEdgeType {
     }
 }
 
-impl From<CommandGraph> for CommandsS2c {
-    fn from(command_graph: CommandGraph) -> Self {
+impl<'a> From<CommandGraph<'a>> for CommandsS2c<'a> {
+    fn from(command_graph: CommandGraph<'a>) -> Self {
         let graph = command_graph.graph;
         let nodes_and_edges = graph.into_nodes_edges();
 
         let mut nodes: Vec<Node> = nodes_and_edges
             .0
             .into_iter()
-            .map(|node| Node {
+            .map(|node| Node::<'a> {
                 children: Vec::new(),
                 data: node.weight.data,
                 executable: node.weight.executable,
                 redirect_node: None,
+                is_restricted: false, // TODO:
             })
             .collect();
 
@@ -252,8 +253,7 @@ impl From<CommandGraph> for CommandsS2c {
 /// the value `1`
 #[allow(clippy::type_complexity)]
 pub struct CommandGraphBuilder<'a, T> {
-    // We do not own the graph, we just have a mutable reference to it
-    graph: &'a mut CommandGraph,
+    registry: &'a mut CommandRegistry,
     current_node: NodeIndex,
     executables: &'a mut HashMap<NodeIndex, fn(&mut ParseInput) -> T>,
     parsers: &'a mut HashMap<NodeIndex, fn(&mut ParseInput) -> bool>,
@@ -278,9 +278,9 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
             fn(String, &mut HashMap<ModifierValue, ModifierValue>),
         >,
     ) -> Self {
-        CommandGraphBuilder {
+        CommandGraphBuilder::<'a> {
             current_node: registry.graph.root,
-            graph: &mut registry.graph,
+            registry,
             executables,
             parsers,
             modifiers,
@@ -291,7 +291,7 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
     /// Transitions to the root node. Use this to start building a new command
     /// from root.
     pub fn root(&mut self) -> &mut Self {
-        self.current_node = self.graph.root;
+        self.current_node = self.registry.graph.root;
         self
     }
 
@@ -301,13 +301,13 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
     /// * executable - `false`
     /// * scopes - `Vec::new()`
     pub fn literal<S: Into<String>>(&mut self, literal: S) -> &mut Self {
-        let graph = &mut self.graph.graph;
+        let graph = &mut self.registry.graph.graph;
         let current_node = &mut self.current_node;
 
         let literal_node = graph.add_node(CommandNode {
             executable: false,
             data: NodeData::Literal {
-                name: literal.into(),
+                name: literal.into().into(),
             },
             scopes: Vec::new(),
         });
@@ -327,13 +327,13 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
     /// * parser - `StringArg::SingleWord`
     /// * suggestion - `None`
     pub fn argument<A: Into<String>>(&mut self, argument: A) -> &mut Self {
-        let graph = &mut self.graph.graph;
+        let graph = &mut self.registry.graph.graph;
         let current_node = &mut self.current_node;
 
         let argument_node = graph.add_node(CommandNode {
             executable: false,
             data: NodeData::Argument {
-                name: argument.into(),
+                name: argument.into().into(),
                 parser: Parser::String(StringArg::SingleWord),
                 suggestion: None,
             },
@@ -382,7 +382,7 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
     ///     .redirect_to(simple_command); // redirect to the simple command
     /// ```
     pub fn redirect_to(&mut self, node: NodeIndex) -> &mut Self {
-        let graph = &mut self.graph.graph;
+        let graph = &mut self.registry.graph.graph;
         let current_node = &mut self.current_node;
 
         graph.add_edge(*current_node, node, CommandEdgeType::Redirect);
@@ -402,7 +402,7 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
     /// # Example
     /// have a look at the example for [`CommandGraphBuilder`]
     pub fn with_executable(&mut self, executable: fn(&mut ParseInput) -> T) -> &mut Self {
-        let graph = &mut self.graph.graph;
+        let graph = &mut self.registry.graph.graph;
         let current_node = &mut self.current_node;
 
         let node = graph.node_weight_mut(*current_node).unwrap();
@@ -461,7 +461,7 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
     ///   and its children (list of strings following the system described in
     ///   [`scopes`](crate::scopes))
     pub fn with_scopes<S: Into<String>>(&mut self, scopes: Vec<S>) -> &mut Self {
-        let graph = &mut self.graph.graph;
+        let graph = &mut self.registry.graph.graph;
         let current_node = &mut self.current_node;
 
         let node = graph.node_weight_mut(*current_node).unwrap();
@@ -492,12 +492,13 @@ impl<'a, T> CommandGraphBuilder<'a, T> {
     /// # Type Parameters
     /// * `P` - the parser to use for the current node (must be [`CommandArg`])
     pub fn with_parser<P: CommandArg>(&mut self) -> &mut Self {
-        let graph = &mut self.graph.graph;
+        let graph = &mut self.registry.graph.graph;
         let current_node = self.current_node;
 
         let node = graph.node_weight_mut(current_node).unwrap();
-        self.parsers
-            .insert(current_node, |input| P::parse_arg(input).is_ok());
+        self.parsers.insert(current_node, |input: &mut ParseInput| {
+            P::parse_arg(input).is_ok()
+        });
 
         let parser = P::display();
 

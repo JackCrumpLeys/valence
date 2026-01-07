@@ -1,5 +1,6 @@
 use valence::item::ItemComponent;
 use valence::prelude::*;
+use valence::protocol::text_component::IntoTextComponent;
 
 fn main() {
     App::new()
@@ -67,7 +68,7 @@ fn init_clients(
             30,
             ItemStack::new(ItemKind::IronSword, 1).with_components(vec![
                 ItemComponent::Unbreakable,
-                ItemComponent::CustomName("Custom Item Name".into()),
+                ItemComponent::CustomName("Custom Item Name".into_text_component()),
             ]),
         );
     }
