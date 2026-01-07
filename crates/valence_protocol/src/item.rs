@@ -1,20 +1,18 @@
-use std::borrow::Cow;
 use std::fmt::Debug;
 use std::io::Write;
 
 use uuid::Uuid;
-use valence_generated::attributes::{EntityAttribute, EntityAttributeOperation};
+use valence_generated::attributes::EntityAttributeOperation;
 pub use valence_generated::item::ItemKind;
 use valence_generated::registry_id::RegistryId;
 pub use valence_generated::sound::Sound;
 use valence_ident::Ident;
 use valence_nbt::Compound;
-use valence_text::color::RgbColor;
 use valence_text::Text;
 
 use crate::id_or::IdOr;
 use crate::impls::cautious_capacity;
-use crate::sound::{SoundDirect, SoundId};
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, IDSet, VarInt};
 
 const NUM_ITEM_COMPONENTS: usize = 96;
@@ -30,7 +28,6 @@ enum Patchable<T> {
     Removed,
     None,
 }
-
 impl<T> Patchable<T> {
     fn to_option(self) -> Option<T> {
         match self {
@@ -106,18 +103,18 @@ pub enum ItemComponent {
 
     /// A custom name for the item, typically set via an anvil.
     /// Usually rendered in italics by the client.
-    CustomName(Text),
+    CustomName(TextComponent),
 
     /// Overrides the base name of the item (e.g., "Stone").
-    /// Unlike CustomName, this is not italicized by default.
-    ItemName(Text),
+    /// Unlike `CustomName`, this is not italicized by default.
+    ItemName(TextComponent),
 
     /// References a specific model file in a resource pack.
     /// Allows a single Item ID to have multiple distinct visual appearances.
     ItemModel(String),
 
     /// Additional lines of text displayed below the item's name in the tooltip.
-    Lore(Vec<Text>),
+    Lore(Vec<TextComponent>),
 
     /// Determines the color of the item's name (Common/Uncommon/Rare/Epic).
     /// Also affects the default glint behavior in some contexts.
@@ -557,24 +554,23 @@ impl<A: Encode, B: Encode> Encode for ModePair<A, B> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         match self {
             ModePair::Mode0(a) => {
-                0u8.encode(&mut w)?;
+                0_u8.encode(&mut w)?;
                 a.encode(w)
             }
             ModePair::Mode1(b) => {
-                1u8.encode(&mut w)?;
+                1_u8.encode(&mut w)?;
                 b.encode(w)
             }
         }
     }
 }
-
 impl<'a, A: Decode<'a>, B: Decode<'a>> Decode<'a> for ModePair<A, B> {
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
         let mode = u8::decode(r)?;
         match mode {
             0 => Ok(ModePair::Mode0(A::decode(r)?)),
             1 => Ok(ModePair::Mode1(B::decode(r)?)),
-            _ => anyhow::bail!("Invalid ModePair byte: {}", mode),
+            _ => anyhow::bail!("Invalid ModePair byte: {mode}"),
         }
     }
 }
@@ -583,7 +579,6 @@ impl<'a, A: Decode<'a>, B: Decode<'a>> Decode<'a> for ModePair<A, B> {
 /// Used by `CanPlaceOn` and `CanBreak` in Adventure Mode.
 #[derive(Clone, PartialEq, Debug, Encode)]
 pub struct BlockPredicate {
-    /// A set of Block IDs (or a Tag like `#minecraft:logs`) to match.
     /// If None, matches any block ID.
     pub blocks: Option<IDSet>,
 
@@ -684,7 +679,7 @@ pub struct AttributeModifier {
 
     /// How the math is applied.
     /// (Add): X = X + Value
-    /// (Multiply Base): X = X + (BaseValue * Value)
+    /// (Multiply Base): X = X + (`BaseValue` * Value)
     /// (Multiply Total): X = X * (1 + Value)
     pub operation: EntityAttributeOperation,
 
@@ -708,7 +703,7 @@ pub struct ToolRule {
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct LodestoneTarget {
-    /// The namespaced key of the dimension (e.g., "minecraft:the_nether").
+    /// The namespaced key of the dimension (e.g., "`minecraft:the_nether`").
     pub dimension: String,
 
     /// The precise X, Y, Z coordinates of the Lodestone block.
@@ -732,7 +727,7 @@ pub struct SoundEventDefinition {
 pub struct TrimMaterial {
     /// Corresponds to "Suffix" in the Wiki.
     /// This string is appended to the texture path (e.g., "amethyst" ->
-    /// "trims/items/leggings_trim_amethyst").
+    /// "`trims/items/leggings_trim_amethyst`").
     pub asset_name: String,
 
     /// Allows specific armor materials to use a different texture suffix.
@@ -740,12 +735,12 @@ pub struct TrimMaterial {
     /// Structure:
     /// - Key: Armor Material Model Name (Identifier, e.g.,
     ///   "minecraft:netherite")
-    /// - Value: Overridden Asset Name (String, e.g., "amethyst_darker")
+    /// - Value: Overridden Asset Name (String, e.g., "`amethyst_darker`")
     pub overrides: Vec<(Ident<String>, String)>,
 
     /// Corresponds to "Description" in the Wiki.
     /// The text displayed in the item tooltip (e.g., "Amethyst Material").
-    pub description: Text,
+    pub description: TextComponent,
 }
 
 /// Defines the shape/pattern of the armor trim (e.g., Vex, Coast).
@@ -758,7 +753,7 @@ pub struct TrimPattern {
     pub template_item: RegistryId,
 
     /// The text displayed in the tooltip (e.g., "Vex Armor Trim").
-    pub description: Text,
+    pub description: TextComponent,
 
     /// If true, the pattern is applied as a "Decal" (no color blending).
     pub decal: bool,
@@ -777,7 +772,7 @@ pub struct InstrumentDefinition {
     pub range: f32,
 
     /// The description shown in the tooltip (e.g., "Ponder").
-    pub description: Text,
+    pub description: TextComponent,
 }
 
 /// Defines a Music Disc song.
@@ -864,10 +859,10 @@ pub struct WritablePage {
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct WrittenPage {
     /// The JSON text component for the page content.
-    pub raw: Text,
+    pub raw: TextComponent,
 
     /// Optional filtered version for chat safety settings.
-    pub filtered: Option<Text>,
+    pub filtered: Option<TextComponent>,
 }
 
 /// Represents a Player's Game Profile (Skin/UUID).
@@ -908,7 +903,7 @@ pub struct BeeData {
 /// A wrapper for the various effects caused by consuming an item.
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct ConsumeEffect {
-    /// The registry ID of the effect type (ApplyEffects, Teleport, etc.).
+    /// The registry ID of the effect type (`ApplyEffects`, Teleport, etc.).
     pub type_id: VarInt,
 
     /// The effect data. Note: The protocol doesn't wrap this in a neat enum,
@@ -1140,7 +1135,6 @@ pub struct HashedItemStack {
     pub count: i8,
     components: [Patchable<()>; NUM_ITEM_COMPONENTS],
 }
-
 impl HashedItemStack {
     pub const EMPTY: Self = Self {
         item: ItemKind::Air,
@@ -1457,7 +1451,7 @@ impl ItemStack {
 }
 
 impl Encode for ItemStack {
-    fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
         self.encode_recursive(w, false)
     }
 }
@@ -1728,15 +1722,14 @@ impl Encode for ItemComponent {
         }
     }
 }
-
 impl<'a> Decode<'a> for ItemStack {
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
         decode_item_stack_recursive(r, 0, false)
     }
 }
 
-pub(crate) fn decode_item_stack_recursive<'a>(
-    r: &mut &'a [u8],
+pub(crate) fn decode_item_stack_recursive(
+    r: &mut &[u8],
     depth: usize,
     prefixed: bool,
 ) -> anyhow::Result<ItemStack> {
@@ -1760,7 +1753,7 @@ pub(crate) fn decode_item_stack_recursive<'a>(
     for _ in 0..added_count {
         let id = VarInt::decode(r)?.0 as usize;
         if id >= NUM_ITEM_COMPONENTS {
-            return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
+            return Err(anyhow::anyhow!("Invalid item component ID: {id}"));
         }
 
         let _prefix = if prefixed {
@@ -1778,7 +1771,7 @@ pub(crate) fn decode_item_stack_recursive<'a>(
     for _ in 0..removed_count {
         let id = VarInt::decode(r)?.0 as usize;
         if id >= NUM_ITEM_COMPONENTS {
-            return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
+            return Err(anyhow::anyhow!("Invalid item component ID: {id}"));
         }
         components[id] = Patchable::Removed;
     }
@@ -1790,7 +1783,7 @@ pub(crate) fn decode_item_stack_recursive<'a>(
     })
 }
 
-fn decode_block_predicate<'a>(r: &mut &'a [u8], depth: usize) -> anyhow::Result<BlockPredicate> {
+fn decode_block_predicate(r: &mut &[u8], depth: usize) -> anyhow::Result<BlockPredicate> {
     Ok(BlockPredicate {
         blocks: Decode::decode(r)?,
         properties: Decode::decode(r)?,
@@ -1814,11 +1807,7 @@ fn decode_block_predicate<'a>(r: &mut &'a [u8], depth: usize) -> anyhow::Result<
     })
 }
 
-fn decode_item_component<'a>(
-    r: &mut &'a [u8],
-    id: usize,
-    depth: usize,
-) -> anyhow::Result<ItemComponent> {
+fn decode_item_component(r: &mut &[u8], id: usize, depth: usize) -> anyhow::Result<ItemComponent> {
     Ok(match id {
         0 => ItemComponent::CustomData(Decode::decode(r)?),
         1 => ItemComponent::MaxStackSize(Decode::decode(r)?),
@@ -2042,7 +2031,7 @@ fn decode_item_component<'a>(
         93 => ItemComponent::CatCollar(Decode::decode(r)?),
         94 => ItemComponent::SheepColor(Decode::decode(r)?),
         95 => ItemComponent::ShulkerColor(Decode::decode(r)?),
-        _ => return Err(anyhow::anyhow!("Unknown ItemComponent ID: {}", id)),
+        _ => return Err(anyhow::anyhow!("Unknown ItemComponent ID: {id}")),
     })
 }
 
@@ -2054,14 +2043,14 @@ impl Encode for HashedItemStack {
         } else {
             true.encode(&mut w)?;
             self.item.encode(&mut w)?;
-            VarInt(self.count as i32).encode(&mut w)?;
+            VarInt(i32::from(self.count)).encode(&mut w)?;
 
             let mut added = Vec::new();
             let mut removed = Vec::new();
 
             for (i, c) in self.components.iter().enumerate() {
                 match c {
-                    Patchable::Added((_, hash)) => added.push((i, hash)),
+                    Patchable::Added(((), hash)) => added.push((i, hash)),
                     Patchable::Removed => removed.push(i),
                     _ => {}
                 }
@@ -2082,7 +2071,6 @@ impl Encode for HashedItemStack {
         }
     }
 }
-
 impl Decode<'_> for HashedItemStack {
     fn decode(r: &mut &'_ [u8]) -> anyhow::Result<Self> {
         let has_item = bool::decode(r)?;
@@ -2100,7 +2088,7 @@ impl Decode<'_> for HashedItemStack {
             for (id, hash) in components_added {
                 let id = id.0 as usize;
                 if id >= NUM_ITEM_COMPONENTS {
-                    return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
+                    return Err(anyhow::anyhow!("Invalid item component ID: {id}"));
                 }
                 components[id] = Patchable::Added(((), hash));
             }
@@ -2108,7 +2096,7 @@ impl Decode<'_> for HashedItemStack {
             for id in components_removed {
                 let id = id.0 as usize;
                 if id >= NUM_ITEM_COMPONENTS {
-                    return Err(anyhow::anyhow!("Invalid item component ID: {}", id));
+                    return Err(anyhow::anyhow!("Invalid item component ID: {id}"));
                 }
                 components[id] = Patchable::Removed;
             }
