@@ -706,33 +706,27 @@ where
         }
 
         fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
-            &v;
             Ok(Cow::Owned(v.to_owned()))
         }
 
         fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
-            &v;
             Ok(Cow::Owned(v))
         }
 
         // Handle integers (e.g. { "": 1 })
         fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
-            &v;
             Ok(Cow::Owned(v.to_string()))
         }
 
         fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
-            &v;
             Ok(Cow::Owned(v.to_string()))
         }
 
         fn visit_f64<E: de::Error>(self, v: f64) -> Result<Self::Value, E> {
-            &v;
             Ok(Cow::Owned(v.to_string()))
         }
 
         fn visit_bool<E: de::Error>(self, v: bool) -> Result<Self::Value, E> {
-            &v;
             Ok(Cow::Owned(v.to_string()))
         }
     }

@@ -4,8 +4,8 @@ use std::borrow::Cow;
 use std::io::Write;
 
 use valence_ident::Ident;
-use valence_text::Text;
 
+use crate::text_component::TextComponent;
 use crate::{packet_id, Decode, Encode, ItemStack, Packet, VarInt};
 
 pub type UpdateAdvancementsS2c<'a> =
@@ -36,8 +36,8 @@ pub struct AdvancementRequirements<'a> {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct AdvancementDisplay<'a, I> {
-    pub title: Cow<'a, Text>,
-    pub description: Cow<'a, Text>,
+    pub title: Cow<'a, TextComponent>,
+    pub description: Cow<'a, TextComponent>,
     pub icon: I,
     pub frame_type: VarInt,
     pub flags: i32,
@@ -76,8 +76,8 @@ impl<I: Encode> Encode for AdvancementDisplay<'_, I> {
 
 impl<'a, I: Decode<'a>> Decode<'a> for AdvancementDisplay<'a, I> {
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
-        let title = <Cow<'a, Text>>::decode(r)?;
-        let description = <Cow<'a, Text>>::decode(r)?;
+        let title = <Cow<'a, TextComponent>>::decode(r)?;
+        let description = <Cow<'a, TextComponent>>::decode(r)?;
         let icon = I::decode(r)?;
         let frame_type = VarInt::decode(r)?;
         let flags = i32::decode(r)?;

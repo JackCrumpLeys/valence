@@ -1,5 +1,4 @@
-use valence_generated::registry_id::RegistryId;
-use valence_math::{DVec3, Vec3};
+use valence_math::DVec3;
 
 use crate::sound::SoundId;
 use crate::{Decode, Encode, Packet, Particle};

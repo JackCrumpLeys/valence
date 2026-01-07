@@ -35,7 +35,7 @@ pub enum HeightMapKind {
     /// "Solid" blocks, except bamboo saplings and cactuses; fluids.
     #[packet(tag = 4)]
     MotionBlocking,
-    /// Same as MOTION_BLOCKING, excluding leaf blocks.
+    /// Same as `MOTION_BLOCKING`, excluding leaf blocks.
     #[packet(tag = 5)]
     MotionBlockingNoLeaves,
 }

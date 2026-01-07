@@ -1,7 +1,5 @@
 use std::borrow::Cow;
 
-use valence_text::Text;
-
 use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet};
 
