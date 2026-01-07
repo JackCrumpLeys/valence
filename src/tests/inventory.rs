@@ -2,6 +2,9 @@ use std::borrow::Cow;
 
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
+use valence_server::item::ItemComponent;
+use valence_server::protocol::text_component::IntoTextComponent;
+use valence_text::IntoText;
 
 use crate::inventory::{
     convert_to_player_slot_id, ClickMode, ClientInventoryState, CursorItem, DropItemStackEvent,
@@ -143,7 +146,15 @@ fn test_should_modify_player_inventory_click_slot() {
         .world_mut()
         .get_mut::<Inventory>(client)
         .expect("could not find inventory for client");
-    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2));
+    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2)
+        .with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ])
+    );
 
     // Make the client click the slot and pick up the item.
     let state_id = app
@@ -166,7 +177,15 @@ fn test_should_modify_player_inventory_click_slot() {
             .into()]
             .as_slice(),
         ),
-        carried_item: ItemStack::new(ItemKind::Diamond, 2).into(),
+        carried_item: ItemStack::new(ItemKind::Diamond, 2)
+            .with_components(vec![
+                ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Lore Line 1.".into_text_component(),
+                    "Lore line 2.".into_text_component(),
+                ]),
+            ])
+            .into(),
     });
 
     app.update();
@@ -192,7 +211,14 @@ fn test_should_modify_player_inventory_click_slot() {
         .get::<CursorItem>(client)
         .expect("could not find client");
 
-    assert_eq!(cursor_item.0, ItemStack::new(ItemKind::Diamond, 2));
+    assert_eq!(cursor_item.0, ItemStack::new(ItemKind::Diamond, 2)
+        .with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ]));
 }
 
 #[test]
@@ -288,7 +314,13 @@ fn test_should_modify_open_inventory_click_slot() {
         .get_mut::<Inventory>(inventory_ent)
         .expect("could not find inventory for client");
 
-    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2));
+    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
 
     // Process a tick to get past the "on join" logic.
     app.update();
@@ -310,7 +342,13 @@ fn test_should_modify_open_inventory_click_slot() {
         }
         .into()]
         .into(),
-        carried_item: ItemStack::new(ItemKind::Diamond, 2).into(),
+        carried_item: ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ]).into(),
     });
 
     app.update();
@@ -328,12 +366,21 @@ fn test_should_modify_open_inventory_click_slot() {
         .world_mut()
         .get::<Inventory>(inventory_ent)
         .expect("could not find inventory");
+
     assert_eq!(inventory.slot(20), &ItemStack::EMPTY);
+
     let cursor_item = app
         .world_mut()
         .get::<CursorItem>(client)
         .expect("could not find client");
-    assert_eq!(cursor_item.0, ItemStack::new(ItemKind::Diamond, 2));
+
+    assert_eq!(cursor_item.0, ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
 }
 
 #[test]
@@ -354,7 +401,13 @@ fn test_prevent_modify_open_inventory_click_slot_readonly_inventory() {
         .expect("could not find inventory for client");
 
     inventory.readonly = true;
-    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2));
+    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
 
     // Process a tick to get past the "on join" logic.
     app.update();
@@ -380,7 +433,13 @@ fn test_prevent_modify_open_inventory_click_slot_readonly_inventory() {
         }
         .into()]
         .into(),
-        carried_item: ItemStack::new(ItemKind::Diamond, 2).into(),
+        carried_item: ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ]).into(),
     });
 
     app.update();
@@ -398,7 +457,13 @@ fn test_prevent_modify_open_inventory_click_slot_readonly_inventory() {
         .get::<Inventory>(inventory_ent)
         .expect("could not find inventory");
     // Inventory is read-only, the item is not being moved
-    assert_eq!(inventory.slot(20), &ItemStack::new(ItemKind::Diamond, 2));
+    assert_eq!(inventory.slot(20), &ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
     let cursor_item = app
         .world_mut()
         .get::<CursorItem>(client)
@@ -464,7 +529,13 @@ fn test_hotbar_item_swap_container() {
         .expect("could not find inventory for client");
 
     // 36 is the first hotbar slot
-    player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 1));
+    player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
 
     let open_inv_ent = set_up_open_inventory(&mut app, client);
 
@@ -473,7 +544,13 @@ fn test_hotbar_item_swap_container() {
         .get_mut::<Inventory>(open_inv_ent)
         .expect("could not find inventory for client");
 
-    open_inventory.set_slot(0, ItemStack::new(ItemKind::IronIngot, 10));
+    open_inventory.set_slot(0, ItemStack::new(ItemKind::IronIngot, 10).with_components(vec![
+        ItemComponent::CustomName("Custom Iron".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Other Lore Line 1.".into_text_component(),
+            "Other Lore Line 2.".into_text_component(),
+        ]),
+    ]));
 
     // This update makes sure we have the items in the inventory by the time the
     // client wants to update these
@@ -497,13 +574,25 @@ fn test_hotbar_item_swap_container() {
             // target slot.
             SlotChange {
                 idx: 0,
-                stack: ItemStack::new(ItemKind::Diamond, 1),
+                stack: ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
             SlotChange {
                 // 54 is the players hotbar slot 1, when the 9x3 inventory is opnened.
                 idx: 54,
-                stack: ItemStack::new(ItemKind::IronIngot, 10),
+                stack: ItemStack::new(ItemKind::IronIngot, 10).with_components(vec![
+                    ItemComponent::CustomName("Custom Iron".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Other Lore Line 1.".into_text_component(),
+                        "Other Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
             // The second one is the slot in the open inventory, after the ClickSlot action
@@ -529,7 +618,13 @@ fn test_hotbar_item_swap_container() {
     // Swapped items successfully
     assert_eq!(
         player_inventory.slot(36),
-        &ItemStack::new(ItemKind::IronIngot, 10)
+        &ItemStack::new(ItemKind::IronIngot, 10).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ])
     );
 
     let open_inventory = app
@@ -539,7 +634,13 @@ fn test_hotbar_item_swap_container() {
 
     assert_eq!(
         open_inventory.slot(0),
-        &ItemStack::new(ItemKind::Diamond, 1)
+        &ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ])
     );
 }
 
@@ -563,7 +664,13 @@ fn test_prevent_hotbar_item_click_container_readonly_inventory() {
         .expect("could not find inventory for client");
 
     // 36 is the first hotbar slot
-    player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 1));
+    player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
 
     let open_inv_ent = set_up_open_inventory(&mut app, client);
 
@@ -574,7 +681,13 @@ fn test_prevent_hotbar_item_click_container_readonly_inventory() {
 
     // Open inventory is read-only
     open_inventory.readonly = true;
-    open_inventory.set_slot(0, ItemStack::new(ItemKind::IronIngot, 10));
+    open_inventory.set_slot(0, ItemStack::new(ItemKind::IronIngot, 10).with_components(vec![
+        ItemComponent::CustomName("Custom Iron".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Other Lore Line 1.".into_text_component(),
+            "Other Lore Line 2.".into_text_component(),
+        ]),
+    ]));
 
     // This update makes sure we have the items in the inventory by the time the
     // client wants to update these
@@ -600,7 +713,13 @@ fn test_prevent_hotbar_item_click_container_readonly_inventory() {
             // target slot.
             SlotChange {
                 idx: 0,
-                stack: ItemStack::new(ItemKind::Diamond, 1),
+                stack: ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
             // The second one is the slot in the open inventory, after the ClickSlot action
@@ -608,7 +727,13 @@ fn test_prevent_hotbar_item_click_container_readonly_inventory() {
             SlotChange {
                 // 54 is the players hotbar slot 1, when the 9x3 inventory is opnened.
                 idx: 54,
-                stack: ItemStack::new(ItemKind::IronIngot, 10),
+                stack: ItemStack::new(ItemKind::IronIngot, 10).with_components(vec![
+                    ItemComponent::CustomName("Custom Iron".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Other Lore Line 1.".into_text_component(),
+                        "Other Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
         ]
@@ -632,7 +757,13 @@ fn test_prevent_hotbar_item_click_container_readonly_inventory() {
     // Opened inventory is read-only, the items are not swapped.
     assert_eq!(
         player_inventory.slot(36),
-        &ItemStack::new(ItemKind::Diamond, 1)
+        &ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ])
     );
 
     let open_inventory = app
@@ -643,7 +774,13 @@ fn test_prevent_hotbar_item_click_container_readonly_inventory() {
     // Opened inventory is read-only, the items are not swapped.
     assert_eq!(
         open_inventory.slot(0),
-        &ItemStack::new(ItemKind::IronIngot, 10)
+        &ItemStack::new(ItemKind::IronIngot, 10).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ])
     );
 }
 
@@ -667,7 +804,13 @@ fn test_still_allow_hotbar_item_click_in_own_inventory_if_container_readonly_inv
         .expect("could not find inventory for client");
 
     // 36 is the first hotbar slot
-    player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 10));
+    player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 10).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
 
     let open_inv_ent = set_up_open_inventory(&mut app, client);
 
@@ -700,7 +843,13 @@ fn test_still_allow_hotbar_item_click_in_own_inventory_if_container_readonly_inv
         slot_changes: vec![
             SlotChange {
                 idx: 27,
-                stack: ItemStack::new(ItemKind::Diamond, 10),
+                stack: ItemStack::new(ItemKind::Diamond, 10).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
             SlotChange {
@@ -727,7 +876,13 @@ fn test_still_allow_hotbar_item_click_in_own_inventory_if_container_readonly_inv
     assert_eq!(player_inventory.slot(36), &ItemStack::EMPTY);
     assert_eq!(
         player_inventory.slot(9),
-        &ItemStack::new(ItemKind::Diamond, 10)
+        &ItemStack::new(ItemKind::Diamond, 10).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ])
     );
 }
 
@@ -750,7 +905,13 @@ fn test_prevent_shift_item_click_container_readonly_inventory() {
         .get_mut::<Inventory>(client)
         .expect("could not find inventory for client");
 
-    player_inventory.set_slot(9, ItemStack::new(ItemKind::Diamond, 64));
+    player_inventory.set_slot(9, ItemStack::new(ItemKind::Diamond, 64).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore line 2.".into_text_component(),
+        ]),
+    ]));
 
     let open_inv_ent = set_up_open_inventory(&mut app, client);
 
@@ -783,7 +944,13 @@ fn test_prevent_shift_item_click_container_readonly_inventory() {
             // target
             SlotChange {
                 idx: 0,
-                stack: ItemStack::new(ItemKind::Diamond, 64),
+                stack: ItemStack::new(ItemKind::Diamond, 64).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
             // source
@@ -811,7 +978,13 @@ fn test_prevent_shift_item_click_container_readonly_inventory() {
 
     assert_eq!(
         player_inventory.slot(9),
-        &ItemStack::new(ItemKind::Diamond, 64)
+        &ItemStack::new(ItemKind::Diamond, 64).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore line 2.".into_text_component(),
+            ]),
+        ])
     );
 
     let open_inventory = app
@@ -871,7 +1044,13 @@ fn test_set_creative_mode_slot_handling() {
 
     helper.send(&SetCreativeModeSlotC2s {
         slot: 36,
-        clicked_item: ItemStack::new(ItemKind::Diamond, 2),
+        clicked_item: ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+            ItemComponent::CustomName("Creative Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Creative Lore Line 1.".into_text_component(),
+                "Creative Lore line 2.".into_text_component(),
+            ]),
+        ]),
     });
 
     app.update();
@@ -882,7 +1061,13 @@ fn test_set_creative_mode_slot_handling() {
         .get::<Inventory>(client)
         .expect("could not find inventory for client");
 
-    assert_eq!(inventory.slot(36), &ItemStack::new(ItemKind::Diamond, 2));
+    assert_eq!(inventory.slot(36), &ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+        ItemComponent::CustomName("Creative Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Creative Lore Line 1.".into_text_component(),
+            "Creative Lore line 2.".into_text_component(),
+        ]),
+    ]));
 }
 
 #[test]
@@ -906,7 +1091,13 @@ fn test_ignore_set_creative_mode_slot_if_not_creative() {
 
     helper.send(&SetCreativeModeSlotC2s {
         slot: 36,
-        clicked_item: ItemStack::new(ItemKind::Diamond, 2),
+        clicked_item: ItemStack::new(ItemKind::Diamond, 2).with_components(vec![
+            ItemComponent::CustomName("Creative Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Creative Lore Line 1.".into_text_component(),
+                "Creative Lore line 2.".into_text_component(),
+            ]),
+        ]),
     });
 
     app.update();
@@ -1317,7 +1508,11 @@ mod dropping_items {
             .world_mut()
             .get_mut::<CursorItem>(client)
             .expect("could not find client");
-        cursor_item.0 = ItemStack::new(ItemKind::IronIngot, 32);
+
+        cursor_item.0 = ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+            ItemComponent::CustomName("Droppable Iron".into_text_component()),
+        ]);
+
         let inv_state = app
             .world_mut()
             .get_mut::<ClientInventoryState>(client)
@@ -1354,7 +1549,9 @@ mod dropping_items {
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].client, client);
         assert_eq!(events[0].from_slot, None);
-        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 32));
+        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+            ItemComponent::CustomName("Droppable Iron".into_text_component()),
+        ]));
     }
 
     #[test]
@@ -1382,7 +1579,14 @@ mod dropping_items {
             .get_mut::<Inventory>(client)
             .expect("could not find inventory");
 
-        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32));
+        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+                ItemComponent::CustomName("Custom Iron".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Other Lore Line 1.".into_text_component(),
+                    "Other Lore Line 2.".into_text_component(),
+                ]),
+        ]));
+
 
         helper.send(&ContainerClickC2s {
             window_id: VarInt(0),
@@ -1392,7 +1596,13 @@ mod dropping_items {
             state_id: VarInt(state_id),
             slot_changes: vec![SlotChange {
                 idx: 40,
-                stack: ItemStack::new(ItemKind::IronIngot, 31),
+                stack: ItemStack::new(ItemKind::IronIngot, 31).with_components(vec![
+                    ItemComponent::CustomName("Custom Iron".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Other Lore Line 1.".into_text_component(),
+                        "Other Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into()]
             .into(),
@@ -1412,7 +1622,13 @@ mod dropping_items {
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].client, client);
         assert_eq!(events[0].from_slot, Some(40));
-        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 1));
+        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 1).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ]));
     }
 
     #[test]
@@ -1441,7 +1657,13 @@ mod dropping_items {
             .expect("could not find inventory");
 
         inventory.readonly = true;
-        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32));
+        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+                ItemComponent::CustomName("Custom Iron".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Other Lore Line 1.".into_text_component(),
+                    "Other Lore Line 2.".into_text_component(),
+                ]),
+        ]));
 
         helper.send(&ContainerClickC2s {
             window_id: VarInt(0),
@@ -1451,7 +1673,13 @@ mod dropping_items {
             state_id: VarInt(state_id),
             slot_changes: vec![SlotChange {
                 idx: 40,
-                stack: ItemStack::new(ItemKind::IronIngot, 31),
+                stack: ItemStack::new(ItemKind::IronIngot, 31).with_components(vec![
+                    ItemComponent::CustomName("Custom Iron".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Other Lore Line 1.".into_text_component(),
+                        "Other Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into()]
             .into(),
@@ -1469,7 +1697,13 @@ mod dropping_items {
         assert_eq!(
             inventory.slot(40),
             // Inventory is read-only, item is not being dropped
-            &ItemStack::new(ItemKind::IronIngot, 32)
+            &ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+                ItemComponent::CustomName("Custom Iron".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Other Lore Line 1.".into_text_component(),
+                    "Other Lore Line 2.".into_text_component(),
+                ]),
+            ])
         );
 
         let events = app
@@ -1508,7 +1742,13 @@ mod dropping_items {
             .get_mut::<Inventory>(client)
             .expect("could not find inventory");
 
-        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32));
+        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ]));
 
         helper.send(&ContainerClickC2s {
             window_id: VarInt(0),
@@ -1538,7 +1778,13 @@ mod dropping_items {
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].client, client);
         assert_eq!(events[0].from_slot, Some(40));
-        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 32));
+        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ]));
     }
 
     #[test]
@@ -1567,7 +1813,13 @@ mod dropping_items {
             .expect("could not find inventory");
 
         inventory.readonly = true;
-        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32));
+        inventory.set_slot(40, ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ]));
 
         helper.send(&ContainerClickC2s {
             window_id: VarInt(0),
@@ -1595,7 +1847,13 @@ mod dropping_items {
         assert_eq!(
             inventory.slot(40),
             // Inventory is read-only, item is not being dropped
-            &ItemStack::new(ItemKind::IronIngot, 32)
+            &ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+                ItemComponent::CustomName("Custom Iron".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Other Lore Line 1.".into_text_component(),
+                    "Other Lore Line 2.".into_text_component(),
+                ]),
+            ])
         );
 
         let events = app
@@ -1630,7 +1888,13 @@ mod dropping_items {
 
         inventory.set_slot(
             convert_to_player_slot_id(InventoryKind::Generic9x3, 50),
-            ItemStack::new(ItemKind::IronIngot, 32),
+            ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+                ItemComponent::CustomName("Custom Iron".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Other Lore Line 1.".into_text_component(),
+                    "Other Lore Line 2.".into_text_component(),
+                ]),
+            ]),
         );
 
         let _inventory_ent = set_up_open_inventory(&mut app, client);
@@ -1655,7 +1919,13 @@ mod dropping_items {
             mode: ClickMode::DropKey,
             slot_changes: vec![SlotChange {
                 idx: 50,
-                stack: ItemStack::new(ItemKind::IronIngot, 31),
+                stack: ItemStack::new(ItemKind::IronIngot, 31).with_components(vec![
+                    ItemComponent::CustomName("Custom Iron".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Other Lore Line 1.".into_text_component(),
+                        "Other Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into()]
             .into(),
@@ -1684,14 +1954,26 @@ mod dropping_items {
             Some(convert_to_player_slot_id(InventoryKind::Generic9x3, 50))
         );
 
-        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 1));
+        assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 1).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ]));
 
         // Also make sure that the player inventory was updated correctly.
         let expected_player_slot_id = convert_to_player_slot_id(InventoryKind::Generic9x3, 50);
         assert_eq!(
             player_inventory.slot(expected_player_slot_id),
-            &ItemStack::new(ItemKind::IronIngot, 31)
-        );
+            &ItemStack::new(ItemKind::IronIngot, 31).with_components(vec![
+                ItemComponent::CustomName("Custom Iron".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Other Lore Line 1.".into_text_component(),
+                    "Other Lore Line 2.".into_text_component(),
+                ]),
+            ]
+        ));
     }
 
     #[test]
@@ -1795,7 +2077,13 @@ fn should_drop_item_stack_player_open_inventory_with_dropkey() {
 
     inventory.set_slot(
         convert_to_player_slot_id(InventoryKind::Generic9x3, 50),
-        ItemStack::new(ItemKind::IronIngot, 32),
+        ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+            ItemComponent::CustomName("Custom Iron".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Other Lore Line 1.".into_text_component(),
+                "Other Lore Line 2.".into_text_component(),
+            ]),
+        ]),
     );
 
     let _inventory_ent = set_up_open_inventory(&mut app, client);
@@ -1847,7 +2135,13 @@ fn should_drop_item_stack_player_open_inventory_with_dropkey() {
         events[0].from_slot,
         Some(convert_to_player_slot_id(InventoryKind::Generic9x3, 50))
     );
-    assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 32));
+    assert_eq!(events[0].stack, ItemStack::new(ItemKind::IronIngot, 32).with_components(vec![
+        ItemComponent::CustomName("Custom Iron".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Other Lore Line 1.".into_text_component(),
+            "Other Lore Line 2.".into_text_component(),
+        ]),
+    ]));
 
     // Also make sure that the player inventory was updated correctly.
     let expected_player_slot_id = convert_to_player_slot_id(InventoryKind::Generic9x3, 50);
@@ -1871,7 +2165,13 @@ fn dragging_items() {
     helper.clear_received();
 
     app.world_mut().get_mut::<CursorItem>(client).unwrap().0 =
-        ItemStack::new(ItemKind::Diamond, 64);
+        ItemStack::new(ItemKind::Diamond, 64).with_components(vec![
+            ItemComponent::CustomName("Draggable Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore Line 2.".into_text_component(),
+            ]),
+        ]);
 
     let inv_state = app.world_mut().get::<ClientInventoryState>(client).unwrap();
     let window_id = inv_state.window_id();
@@ -1886,22 +2186,46 @@ fn dragging_items() {
         slot_changes: vec![
             SlotChange {
                 idx: 9,
-                stack: ItemStack::new(ItemKind::Diamond, 21),
+                stack: ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+                    ItemComponent::CustomName("Draggable Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
             SlotChange {
                 idx: 10,
-                stack: ItemStack::new(ItemKind::Diamond, 21),
+                stack: ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+                    ItemComponent::CustomName("Draggable Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
             SlotChange {
                 idx: 11,
-                stack: ItemStack::new(ItemKind::Diamond, 21),
+                stack: ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+                    ItemComponent::CustomName("Draggable Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
             }
             .into(),
         ]
         .into(),
-        carried_item: ItemStack::new(ItemKind::Diamond, 1).into(),
+        carried_item: ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+            ItemComponent::CustomName("Draggable Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore Line 2.".into_text_component(),
+            ]),
+        ]).into(),
     };
     helper.send(&drag_packet);
 
@@ -1914,7 +2238,13 @@ fn dragging_items() {
         .get::<CursorItem>(client)
         .expect("could not find client");
 
-    assert_eq!(cursor_item.0, ItemStack::new(ItemKind::Diamond, 1));
+    assert_eq!(cursor_item.0, ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+        ItemComponent::CustomName("Draggable Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore Line 2.".into_text_component(),
+        ]),
+    ]));
 
     let inventory = app
         .world_mut()
@@ -1922,6 +2252,12 @@ fn dragging_items() {
         .expect("could not find inventory");
 
     for i in 9..12 {
-        assert_eq!(inventory.slot(i), &ItemStack::new(ItemKind::Diamond, 21));
+        assert_eq!(inventory.slot(i), &ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+            ItemComponent::CustomName("Draggable Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore Line 2.".into_text_component(),
+            ]),
+        ]));
     }
 }
