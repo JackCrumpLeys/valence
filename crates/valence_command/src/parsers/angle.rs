@@ -7,14 +7,14 @@ use crate::parsers::{CommandArg, CommandArgParseError, ParseInput};
 pub struct Angle(pub f32);
 
 impl CommandArg for Angle {
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let angle = f32::parse_arg(input)?;
 
         Ok(Angle(angle))
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Angle
     }
 }

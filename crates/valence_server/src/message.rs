@@ -5,6 +5,7 @@ use bevy_ecs::prelude::*;
 use valence_protocol::encode::WritePacket;
 use valence_protocol::packets::play::{ChatC2s, SystemChatS2c};
 use valence_protocol::text::IntoText;
+use valence_protocol::text_component::IntoTextComponent;
 
 use crate::event_loop::{EventLoopPreUpdate, PacketEvent};
 

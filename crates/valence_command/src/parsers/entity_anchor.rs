@@ -9,7 +9,7 @@ pub enum EntityAnchor {
 }
 
 impl CommandArg for EntityAnchor {
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         if input.match_next("eyes") {
             Ok(EntityAnchor::Eyes)
@@ -23,7 +23,7 @@ impl CommandArg for EntityAnchor {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::EntityAnchor
     }
 }

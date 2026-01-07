@@ -175,7 +175,7 @@ fn create_particle_vec() -> Vec<Particle> {
         },
         Particle::Vibration {
             source: VibrationSourceType::Entity {
-                kind: 0.into(),
+                id: 0.into(),
                 eye_height: 1.0,
             },
             ticks: 50.into(),

@@ -3,7 +3,7 @@ use crate::parsers::{CommandArg, CommandArgParseError, ParseInput};
 macro_rules! impl_parser_for_number {
     ($type:ty, $name:expr, $parser:ident) => {
         impl CommandArg for $type {
-            fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+            fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
                 input.skip_whitespace();
                 let s = input.pop_word();
 
@@ -15,7 +15,7 @@ macro_rules! impl_parser_for_number {
                 })
             }
 
-            fn display() -> Parser {
+            fn display() -> Parser<'static> {
                 Parser::$parser {
                     min: None,
                     max: None,

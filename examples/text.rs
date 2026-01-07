@@ -91,18 +91,19 @@ fn init_clients(
         client.send_chat_message("\nTranslated Text");
         client.send_chat_message(
             " - 'chat.type.advancement.task': ".into_text()
-                + Text::translate(keys::CHAT_TYPE_ADVANCEMENT_TASK, []),
+                + Text::translate(keys::CHAT_TYPE_ADVANCEMENT_TASK, [], None),
         );
         client.send_chat_message(
             " - 'chat.type.advancement.task' with slots: ".into_text()
                 + Text::translate(
                     keys::CHAT_TYPE_ADVANCEMENT_TASK,
                     ["arg1".into(), "arg2".into()],
+                    None,
                 ),
         );
         client.send_chat_message(
             " - 'custom.translation_key': ".into_text()
-                + Text::translate("custom.translation_key", []),
+                + Text::translate("custom.translation_key", [], None),
         );
 
         // Scoreboard value example

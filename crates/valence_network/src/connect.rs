@@ -505,7 +505,8 @@ async fn login_online(
     match resp.status() {
         StatusCode::OK => {}
         StatusCode::NO_CONTENT => {
-            let reason = Text::translate(keys::MULTIPLAYER_DISCONNECT_UNVERIFIED_USERNAME, []);
+            let reason =
+                Text::translate(keys::MULTIPLAYER_DISCONNECT_UNVERIFIED_USERNAME, [], None);
             io.send_packet(&LoginDisconnectS2c {
                 reason: Cow::Owned(JsonText(reason)),
             })

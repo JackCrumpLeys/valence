@@ -106,7 +106,7 @@ fn init_clients(
         visible_chunk_layer.0 = layer;
         visible_entity_layers.0.insert(layer);
         pos.set(SPAWN_POS);
-        *game_mode = GameMode::Adventure;
+        *game_mode = GameMode::Creative;
         abilities.set_allow_flying(true);
         flying_speed.0 = 0.1;
         fov_modifier.0 = 0.05;

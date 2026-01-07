@@ -4,7 +4,7 @@ use super::Parser;
 use crate::parsers::{CommandArg, CommandArgParseError, ParseInput};
 
 impl CommandArg for Color {
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         if input.match_next("black") {
             Ok(Self::BLACK)
@@ -48,7 +48,7 @@ impl CommandArg for Color {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Color
     }
 }

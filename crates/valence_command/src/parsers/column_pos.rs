@@ -9,7 +9,7 @@ pub struct ColumnPos {
 }
 
 impl CommandArg for ColumnPos {
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let x = AbsoluteOrRelative::<i32>::parse_arg(input)?;
         input.skip_whitespace();
@@ -20,7 +20,7 @@ impl CommandArg for ColumnPos {
         Ok(ColumnPos { x, y, z })
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::ColumnPos
     }
 }

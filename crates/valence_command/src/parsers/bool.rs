@@ -2,7 +2,7 @@ use super::Parser;
 use crate::parsers::{CommandArg, CommandArgParseError, ParseInput};
 
 impl CommandArg for bool {
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         if input.match_next("true") {
             Ok(true)
@@ -16,7 +16,7 @@ impl CommandArg for bool {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Bool
     }
 }

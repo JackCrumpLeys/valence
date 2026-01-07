@@ -1147,6 +1147,21 @@ impl HashedItemStack {
     }
 }
 
+impl From<ItemStack> for HashedItemStack {
+    fn from(stack: ItemStack) -> Self {
+        Self {
+            item: stack.item,
+            count: stack.count,
+            components: stack.components.map(|c| match c {
+                Patchable::Default(_) => Patchable::Default(()),
+                Patchable::Added((_, h)) => Patchable::Added(((), h)),
+                Patchable::Removed => Patchable::Removed,
+                Patchable::None => Patchable::None,
+            }),
+        }
+    }
+}
+
 impl ItemComponent {
     pub fn id(&self) -> u32 {
         match self {
@@ -2196,7 +2211,7 @@ mod tests {
         let mut stack = create_test_stack(ItemKind::Diamond, 1);
 
         // Test Insert
-        let custom_name = ItemComponent::CustomName(Text::from("Test Item"));
+        let custom_name = ItemComponent::CustomName(Text::from("Test Item").into());
         stack.insert_component(custom_name.clone());
 
         assert_eq!(stack.get_component(5_usize), Some(&custom_name));
@@ -2272,7 +2287,7 @@ mod tests {
     #[test]
     fn test_nested_container_serialization() {
         let mut inner_stack = ItemStack::new(ItemKind::Apple, 1);
-        inner_stack.insert_component(ItemComponent::ItemName(Text::from("Inner")));
+        inner_stack.insert_component(ItemComponent::ItemName(Text::from("Inner").into()));
 
         let mut outer_stack = ItemStack::new(ItemKind::Chest, 1);
         outer_stack.insert_component(ItemComponent::Container(vec![inner_stack]));
