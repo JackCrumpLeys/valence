@@ -134,6 +134,8 @@ pub(super) fn validate_click_slot_packet(
         open_inventory,
     };
 
+    let mut new_cursor_stack = ItemStack::EMPTY;
+
     match packet.mode {
         ClickMode::Click => {
             if packet.slot_idx == -1 {
@@ -187,7 +189,8 @@ pub(super) fn validate_click_slot_packet(
                         packet.slot_changes.len()
                     );
 
-                    let old_slot = window.slot(packet.slot_changes[0].idx as u16);
+                    let hashed_change = &packet.slot_changes[0];
+                    let old_slot = window.slot(hashed_change.idx as u16);
                     // TODO: make sure NBT is the same.
                     //       Sometimes, the client will add nbt data to an item if it's missing,
                     // like       "Damage" to a sword.
@@ -206,10 +209,17 @@ pub(super) fn validate_click_slot_packet(
                             // did not previously exist.
                             old_slot.item == packet.carried_item.item
                                 && old_slot.count == packet.carried_item.count
-                                && cursor_item.0.item == packet.slot_changes[0].stack.item
-                                && cursor_item.0.count == packet.slot_changes[0].stack.count,
+                                && cursor_item.0.item == hashed_change.stack.item
+                                && cursor_item.0.count == hashed_change.stack.count,
                             "swapped items must match"
                         );
+
+                        // Find the unhashed cursor
+                        new_slot_changes.push(SlotChange {
+                            idx: hashed_change.idx,
+                            stack: cursor_item.0.clone().with_count(hashed_change.stack.count),
+                        });
+                        new_cursor_stack = old_slot.clone().with_count(packet.carried_item.count);
                     } else {
                         // assert that a merge occurs
                         let count_deltas = calculate_net_item_delta(packet, &window, cursor_item);
@@ -217,6 +227,35 @@ pub(super) fn validate_click_slot_packet(
                             count_deltas == 0,
                             "invalid item delta for stack merge: {count_deltas}"
                         );
+
+                        // Find unhashed clicked slot
+                        let unhashed_slot = if !hashed_change.stack.is_empty() {
+                            if cursor_item.item == hashed_change.stack.item && !cursor_item.is_empty() {
+                                cursor_item.0.clone().with_count(hashed_change.stack.count)
+                            } else if old_slot.item == hashed_change.stack.item && !old_slot.is_empty() {
+                                old_slot.clone().with_count(hashed_change.stack.count)
+                            } else {
+                                bail!("could not find unhashed click item");
+                            }
+                        } else {
+                            ItemStack::EMPTY
+                        };
+
+                        new_slot_changes.push(SlotChange {
+                            idx: hashed_change.idx,
+                            stack: unhashed_slot,
+                        });
+
+                        // Find unhashed cursor
+                        if !packet.carried_item.is_empty() {
+                            new_cursor_stack = if cursor_item.item == packet.carried_item.item && !cursor_item.is_empty() {
+                                cursor_item.0.clone().with_count(packet.carried_item.count)
+                            } else if old_slot.item == packet.carried_item.item && !old_slot.is_empty() {
+                                old_slot.clone().with_count(packet.carried_item.count)
+                            } else {
+                                bail!("could not unhash carried item");
+                            };
+                        }
                     }
                 }
             }
@@ -251,9 +290,9 @@ pub(super) fn validate_click_slot_packet(
                     bail!("shift click must move an item");
                 };
 
-                let old_slot_kind = window.slot(packet.slot_idx as u16).item;
+                let source_slot = window.slot(packet.slot_idx as u16);
                 ensure!(
-                    old_slot_kind == item_kind,
+                    source_slot.item == item_kind,
                     "shift click must move the same item kind as modified slots"
                 );
 
@@ -266,6 +305,20 @@ pub(super) fn validate_click_slot_packet(
                         .all(|s| s.stack.item == item_kind),
                     "shift click must move the same item kind"
                 );
+
+                // Find unhashed slots
+                for hashed_change in packet.slot_changes.iter() {
+                    let unhashed = if !hashed_change.stack.is_empty() {
+                        source_slot.clone().with_count(hashed_change.stack.count)
+                    } else {
+                        ItemStack::EMPTY
+                    };
+
+                    new_slot_changes.push(SlotChange {
+                        idx: hashed_change.idx,
+                        stack: unhashed,
+                    });
+                }
             }
         }
 
@@ -307,6 +360,25 @@ pub(super) fn validate_click_slot_packet(
                                 && s.count == packet.slot_changes[1].stack.count),
                     "swapped items must match"
                 );
+
+                // find unhashed swapped slots
+                for (i, hashed_change) in packet.slot_changes.iter().enumerate() {
+                    let other_slot = old_slots[1 - i];
+                    let unhashed = if !hashed_change.stack.is_empty() {
+                        if other_slot.item == hashed_change.stack.item && !other_slot.is_empty() {
+                            other_slot.clone().with_count(hashed_change.stack.count)
+                        } else {
+                            bail!("could not find unhashed hotbar swap item");
+                        }
+                    } else {
+                        ItemStack::EMPTY
+                    };
+
+                    new_slot_changes.push(SlotChange {
+                        idx: hashed_change.idx,
+                        stack: unhashed,
+                    });
+                }
             }
         }
         ClickMode::CreativeMiddleClick => {}
@@ -327,8 +399,9 @@ pub(super) fn validate_click_slot_packet(
                     "slot index does not match modified slot"
                 );
 
+                let hashed_change = &packet.slot_changes[0];
                 let old_slot = window.slot(packet.slot_idx as u16);
-                let new_slot = &packet.slot_changes[0].stack;
+                let new_slot = &hashed_change.stack;
                 let is_transmuting = match (!old_slot.is_empty(), !new_slot.is_empty()) {
                     // TODO: make sure NBT is the same.
                     // Sometimes, the client will add nbt data to an item if it's missing, like
@@ -356,6 +429,18 @@ pub(super) fn validate_click_slot_packet(
                     count_deltas == expected_delta,
                     "invalid item delta: expected {expected_delta}, got {count_deltas}"
                 );
+
+                // FInd unhashed slot
+                let unhashed = if !new_slot.is_empty() {
+                    old_slot.clone().with_count(new_slot.count)
+                } else {
+                    ItemStack::EMPTY
+                };
+
+                new_slot_changes.push(SlotChange {
+                    idx: hashed_change.idx,
+                    stack: unhashed,
+                });
             }
         }
         ClickMode::Drag => {
@@ -365,6 +450,39 @@ pub(super) fn validate_click_slot_packet(
                     count_deltas == 0,
                     "invalid item delta: expected 0, got {count_deltas}"
                 );
+
+                // Items are spread out from a stack, to get the real item we need to find the cursor
+                // TOOD: add a lot of testing
+                
+                for hashed_change in packet.slot_changes.iter() {
+                    let current_slot = window.slot(hashed_change.idx as u16);
+
+                    let unhashed = if !hashed_change.stack.is_empty() {
+                        if cursor_item.item == hashed_change.stack.item && !cursor_item.is_empty() {
+                            cursor_item.0.clone().with_count(hashed_change.stack.count)
+                        } else if current_slot.item == hashed_change.stack.item && !current_slot.is_empty() {
+                            current_slot.clone().with_count(hashed_change.stack.count)
+                        } else {
+                            bail!("could not find unhashed drag item");
+                        }
+                    } else {
+                        ItemStack::EMPTY
+                    };
+
+                    new_slot_changes.push(SlotChange {
+                        idx: hashed_change.idx,
+                        stack: unhashed,
+                    });
+                }
+
+                // find unhashed cursor
+                if !packet.carried_item.is_empty() {
+                    new_cursor_stack = if cursor_item.item == packet.carried_item.item && !cursor_item.is_empty() {
+                        cursor_item.0.clone().with_count(packet.carried_item.count)
+                    } else {
+                        bail!("could not unhash carried item for drag");
+                    };
+                }
             } else {
                 ensure!(
                     packet.slot_changes.is_empty()
@@ -380,103 +498,47 @@ pub(super) fn validate_click_slot_packet(
                 count_deltas == 0,
                 "invalid item delta: expected 0, got {count_deltas}"
             );
-        }
-    }
 
-    // TODO: if we are able to compute hashes we can just search items by hash
-
-    // We find the unhashed itemstacks by searching the original items (based on the
-    // changed slots)
-
-    for hashed_change in packet.slot_changes.iter() {
-        let slot_idx = hashed_change.idx as u16;
-        let hashed_stack = &hashed_change.stack;
-
-        let actual_stack = if hashed_stack.is_empty() {
-            // Empty slot - no item to unhash
-            ItemStack::EMPTY
-        } else {
-            // For shift-click operations, the source is packet.slot_idx
-            if packet.mode == ClickMode::ShiftClick && packet.slot_idx >= 0 {
-                let source_slot = window.slot(packet.slot_idx as u16);
-                if source_slot.item == hashed_stack.item && !source_slot.is_empty() {
-                    // The item came from the shift-clicked slot
-                    source_slot.clone().with_count(hashed_stack.count)
+            // Items are collected into a stack
+            // TODO: testing
+            for hashed_change in packet.slot_changes.iter() {
+                let current_slot = window.slot(hashed_change.idx as u16);
+                let unhashed = if !hashed_change.stack.is_empty() {
+                    current_slot.clone().with_count(hashed_change.stack.count)
                 } else {
-                    bail!("could not find unhashed shift-clicked item");
-                }
-            } else {
-                // Try to find a matching item in the current slot or cursor
-                let current_slot = window.slot(slot_idx);
+                    ItemStack::EMPTY
+                };
 
-                if current_slot.item == hashed_stack.item && !current_slot.is_empty() {
-                    // The item is already in this slot, preserve its components
-                    current_slot.clone().with_count(hashed_stack.count)
-                } else if cursor_item.item == hashed_stack.item && !cursor_item.is_empty() {
-                    // The item came from the cursor, preserve its components
-                    cursor_item.0.clone().with_count(hashed_stack.count)
+                new_slot_changes.push(SlotChange {
+                    idx: hashed_change.idx,
+                    stack: unhashed,
+                });
+            }
+
+            // find unhsashd cursor
+            if !packet.carried_item.is_empty() {
+                new_cursor_stack = if cursor_item.item == packet.carried_item.item && !cursor_item.is_empty() {
+                    cursor_item.0.clone().with_count(packet.carried_item.count)
                 } else {
-                    // Look through other modified slots to find a source
-                    let source_stack = packet
-                        .slot_changes
-                        .iter()
-                        .find(|other| {
-                            other.idx != hashed_change.idx
-                                && other.stack.item == hashed_stack.item
-                                && !other.stack.is_empty()
-                        })
-                        .and_then(|other| {
-                            let other_slot_idx = other.idx;
-                            let other_slot = window.slot(other_slot_idx as u16);
-                            if other_slot.item == hashed_stack.item && !other_slot.is_empty() {
-                                Some((other_slot.clone(), other_slot_idx))
-                            } else {
-                                None
-                            }
-                        });
+                    // Look for the item in the modified slots
+                    let source_stack = packet.slot_changes.iter().find_map(|change| {
+                        let slot = window.slot(change.idx as u16);
+                        if slot.item == packet.carried_item.item && !slot.is_empty() {
+                            Some(slot.clone())
+                        } else {
+                            None
+                        }
+                    });
 
-                    if let Some((source, _source_idx)) = source_stack {
-                        source.with_count(hashed_stack.count)
+                    if let Some(source) = source_stack {
+                        source.with_count(packet.carried_item.count)
                     } else {
-                        bail!("could not find unhashed modified slot item");
+                        bail!("could not unhash carried item for double click");
                     }
-                }
-            }
-        };
-
-        new_slot_changes.push(SlotChange {
-            idx: hashed_change.idx,
-            stack: actual_stack,
-        });
-    }
-
-    // Unhash the cursor item
-    let new_cursor_stack = if !packet.carried_item.is_empty() {
-        let hashed_carried = &packet.carried_item;
-
-        if cursor_item.item == hashed_carried.item && !cursor_item.is_empty() {
-            // Preserve components
-            cursor_item.0.clone().with_count(hashed_carried.count)
-        } else {
-            // Look for the item in the modified slots
-            let source_stack = packet.slot_changes.iter().find_map(|change| {
-                let slot = window.slot(change.idx as u16);
-                if slot.item == hashed_carried.item && !slot.is_empty() {
-                    Some(slot.clone())
-                } else {
-                    None
-                }
-            });
-
-            if let Some(source) = source_stack {
-                source.with_count(hashed_carried.count)
-            } else {
-                bail!("could not unhash carried item");
+                };
             }
         }
-    } else {
-        ItemStack::EMPTY
-    };
+    }
 
     Ok((new_cursor_stack, new_slot_changes))
 }

@@ -940,6 +940,11 @@ fn handle_click_slot(
                     continue;
                 }
 
+                if pkt.slot_idx == -999 {
+                    // The player was just clicking outside the inventories without holding an item
+                    continue
+                }
+
                 if (0_i16..target_inventory.slot_count() as i16).contains(&pkt.slot_idx) {
                     // The player is dropping an item from another inventory.
 
@@ -1028,6 +1033,11 @@ fn handle_click_slot(
                     continue;
                 }
 
+                if pkt.slot_idx == -999 {
+                    // The player was just clicking outside the inventories without holding an item
+                    continue;
+                }
+
                 // println!("dropping from slot {}", pkt.slot_idx);
                 let stack = client_inv.slot(pkt.slot_idx as u16);
 
@@ -1068,7 +1078,7 @@ fn handle_click_slot(
                 // The player is interacting with an inventory that is
                 // open or has an inventory open while interacting with their own inventory.
 
-                let Ok(target_inventory) = inventories.get_mut(open_inventory.entity) else {
+                let Ok(mut target_inventory) = inventories.get_mut(open_inventory.entity) else {
                     // The inventory does not exist, ignore.
                     continue;
                 };
@@ -1107,7 +1117,7 @@ fn handle_click_slot(
                             continue;
                         }
 
-                        // target_inventory.set_slot(slot.idx as u16, slot.stack.clone());
+                        target_inventory.set_slot(slot.idx as u16, slot.stack.clone());
                         open_inventory.client_changed |= 1 << slot.idx;
                     } else {
                         if (target_inventory.readonly && transferred_between_inventories)
