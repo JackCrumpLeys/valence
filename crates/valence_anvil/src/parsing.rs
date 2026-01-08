@@ -159,7 +159,8 @@ fn parse_chunk(
         }
 
         let Some(Value::Compound(mut block_states)) = section.remove("block_states") else {
-            return Err(ParseChunkError::MissingBlockStates);
+            continue;
+            // return Err(ParseChunkError::MissingBlockStates);
         };
 
         let Some(Value::List(List::Compound(palette))) = block_states.remove("palette") else {

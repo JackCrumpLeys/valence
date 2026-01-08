@@ -21,7 +21,7 @@ const NUM_ITEM_COMPONENTS: usize = 96;
 const MAX_RECURSION_DEPTH: usize = 16;
 
 #[derive(Clone, PartialEq, Debug, Copy)]
-enum Patchable<T> {
+pub enum Patchable<T> {
     Default(T),
     /// `T`, `crc32c hash`
     Added((T, i32)),
@@ -29,7 +29,7 @@ enum Patchable<T> {
     None,
 }
 impl<T> Patchable<T> {
-    fn to_option(self) -> Option<T> {
+    pub fn to_option(self) -> Option<T> {
         match self {
             Patchable::Default(t) => Some(t),
             Patchable::Added((t, _)) => Some(t),
@@ -37,7 +37,7 @@ impl<T> Patchable<T> {
         }
     }
 
-    fn to_option_ref(&self) -> Option<&T> {
+    fn as_option(&self) -> Option<&T> {
         match self {
             Patchable::Default(t) => Some(t),
             Patchable::Added((t, _)) => Some(t),
@@ -71,7 +71,7 @@ impl Debug for ItemStack {
                     .components
                     .iter()
                     .enumerate()
-                    .filter_map(|(i, c)| c.to_option_ref().map(|comp| (i, comp)))
+                    .filter_map(|(i, c)| c.as_option().map(|comp| (i, comp)))
                     .collect::<Vec<_>>(),
             )
             .finish()
@@ -1307,7 +1307,7 @@ impl ItemStack {
     pub fn components(&self) -> Vec<&ItemComponent> {
         self.components
             .iter()
-            .filter_map(|component| component.to_option_ref())
+            .filter_map(|component| component.as_option())
             .map(|boxed| &**boxed)
             .collect()
     }
@@ -1317,7 +1317,7 @@ impl ItemStack {
         self.item
             .default_components()
             .iter()
-            .filter_map(|component| component.to_option_ref().map(|b| &**b))
+            .filter_map(|component| component.as_option().map(|b| &**b))
             .cloned()
             .collect()
     }
@@ -2154,7 +2154,7 @@ impl ItemKindExt for ItemKind {
 #[cfg(test)]
 mod tests {
     use valence_ident::ident;
-    use valence_nbt::{Compound, List};
+    use valence_nbt::Compound;
     use valence_text::Text;
 
     use super::*;
@@ -2183,10 +2183,10 @@ mod tests {
         let p_removed: Patchable<Box<i32>> = Patchable::Removed;
         let p_none: Patchable<Box<i32>> = Patchable::None;
 
-        assert_eq!(p_added.to_option_ref().map(|v| **v), Some(10));
-        assert_eq!(p_default.to_option_ref().map(|v| **v), Some(5));
-        assert_eq!(p_removed.to_option_ref(), None);
-        assert_eq!(p_none.to_option_ref(), None);
+        assert_eq!(p_added.as_option().map(|v| **v), Some(10));
+        assert_eq!(p_default.as_option().map(|v| **v), Some(5));
+        assert_eq!(p_removed.as_option(), None);
+        assert_eq!(p_none.as_option(), None);
     }
 
     // --- ItemStack Logical Tests ---
@@ -2263,7 +2263,7 @@ mod tests {
 
     #[test]
     fn test_mode_pair_serialization() {
-        let m0 = ModePair::<String, RegistryId>::Mode0("minecraft:standard".to_string());
+        let m0 = ModePair::<String, RegistryId>::Mode0("minecraft:standard".to_owned());
         let m1 = ModePair::<String, RegistryId>::Mode1(RegistryId::new(1));
 
         roundtrip(&m0);
@@ -2300,7 +2300,7 @@ mod tests {
         let mut buf = Vec::new();
 
         // Helper to write a recursive bundle structure manually
-        fn write_recursive_bundle(mut w: &mut Vec<u8>, depth: usize) {
+        fn write_recursive_bundle(w: &mut Vec<u8>, depth: usize) {
             VarInt(1).encode(&mut *w).unwrap(); // Count
             ItemKind::Bundle.encode(&mut *w).unwrap(); // Item
 

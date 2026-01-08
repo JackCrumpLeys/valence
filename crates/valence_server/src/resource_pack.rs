@@ -3,6 +3,7 @@ use bevy_ecs::prelude::*;
 use uuid::Uuid;
 use valence_protocol::packets::play::{ResourcePackC2s, ResourcePackPushS2c};
 use valence_protocol::text::Text;
+use valence_protocol::text_component::IntoTextComponent;
 use valence_protocol::WritePacket;
 
 use crate::client::Client;
@@ -50,7 +51,7 @@ impl Client {
             url: url.into(),
             hash: hash.into(),
             forced,
-            prompt_message: prompt_message.map(|t| t.into()),
+            prompt_message: prompt_message.map(|t| t.into_cow_text_component()),
         });
 
         uuid
@@ -80,7 +81,7 @@ impl Client {
             url: url.into(),
             hash: hash.into(),
             forced,
-            prompt_message: prompt_message.map(|t| t.into()),
+            prompt_message: prompt_message.map(|t| t.into_cow_text_component()),
         });
     }
 }

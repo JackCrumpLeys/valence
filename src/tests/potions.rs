@@ -40,7 +40,10 @@ fn test_status_effects_packets() {
     let packet = sent_packets.first::<UpdateMobEffectS2c>();
 
     assert_eq!(packet.entity_id, VarInt(0)); // Client entity ID is always 0
-    assert_eq!(packet.effect_id, VarInt(31)); // Bad Omen
+    assert_eq!(
+        packet.effect_id,
+        i32::from(StatusEffect::BadOmen.to_raw()).into()
+    ); // Bad Omen
     assert_eq!(packet.amplifier, 1);
     assert_eq!(packet.duration, VarInt(100));
 
@@ -67,5 +70,8 @@ fn test_status_effects_packets() {
     let packet = sent_packets.first::<RemoveMobEffectS2c>();
 
     assert_eq!(packet.entity_id, VarInt(0)); // Client entity ID is always 0
-    assert_eq!(packet.effect_id, VarInt(31)); // Bad Omen
+    assert_eq!(
+        packet.effect_id,
+        i32::from(StatusEffect::BadOmen.to_raw()).into()
+    ); // Bad Omen
 }

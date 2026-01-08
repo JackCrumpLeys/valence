@@ -4,6 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use serde::Deserialize;
 use valence_build_utils::{ident, rerun_if_changed};
+// TODO: Update to support components
 
 #[derive(Deserialize, Clone, Debug)]
 struct Item {
@@ -14,18 +15,18 @@ struct Item {
     max_durability: u16,
     enchantability: u8,
     fireproof: bool,
-    food: Option<FoodComponent>,
+    // food: Option<FoodComponent>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-struct FoodComponent {
-    hunger: u16,
-    saturation: f32,
-    always_edible: bool,
-    meat: bool,
-    snack: bool,
-    // TODO: effects
-}
+// #[derive(Deserialize, Clone, Debug)]
+// struct FoodComponent {
+//     hunger: u16,
+//     saturation: f32,
+//     always_edible: bool,
+//     meat: bool,
+//     snack: bool,
+//     // TODO: effects
+// }
 
 pub(crate) fn build() -> anyhow::Result<TokenStream> {
     rerun_if_changed(["extracted/items.json"]);
@@ -108,31 +109,32 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         })
         .collect::<TokenStream>();
 
-    let item_kind_to_food_component_arms = items
-        .iter()
-        .map(|item| match &item.food {
-            Some(food_component) => {
-                let name = ident(item.name.to_pascal_case());
-                let hunger = food_component.hunger;
-                let saturation = food_component.saturation;
-                let always_edible = food_component.always_edible;
-                let meat = food_component.meat;
-                let snack = food_component.snack;
-
-                quote! {
-                    Self::#name => Some(FoodComponent {
-                        hunger: #hunger,
-                        saturation: #saturation,
-                        always_edible: #always_edible,
-                        meat: #meat,
-                        snack: #snack,
-                    }
-                ),
-                }
-            }
-            None => quote! {},
-        })
-        .collect::<TokenStream>();
+    // TODO: This is in components now
+    // let item_kind_to_food_component_arms = items
+    //     .iter()
+    //     .map(|item| match &item.food {
+    //         Some(food_component) => {
+    //             let name = ident(item.name.to_pascal_case());
+    //             let hunger = food_component.hunger;
+    //             let saturation = food_component.saturation;
+    //             let always_edible = food_component.always_edible;
+    //             let meat = food_component.meat;
+    //             let snack = food_component.snack;
+    //
+    //             quote! {
+    //                 Self::#name => Some(FoodComponent {
+    //                     hunger: #hunger,
+    //                     saturation: #saturation,
+    //                     always_edible: #always_edible,
+    //                     meat: #meat,
+    //                     snack: #snack,
+    //                 }
+    //             ),
+    //             }
+    //         }
+    //         None => quote! {},
+    //     })
+    //     .collect::<TokenStream>();
 
     let item_kind_to_max_durability_arms = items
         .iter()
@@ -213,9 +215,9 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            #[doc = "Construct an item kind for its `snake_case` name."]
-            #[doc = ""]
-            #[doc = "Returns `None` if the name is invalid."]
+            /// Construct an item kind for its `snake_case` name.
+            ///
+            /// Returns `None` if the name is invalid.
             #[allow(clippy::should_implement_trait)]
             pub fn from_str(name: &str) -> Option<ItemKind> {
                 match name {
@@ -224,7 +226,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            #[doc = "Gets the `snake_case` name of this item kind."]
+            /// Gets the `snake_case` name of this item kind.
             pub const fn to_str(self) -> &'static str {
                 match self {
                     #item_kind_to_str_arms
@@ -245,15 +247,15 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            #[doc = "Returns a food component which stores hunger, saturation etc."]
-            #[doc = ""]
-            #[doc = "If the item kind can't be eaten, `None` will be returned."]
-            pub const fn food_component(self) -> Option<FoodComponent> {
-                match self {
-                    #item_kind_to_food_component_arms
-                    _ => None
-                }
-            }
+            // /// Returns a food component which stores hunger, saturation etc.
+            // ///
+            // /// If the item kind can't be eaten, `None` will be returned.
+            // pub const fn food_component(self) -> Option<FoodComponent> {
+            //     match self {
+            //         #item_kind_to_food_component_arms
+            //         _ => None
+            //     }
+            // }
 
             #[doc = "Returns the maximum durability before the item will break."]
             #[doc = ""]
@@ -305,7 +307,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
 
         impl From<ItemKind> for RegistryId {
             fn from(item: ItemKind) -> Self {
-                RegistryId::new(item.to_raw() as i32)
+                RegistryId::new(i32::from(item.to_raw()))
             }
         }
     })

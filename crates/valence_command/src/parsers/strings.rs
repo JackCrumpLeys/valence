@@ -19,7 +19,7 @@ impl CommandArg for String {
 pub struct GreedyString(pub String);
 
 impl CommandArg for GreedyString {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         Ok(GreedyString(
             match input.pop_all() {
@@ -39,7 +39,7 @@ impl CommandArg for GreedyString {
 pub struct QuotableString(pub String);
 
 impl CommandArg for QuotableString {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         match input.peek() {
             Some('"') => {

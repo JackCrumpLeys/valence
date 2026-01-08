@@ -137,7 +137,7 @@ fn create_particle_vec() -> Vec<Particle> {
         Particle::Enchant,
         Particle::EndRod,
         Particle::EntityEffect {
-            color: 0xffff0000u32 as i32, // red
+            color: 0xffff0000_u32 as i32, // red
         },
         Particle::ExplosionEmitter,
         Particle::Explosion,
@@ -154,7 +154,7 @@ fn create_particle_vec() -> Vec<Particle> {
         Particle::CherryLeaves,
         Particle::PaleOakLeaves,
         Particle::TintedLeaves {
-            color: 0xffff00ffu32 as i32, // magenta
+            color: 0xffff00ff_u32 as i32, // magenta
         },
         Particle::SculkSoul,
         Particle::SculkCharge { roll: 1.0 },

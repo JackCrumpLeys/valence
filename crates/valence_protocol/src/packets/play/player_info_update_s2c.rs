@@ -3,9 +3,9 @@ use std::io::Write;
 
 use bitfield_struct::bitfield;
 use uuid::Uuid;
-use valence_text::Text;
 
 use crate::profile::Property;
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, GameMode, Packet, VarInt};
 
 #[derive(Clone, Debug, Packet)]
@@ -36,7 +36,7 @@ pub struct PlayerListEntry<'a> {
     pub listed: bool,
     pub ping: i32,
     pub game_mode: GameMode,
-    pub display_name: Option<Cow<'a, Text>>,
+    pub display_name: Option<Cow<'a, TextComponent>>,
     pub priority: i32,
 }
 

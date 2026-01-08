@@ -230,9 +230,13 @@ pub(super) fn validate_click_slot_packet(
 
                         // Find unhashed clicked slot
                         let unhashed_slot = if !hashed_change.stack.is_empty() {
-                            if cursor_item.item == hashed_change.stack.item && !cursor_item.is_empty() {
+                            if cursor_item.item == hashed_change.stack.item
+                                && !cursor_item.is_empty()
+                            {
                                 cursor_item.0.clone().with_count(hashed_change.stack.count)
-                            } else if old_slot.item == hashed_change.stack.item && !old_slot.is_empty() {
+                            } else if old_slot.item == hashed_change.stack.item
+                                && !old_slot.is_empty()
+                            {
                                 old_slot.clone().with_count(hashed_change.stack.count)
                             } else {
                                 bail!("could not find unhashed click item");
@@ -248,9 +252,13 @@ pub(super) fn validate_click_slot_packet(
 
                         // Find unhashed cursor
                         if !packet.carried_item.is_empty() {
-                            new_cursor_stack = if cursor_item.item == packet.carried_item.item && !cursor_item.is_empty() {
+                            new_cursor_stack = if cursor_item.item == packet.carried_item.item
+                                && !cursor_item.is_empty()
+                            {
                                 cursor_item.0.clone().with_count(packet.carried_item.count)
-                            } else if old_slot.item == packet.carried_item.item && !old_slot.is_empty() {
+                            } else if old_slot.item == packet.carried_item.item
+                                && !old_slot.is_empty()
+                            {
                                 old_slot.clone().with_count(packet.carried_item.count)
                             } else {
                                 bail!("could not unhash carried item");
@@ -451,16 +459,18 @@ pub(super) fn validate_click_slot_packet(
                     "invalid item delta: expected 0, got {count_deltas}"
                 );
 
-                // Items are spread out from a stack, to get the real item we need to find the cursor
-                // TOOD: add a lot of testing
-                
+                // Items are spread out from a stack, to get the real item we need to find the
+                // cursor TOOD: add a lot of testing
+
                 for hashed_change in packet.slot_changes.iter() {
                     let current_slot = window.slot(hashed_change.idx as u16);
 
                     let unhashed = if !hashed_change.stack.is_empty() {
                         if cursor_item.item == hashed_change.stack.item && !cursor_item.is_empty() {
                             cursor_item.0.clone().with_count(hashed_change.stack.count)
-                        } else if current_slot.item == hashed_change.stack.item && !current_slot.is_empty() {
+                        } else if current_slot.item == hashed_change.stack.item
+                            && !current_slot.is_empty()
+                        {
                             current_slot.clone().with_count(hashed_change.stack.count)
                         } else {
                             bail!("could not find unhashed drag item");
@@ -477,7 +487,9 @@ pub(super) fn validate_click_slot_packet(
 
                 // find unhashed cursor
                 if !packet.carried_item.is_empty() {
-                    new_cursor_stack = if cursor_item.item == packet.carried_item.item && !cursor_item.is_empty() {
+                    new_cursor_stack = if cursor_item.item == packet.carried_item.item
+                        && !cursor_item.is_empty()
+                    {
                         cursor_item.0.clone().with_count(packet.carried_item.count)
                     } else {
                         bail!("could not unhash carried item for drag");
@@ -517,25 +529,26 @@ pub(super) fn validate_click_slot_packet(
 
             // find unhsashd cursor
             if !packet.carried_item.is_empty() {
-                new_cursor_stack = if cursor_item.item == packet.carried_item.item && !cursor_item.is_empty() {
-                    cursor_item.0.clone().with_count(packet.carried_item.count)
-                } else {
-                    // Look for the item in the modified slots
-                    let source_stack = packet.slot_changes.iter().find_map(|change| {
-                        let slot = window.slot(change.idx as u16);
-                        if slot.item == packet.carried_item.item && !slot.is_empty() {
-                            Some(slot.clone())
-                        } else {
-                            None
-                        }
-                    });
-
-                    if let Some(source) = source_stack {
-                        source.with_count(packet.carried_item.count)
+                new_cursor_stack =
+                    if cursor_item.item == packet.carried_item.item && !cursor_item.is_empty() {
+                        cursor_item.0.clone().with_count(packet.carried_item.count)
                     } else {
-                        bail!("could not unhash carried item for double click");
-                    }
-                };
+                        // Look for the item in the modified slots
+                        let source_stack = packet.slot_changes.iter().find_map(|change| {
+                            let slot = window.slot(change.idx as u16);
+                            if slot.item == packet.carried_item.item && !slot.is_empty() {
+                                Some(slot.clone())
+                            } else {
+                                None
+                            }
+                        });
+
+                        if let Some(source) = source_stack {
+                            source.with_count(packet.carried_item.count)
+                        } else {
+                            bail!("could not unhash carried item for double click");
+                        }
+                    };
             }
         }
     }

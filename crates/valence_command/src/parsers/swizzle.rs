@@ -9,7 +9,7 @@ pub struct Swizzle {
 }
 
 impl CommandArg for Swizzle {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let mut swizzle = Swizzle::default();
         while let Some(c) = input.peek() {

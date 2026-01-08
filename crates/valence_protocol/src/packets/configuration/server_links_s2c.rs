@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
-use valence_text::Text;
-
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet, PacketState};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
@@ -19,7 +18,7 @@ pub struct ServerLink<'a> {
 #[derive(Clone, Debug, Encode, Decode)]
 pub enum ServerLinkEnum {
     BuiltIn(BuiltInLinkType),
-    CustomText(Text),
+    CustomText(TextComponent),
 }
 
 #[derive(Clone, Debug, Encode, Decode)]

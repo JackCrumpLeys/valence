@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use bevy_ecs::prelude::Component;
 use bitfield_struct::bitfield;
 use uuid::Uuid;
-use valence_text::Text;
 
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
@@ -16,7 +16,7 @@ pub struct BossEventS2c<'a> {
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub enum BossBarAction<'a> {
     Add {
-        title: Cow<'a, Text>,
+        title: Cow<'a, TextComponent>,
         health: f32,
         color: BossBarColor,
         division: BossBarDivision,
@@ -24,7 +24,7 @@ pub enum BossBarAction<'a> {
     },
     Remove,
     UpdateHealth(f32),
-    UpdateTitle(Cow<'a, Text>),
+    UpdateTitle(Cow<'a, TextComponent>),
     UpdateStyle(BossBarColor, BossBarDivision),
     UpdateFlags(BossBarFlags),
 }

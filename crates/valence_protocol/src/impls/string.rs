@@ -105,7 +105,6 @@ impl Decode<'_> for Text {
         let c = NetworkCompound::decode(r)
             .context("decoding text from NBT")?
             .compound;
-        &c;
         Text::deserialize(c.into_deserializer()).context("deserializing text NBT")
     }
 }

@@ -258,8 +258,8 @@ impl From<NBTUuid> for Uuid {
 pub enum HoverEvent {
     /// Displays a tooltip with the given text.
     ShowText {
-        #[serde(alias = "value", alias = "contents")]
-        text: Text,
+        #[serde(alias = "contents", alias = "text")]
+        value: Text,
     },
     /// Shows an item.
     ShowItem {

@@ -9,7 +9,7 @@ pub struct BlockPos {
 }
 
 impl CommandArg for BlockPos {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let x = AbsoluteOrRelative::<i32>::parse_arg(input)?;
         input.skip_whitespace();

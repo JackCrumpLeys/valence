@@ -319,6 +319,7 @@ impl Client {
     }
 
     /// Puts a particle effect at the given position, only for this client.
+    #[allow(clippy::too_many_arguments)]
     pub fn play_particle<P, O>(
         &mut self,
         particle: &Particle,
@@ -398,7 +399,7 @@ impl Command for DisconnectClient {
         if let Some(mut entity) = world.get_entity_mut(self.client) {
             if let Some(mut client) = entity.get_mut::<Client>() {
                 client.write_packet(&DisconnectS2c {
-                    reason: self.reason.into(),
+                    reason: self.reason.into_cow_text_component(),
                 });
 
                 // Despawned will be removed at the end of the tick, this way, the packets have

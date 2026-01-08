@@ -383,6 +383,7 @@ impl ChunkLayer {
     /// Puts a particle effect at the given position in the world. The particle
     /// effect is visible to all players in the instance with the
     /// appropriate chunk in view.
+    #[allow(clippy::too_many_arguments)]
     pub fn play_particle<P, O>(
         &mut self,
         particle: &Particle,

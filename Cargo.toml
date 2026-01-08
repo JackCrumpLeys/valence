@@ -16,19 +16,18 @@ workspace = true
 
 [features]
 default = [
-    "advancement",
-    "anvil",
-    "boss_bar",
-    "equipment",
-    "inventory",
-    "log",
-    "network",
-    "player_list",
-    "scoreboard",
-    "world_border",
-    "command",
-    "weather",
-    "testing",
+  "advancement",
+  "anvil",
+  "boss_bar",
+  "inventory",
+  "log",
+  "network",
+  "player_list",
+  "scoreboard",
+  "world_border",
+  "command",
+  "weather",
+  "testing",
 ]
 advancement = ["dep:valence_advancement"]
 anvil = ["dep:valence_anvil"]
@@ -54,7 +53,7 @@ rand.workspace = true
 uuid.workspace = true
 valence_advancement = { workspace = true, optional = true }
 valence_anvil = { workspace = true, optional = true, features = [
-    "bevy_plugin",
+  "bevy_plugin",
 ] }
 valence_boss_bar = { workspace = true, optional = true }
 valence_command = { workspace = true, optional = true }
@@ -120,10 +119,10 @@ base64 = "0.22.1"
 bevy_app = { version = "0.14.2", default-features = false }
 bevy_derive = "0.14.2"
 bevy_ecs = { version = "0.14.2", default-features = false, features = [
-    "multi_threaded",
+  "multi_threaded",
 ] }
 bevy_hierarchy = { version = "0.14.2", default-features = false, features = [
-    "bevy_app",
+  "bevy_app",
 ] }
 bevy_log = { version = "0.14.2" }
 bevy_mod_debugdump = { version = "0.11.1" }
@@ -203,8 +202,8 @@ valence_inventory = { path = "crates/valence_inventory", version = "0.2.0-alpha.
 valence_lang = { path = "crates/valence_lang", version = "0.2.0-alpha.1" }
 valence_math = { path = "crates/valence_math", version = "0.2.0-alpha.1" }
 valence_nbt = { path = "crates/valence_nbt", features = [
-    "uuid",
-    "serde",
+  "uuid",
+  "serde",
 ], version = "0.8.0" }
 valence_network = { path = "crates/valence_network", version = "0.2.0-alpha.1" }
 valence_player_list = { path = "crates/valence_player_list", version = "0.2.0-alpha.1" }
@@ -305,7 +304,6 @@ rest_pat_in_fully_bound_structs = "warn"
 semicolon_outside_block = "warn"
 str_to_string = "warn"
 string_lit_chars_any = "warn"
-string_to_string = "warn"
 struct_field_names = "warn"
 tests_outside_test_module = "warn"
 # todo = "warn"

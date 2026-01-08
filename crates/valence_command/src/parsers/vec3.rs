@@ -9,7 +9,7 @@ pub struct Vec3 {
 }
 
 impl CommandArg for Vec3 {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         let x = AbsoluteOrRelative::<f32>::parse_arg(input)?;
         let y = AbsoluteOrRelative::<f32>::parse_arg(input)?;
         let z = AbsoluteOrRelative::<f32>::parse_arg(input)?;
