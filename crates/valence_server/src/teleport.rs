@@ -2,7 +2,7 @@ use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use tracing::warn;
 use valence_entity::{Look, Position, Velocity};
-use valence_math::{DVec3, Vec3};
+use valence_math::DVec3;
 use valence_protocol::packets::play::player_position_s2c::TeleportRelativeFlags;
 use valence_protocol::packets::play::{AcceptTeleportationC2s, PlayerPositionS2c};
 use valence_protocol::WritePacket;
@@ -99,7 +99,7 @@ fn teleport(
             client.write_packet(&PlayerPositionS2c {
                 position: if changed_pos { pos.0 } else { DVec3::ZERO },
                 velocity: if changed_velocity {
-                    velocity.0.into()
+                    velocity.0
                 } else {
                     DVec3::ZERO
                 },
