@@ -322,11 +322,11 @@ pub struct HeadYaw(pub f32);
 
 /// Entity velocity in m/s.
 #[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
-pub struct Velocity(pub Vec3);
+pub struct Velocity(pub DVec3);
 
 impl Velocity {
     pub fn to_packet_units(self) -> valence_protocol::Velocity {
-        valence_protocol::Velocity::from_ms_f32(self.0.into())
+        valence_protocol::Velocity::from_ms_f64(self.0.into())
     }
 }
 

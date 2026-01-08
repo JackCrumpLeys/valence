@@ -35,7 +35,7 @@ pub struct TeleportState {
     /// this is nonzero.
     pending_teleports: u32,
     pub(super) synced_pos: DVec3,
-    pub(super) synced_velocity: Vec3,
+    pub(super) synced_velocity: DVec3,
     pub(super) synced_look: Look,
 }
 
@@ -47,7 +47,7 @@ impl TeleportState {
             // Set initial synced pos and look to NaN so a teleport always happens when first
             // joining.
             synced_pos: DVec3::NAN,
-            synced_velocity: Vec3::NAN,
+            synced_velocity: DVec3::NAN,
             synced_look: Look {
                 yaw: f32::NAN,
                 pitch: f32::NAN,
