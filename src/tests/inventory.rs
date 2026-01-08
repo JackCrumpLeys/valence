@@ -2254,7 +2254,7 @@ fn should_drop_item_stack_player_open_inventory_with_dropkey() {
 //             SlotChange {
 //                 idx: 9,
 //                 stack: ItemStack::new(ItemKind::Diamond,
-// 21).with_components(vec![                     
+// 21).with_components(vec![
 // ItemComponent::CustomName("Draggable Diamond".into_text_component()),
 //                     ItemComponent::Lore(vec![
 //                         "Lore Line 1.".into_text_component(),
@@ -2266,7 +2266,7 @@ fn should_drop_item_stack_player_open_inventory_with_dropkey() {
 //             SlotChange {
 //                 idx: 10,
 //                 stack: ItemStack::new(ItemKind::Diamond,
-// 21).with_components(vec![                     
+// 21).with_components(vec![
 // ItemComponent::CustomName("Draggable Diamond".into_text_component()),
 //                     ItemComponent::Lore(vec![
 //                         "Lore Line 1.".into_text_component(),
@@ -2278,7 +2278,7 @@ fn should_drop_item_stack_player_open_inventory_with_dropkey() {
 //             SlotChange {
 //                 idx: 11,
 //                 stack: ItemStack::new(ItemKind::Diamond,
-// 21).with_components(vec![                     
+// 21).with_components(vec![
 // ItemComponent::CustomName("Draggable Diamond".into_text_component()),
 //                     ItemComponent::Lore(vec![
 //                         "Lore Line 1.".into_text_component(),
