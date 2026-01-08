@@ -231,7 +231,7 @@ impl ChunkLayer {
     }
 
     /// Get a [`ChunkEntry`] for the given position.
-    pub fn chunk_entry<P: Into<ChunkPos>>(&mut self, pos: P) -> ChunkEntry {
+    pub fn chunk_entry<P: Into<ChunkPos>>(&mut self, pos: P) -> ChunkEntry<'_> {
         match self.chunks.entry(pos.into()) {
             Entry::Occupied(oe) => ChunkEntry::Occupied(OccupiedChunkEntry {
                 messages: &mut self.messages,
@@ -267,7 +267,7 @@ impl ChunkLayer {
         self.messages.shrink_to_fit();
     }
 
-    pub fn block<P: Into<BlockPos>>(&self, pos: P) -> Option<BlockRef> {
+    pub fn block<P: Into<BlockPos>>(&self, pos: P) -> Option<BlockRef<'_>> {
         let pos = pos.into();
 
         let y = pos
@@ -383,10 +383,12 @@ impl ChunkLayer {
     /// Puts a particle effect at the given position in the world. The particle
     /// effect is visible to all players in the instance with the
     /// appropriate chunk in view.
+    #[allow(clippy::too_many_arguments)]
     pub fn play_particle<P, O>(
         &mut self,
         particle: &Particle,
         long_distance: bool,
+        always_visible: bool,
         position: P,
         offset: O,
         max_speed: f32,
@@ -400,6 +402,7 @@ impl ChunkLayer {
         self.view_writer(position).write_packet(&LevelParticlesS2c {
             particle: particle.clone(),
             long_distance,
+            always_visible,
             position,
             offset: offset.into(),
             max_speed,

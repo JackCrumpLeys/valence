@@ -20,7 +20,7 @@ impl CommandArg for BlockPos {
         Ok(BlockPos { x, y, z })
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::BlockPos
     }
 }

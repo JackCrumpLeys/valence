@@ -20,7 +20,7 @@ impl CommandArg for ColumnPos {
         Ok(ColumnPos { x, y, z })
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::ColumnPos
     }
 }

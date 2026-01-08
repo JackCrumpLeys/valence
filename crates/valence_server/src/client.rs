@@ -35,6 +35,7 @@ use valence_protocol::packets::play::{
 use valence_protocol::profile::Property;
 use valence_protocol::sound::{Sound, SoundCategory, SoundDirect, SoundId};
 use valence_protocol::text::{IntoText, Text};
+use valence_protocol::text_component::IntoTextComponent;
 use valence_protocol::var_int::VarInt;
 use valence_protocol::{BlockPos, ChunkPos, Encode, GameMode, Packet};
 use valence_registry::RegistrySet;
@@ -159,7 +160,7 @@ impl ClientBundle {
             respawn_pos: Default::default(),
             op_level: Default::default(),
             action_sequence: Default::default(),
-            view_distance: Default::default(),
+            view_distance: ViewDistance(args.view_distance),
             old_view_distance: OldViewDistance(2),
             visible_chunk_layer: Default::default(),
             old_visible_chunk_layer: OldVisibleChunkLayer(Entity::PLACEHOLDER),
@@ -201,6 +202,8 @@ pub struct ClientBundleArgs {
     pub properties: Vec<Property>,
     /// The abstract socket connection.
     pub conn: Box<dyn ClientConnection>,
+    /// The view distance of the client.
+    pub view_distance: u8,
     /// The packet encoder to use. This should be in sync with [`Self::conn`].
     pub enc: PacketEncoder,
 }
@@ -301,7 +304,7 @@ impl Client {
     pub fn kill<'a, M: IntoText<'a>>(&mut self, message: M) {
         self.write_packet(&PlayerCombatKillS2c {
             player_id: VarInt(0),
-            message: message.into_cow_text(),
+            message: message.into_cow_text_component(),
         });
     }
 
@@ -314,10 +317,12 @@ impl Client {
     }
 
     /// Puts a particle effect at the given position, only for this client.
+    #[allow(clippy::too_many_arguments)]
     pub fn play_particle<P, O>(
         &mut self,
         particle: &Particle,
         long_distance: bool,
+        always_visible: bool,
         position: P,
         offset: O,
         max_speed: f32,
@@ -327,8 +332,9 @@ impl Client {
         O: Into<Vec3>,
     {
         self.write_packet(&LevelParticlesS2c {
-            particle: particle.clone(),
             long_distance,
+            always_visible,
+            particle: particle.clone(),
             position: position.into(),
             offset: offset.into(),
             max_speed,
@@ -361,7 +367,7 @@ impl Client {
     }
 
     /// `velocity` is in m/s.
-    pub fn set_velocity<V: Into<Vec3>>(&mut self, velocity: V) {
+    pub fn set_velocity<V: Into<DVec3>>(&mut self, velocity: V) {
         self.write_packet(&SetEntityMotionS2c {
             entity_id: VarInt(0),
             velocity: Velocity(velocity.into()).to_packet_units(),
@@ -391,7 +397,7 @@ impl Command for DisconnectClient {
         if let Some(mut entity) = world.get_entity_mut(self.client) {
             if let Some(mut client) = entity.get_mut::<Client>() {
                 client.write_packet(&DisconnectS2c {
-                    reason: self.reason.into(),
+                    reason: self.reason.into_cow_text_component(),
                 });
 
                 // Despawned will be removed at the end of the tick, this way, the packets have

@@ -202,7 +202,7 @@ fn update_constant_hitbox(
             EntityKind::EGG => [0.25, 0.25, 0.25],
             EntityKind::ENDER_PEARL => [0.25, 0.25, 0.25],
             EntityKind::EXPERIENCE_BOTTLE => [0.25, 0.25, 0.25],
-            EntityKind::POTION => [0.25, 0.25, 0.25],
+            EntityKind::SPLASH_POTION | EntityKind::LINGERING_POTION => [0.25, 0.25, 0.25],
             EntityKind::TRIDENT => [0.5, 0.5, 0.5],
             EntityKind::TRADER_LLAMA => [0.9, 1.87, 0.9],
             EntityKind::TROPICAL_FISH => [0.5, 0.4, 0.5],
@@ -300,7 +300,7 @@ fn update_passive_child_hitbox(
             EntityKind::GOAT => {
                 if pose_query
                     .get(entity)
-                    .map_or(false, |v| v.0 == Pose::LongJumping)
+                    .is_ok_and(|v| v.0 == Pose::LongJumping)
                 {
                     [0.63, 0.91, 0.63]
                 } else {
@@ -499,9 +499,9 @@ fn update_painting_hitbox(
         center_pos.x -= f64::from(facing_x) * 0.46875;
         center_pos.z -= f64::from(facing_z) * 0.46875;
 
-        center_pos.x += f64::from(cc_facing_x) * if bounds.x % 2 == 0 { 0.5 } else { 0.0 };
-        center_pos.y += if bounds.y % 2 == 0 { 0.5 } else { 0.0 };
-        center_pos.z += f64::from(cc_facing_z) * if bounds.z % 2 == 0 { 0.5 } else { 0.0 };
+        center_pos.x += f64::from(cc_facing_x) * if bounds.x.is_multiple_of(2) { 0.5 } else { 0.0 };
+        center_pos.y += if bounds.y.is_multiple_of(2) { 0.5 } else { 0.0 };
+        center_pos.z += f64::from(cc_facing_z) * if bounds.z.is_multiple_of(2) { 0.5 } else { 0.0 };
 
         let bounds = match (facing_x, facing_z) {
             (1 | -1, 0) => DVec3::new(0.0625, f64::from(bounds.y), f64::from(bounds.z)),

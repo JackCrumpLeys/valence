@@ -10,8 +10,35 @@ pub struct SetEquipmentS2c {
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub struct EquipmentEntry {
-    pub slot: i8,
+    pub slot: EquipmentSlot,
     pub item: ItemStack,
+}
+
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+pub enum EquipmentSlot {
+    MainHand = 0,
+    OffHand = 1,
+    Boots = 2,
+    Leggings = 3,
+    Chestplate = 4,
+    Helmet = 5,
+    Body = 6,
+    Saddle = 7,
+}
+impl From<i8> for EquipmentSlot {
+    fn from(value: i8) -> Self {
+        match value {
+            0 => EquipmentSlot::MainHand,
+            1 => EquipmentSlot::OffHand,
+            2 => EquipmentSlot::Boots,
+            3 => EquipmentSlot::Leggings,
+            4 => EquipmentSlot::Chestplate,
+            5 => EquipmentSlot::Helmet,
+            6 => EquipmentSlot::Body,
+            7 => EquipmentSlot::Saddle,
+            _ => panic!("Invalid equipment slot value: {value}"),
+        }
+    }
 }
 
 impl Encode for SetEquipmentS2c {
@@ -19,7 +46,7 @@ impl Encode for SetEquipmentS2c {
         self.entity_id.encode(&mut w)?;
 
         for i in 0..self.equipment.len() {
-            let slot = self.equipment[i].slot;
+            let slot = self.equipment[i].slot as i8;
             if i != self.equipment.len() - 1 {
                 (slot | -128).encode(&mut w)?;
             } else {
@@ -42,7 +69,7 @@ impl<'a> Decode<'a> for SetEquipmentS2c {
             let slot = i8::decode(r)?;
             let item = ItemStack::decode(r)?;
             equipment.push(EquipmentEntry {
-                slot: slot & 127,
+                slot: (slot & 127).into(),
                 item,
             });
             if slot & -128 == 0 {

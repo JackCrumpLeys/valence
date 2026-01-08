@@ -1,12 +1,15 @@
+use std::hash::Hash;
 use std::io::Write;
 
 use anyhow::Context;
+use indexmap::IndexMap;
 use uuid::Uuid;
 use valence_generated::attributes::{EntityAttribute, EntityAttributeOperation};
 use valence_generated::block::{BlockEntityKind, BlockKind, BlockState};
 use valence_generated::item::ItemKind;
 use valence_generated::registry_id::RegistryId;
 use valence_ident::{Ident, IdentError};
+use valence_nbt::compound::NetworkCompound;
 use valence_nbt::Compound;
 use valence_text::color::RgbColor;
 
@@ -63,6 +66,20 @@ impl Decode<'_> for Compound {
         // TODO: consider if we need to bound the input slice or add some other
         // mitigation to prevent excessive memory usage on hostile input.
         Ok(valence_nbt::from_binary(r)?.0)
+    }
+}
+
+impl Encode for NetworkCompound {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        Ok(valence_nbt::to_network_binary(&self.compound, w)?)
+    }
+}
+
+impl Decode<'_> for NetworkCompound {
+    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
+        Ok(NetworkCompound {
+            compound: valence_nbt::from_network_binary(r)?,
+        })
     }
 }
 
@@ -172,7 +189,7 @@ impl Decode<'_> for EntityAttributeOperation {
 
 impl Encode for EntityAttribute {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {
-        VarInt(self.get_id() as i32).encode(w)?;
+        VarInt(i32::from(self.get_id())).encode(w)?;
         Ok(())
     }
 }
@@ -194,5 +211,29 @@ impl Decode<'_> for RgbColor {
     fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
         let color = u32::decode(r)?;
         Ok(Self::from_bits(color))
+    }
+}
+
+impl<K: Encode, V: Encode> Encode for IndexMap<K, V> {
+    fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
+        VarInt(self.len() as i32).encode(&mut w)?;
+        for (key, value) in self {
+            key.encode(&mut w)?;
+            value.encode(&mut w)?;
+        }
+        Ok(())
+    }
+}
+
+impl<'a, K: Decode<'a> + Hash + Eq, V: Decode<'a>> Decode<'a> for IndexMap<K, V> {
+    fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
+        let len = VarInt::decode(r)?.0 as usize;
+        let mut map = IndexMap::with_capacity(len);
+        for _ in 0..len {
+            let key = K::decode(r)?;
+            let value = V::decode(r)?;
+            map.insert(key, value);
+        }
+        Ok(map)
     }
 }

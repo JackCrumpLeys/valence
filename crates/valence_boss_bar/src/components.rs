@@ -6,6 +6,7 @@ use valence_entity::EntityLayerId;
 use valence_server::protocol::packets::play::boss_event_s2c::{
     BossBarAction, BossBarColor, BossBarDivision, BossBarFlags,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::{Text, UniqueId};
 
 /// The bundle of components that make up a boss bar.
@@ -24,8 +25,8 @@ pub struct BossBarBundle {
 pub struct BossBarTitle(pub Text);
 
 impl ToPacketAction for BossBarTitle {
-    fn to_packet_action(&self) -> BossBarAction {
-        BossBarAction::UpdateTitle(Cow::Borrowed(&self.0))
+    fn to_packet_action(&self) -> BossBarAction<'_> {
+        BossBarAction::UpdateTitle(Cow::Borrowed(&self.0).into_cow_text_component())
     }
 }
 
@@ -34,7 +35,7 @@ impl ToPacketAction for BossBarTitle {
 pub struct BossBarHealth(pub f32);
 
 impl ToPacketAction for BossBarHealth {
-    fn to_packet_action(&self) -> BossBarAction {
+    fn to_packet_action(&self) -> BossBarAction<'_> {
         BossBarAction::UpdateHealth(self.0)
     }
 }
@@ -48,18 +49,18 @@ pub struct BossBarStyle {
 }
 
 impl ToPacketAction for BossBarStyle {
-    fn to_packet_action(&self) -> BossBarAction {
+    fn to_packet_action(&self) -> BossBarAction<'_> {
         BossBarAction::UpdateStyle(self.color, self.division)
     }
 }
 
 impl ToPacketAction for BossBarFlags {
-    fn to_packet_action(&self) -> BossBarAction {
+    fn to_packet_action(&self) -> BossBarAction<'_> {
         BossBarAction::UpdateFlags(*self)
     }
 }
 
 /// Trait for converting a component to a boss bar action.
 pub(crate) trait ToPacketAction {
-    fn to_packet_action(&self) -> BossBarAction;
+    fn to_packet_action(&self) -> BossBarAction<'_>;
 }

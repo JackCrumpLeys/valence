@@ -171,33 +171,37 @@ pub trait IntoText<'a>: Sized {
     /// On click, opens the given URL. Has to be `http` or `https` protocol.
     fn on_click_open_url(self, url: impl Into<Cow<'static, str>>) -> Text {
         let mut value = self.into_text();
-        value.click_event = Some(ClickEvent::OpenUrl(url.into()));
+        value.click_event = Some(ClickEvent::OpenUrl { url: url.into() });
         value
     }
     /// On click, sends a command. Doesn't actually have to be a command, can be
     /// a simple chat message.
     fn on_click_run_command(self, command: impl Into<Cow<'static, str>>) -> Text {
         let mut value = self.into_text();
-        value.click_event = Some(ClickEvent::RunCommand(command.into()));
+        value.click_event = Some(ClickEvent::RunCommand {
+            command: command.into(),
+        });
         value
     }
     /// On click, copies the given text to the chat box.
     fn on_click_suggest_command(self, command: impl Into<Cow<'static, str>>) -> Text {
         let mut value = self.into_text();
-        value.click_event = Some(ClickEvent::SuggestCommand(command.into()));
+        value.click_event = Some(ClickEvent::SuggestCommand {
+            command: command.into(),
+        });
         value
     }
     /// On click, turns the page of the opened book to the given number.
     /// Indexing starts at `1`.
     fn on_click_change_page(self, page: impl Into<i32>) -> Text {
         let mut value = self.into_text();
-        value.click_event = Some(ClickEvent::ChangePage(page.into()));
+        value.click_event = Some(ClickEvent::ChangePage { page: page.into() });
         value
     }
     /// On click, copies the given text to clipboard.
     fn on_click_copy_to_clipboard(self, text: impl Into<Cow<'static, str>>) -> Text {
         let mut value = self.into_text();
-        value.click_event = Some(ClickEvent::CopyToClipboard(text.into()));
+        value.click_event = Some(ClickEvent::CopyToClipboard { value: text.into() });
         value
     }
     /// Clears the `click_event` property of the text. Property of the parent
@@ -211,7 +215,9 @@ pub trait IntoText<'a>: Sized {
     /// On mouse hover, shows the given text in a tooltip.
     fn on_hover_show_text(self, text: impl IntoText<'static>) -> Text {
         let mut value = self.into_text();
-        value.hover_event = Some(HoverEvent::ShowText(text.into_text()));
+        value.hover_event = Some(HoverEvent::ShowText {
+            value: text.into_text(),
+        });
         value
     }
     /// Clears the `hover_event` property of the text. Property of the parent
@@ -256,7 +262,7 @@ impl<'a> From<Cow<'a, Text>> for Text {
         value.into_owned()
     }
 }
-impl<'a, 'b> IntoText<'a> for &'a Cow<'b, Text> {
+impl<'a> IntoText<'a> for &'a Cow<'_, Text> {
     fn into_cow_text(self) -> Cow<'a, Text> {
         self.clone()
     }
@@ -277,7 +283,7 @@ impl From<String> for Text {
         value.into_text()
     }
 }
-impl<'a, 'b> IntoText<'b> for &'a String {
+impl<'b> IntoText<'b> for &String {
     fn into_cow_text(self) -> Cow<'b, Text> {
         Cow::Owned(Text::text(self.clone()))
     }
@@ -298,7 +304,7 @@ impl From<Cow<'static, str>> for Text {
         value.into_text()
     }
 }
-impl<'a> IntoText<'static> for &'a Cow<'static, str> {
+impl IntoText<'static> for &Cow<'static, str> {
     fn into_cow_text(self) -> Cow<'static, Text> {
         Cow::Owned(Text::text(self.clone()))
     }
@@ -332,7 +338,7 @@ impl<'a, 'b, T: IntoText<'a>, const N: usize> IntoText<'b> for [T; N] {
     }
 }
 
-impl<'a, 'b, 'c, T: IntoText<'a> + Clone, const N: usize> IntoText<'c> for &'b [T; N] {
+impl<'a, 'c, T: IntoText<'a> + Clone, const N: usize> IntoText<'c> for &[T; N] {
     fn into_cow_text(self) -> Cow<'c, Text> {
         let mut txt = Text::text("");
 

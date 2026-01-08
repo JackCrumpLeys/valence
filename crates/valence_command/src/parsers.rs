@@ -30,7 +30,6 @@ pub use strings::{GreedyString, QuotableString};
 pub use swizzle::Swizzle;
 use thiserror::Error;
 pub use time::Time;
-use tracing::error;
 pub(crate) use valence_server::protocol::packets::play::commands_s2c::Parser;
 pub use vec2::Vec2;
 pub use vec3::Vec3;
@@ -40,9 +39,9 @@ pub trait CommandArg: Sized {
         Self::parse_arg(&mut ParseInput::new(string))
     }
 
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError>;
+    fn parse_arg<'a>(input: &mut ParseInput<'a>) -> Result<Self, CommandArgParseError>;
     /// what will the client be sent
-    fn display() -> Parser;
+    fn display() -> Parser<'static>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -206,7 +205,7 @@ impl<T> CommandArg for AbsoluteOrRelative<T>
 where
     T: CommandArg + Default,
 {
-    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg<'a>(input: &mut ParseInput<'a>) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         if input.peek() == Some('~') {
             input.advance();
@@ -222,7 +221,7 @@ where
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         T::display()
     }
 }

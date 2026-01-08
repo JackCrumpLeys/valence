@@ -214,7 +214,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            /// Construct a effect from its snake_case name.
+            /// Construct a effect from its `snake_case` name.
             ///
             /// Returns `None` if the name is invalid.
             pub fn from_ident(id: Ident<&str>) -> Option<Self> {
@@ -281,7 +281,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
 
         impl From<StatusEffect> for RegistryId {
             fn from(effect: StatusEffect) -> Self {
-                RegistryId::new(effect.to_raw() as i32)
+                RegistryId::new(i32::from(effect.to_raw()))
             }
         }
     })

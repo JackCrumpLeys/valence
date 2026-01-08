@@ -19,7 +19,7 @@ impl CommandArg for ScoreHolder {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::ScoreHolder {
             allow_multiple: false,
         }

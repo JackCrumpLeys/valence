@@ -1,7 +1,6 @@
 use crate::{Bounded, Decode, Encode, FixedBitSet, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
-
 pub struct ChatC2s<'a> {
     pub message: Bounded<&'a str, 256>,
     pub timestamp: u64,
@@ -12,4 +11,5 @@ pub struct ChatC2s<'a> {
     // of the last 20 messages received and whether or not
     // the message was acknowledged by the client
     pub acknowledgement: FixedBitSet<20, 3>,
+    pub checksum: i8,
 }

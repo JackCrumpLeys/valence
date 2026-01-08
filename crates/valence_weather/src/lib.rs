@@ -108,7 +108,7 @@ fn change_client_rain_level(mut clients: Query<(&mut Client, &Rain), Changed<Rai
 fn change_client_thunder_level(mut clients: Query<(&mut Client, &Thunder), Changed<Thunder>>) {
     for (mut client, thunder) in &mut clients {
         client.write_packet(&GameEventS2c {
-            kind: GameEventKind::RainLevelChange,
+            kind: GameEventKind::ThunderLevelChange,
             value: thunder.0,
         });
     }

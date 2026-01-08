@@ -2,8 +2,8 @@ use std::borrow::Cow;
 use std::io::Write;
 
 use uuid::Uuid;
-use valence_text::Text;
 
+use crate::text_component::TextComponent;
 use crate::{Bounded, Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, PartialEq, Debug, Packet)]
@@ -15,12 +15,12 @@ pub struct PlayerChatS2c<'a> {
     pub timestamp: u64,
     pub salt: u64,
     pub previous_messages: Vec<MessageSignature<'a>>,
-    pub unsigned_content: Option<Cow<'a, Text>>,
+    pub unsigned_content: Option<Cow<'a, TextComponent>>,
     pub filter_type: MessageFilterType,
     pub filter_type_bits: Option<u8>,
     pub chat_type: VarInt,
-    pub network_name: Cow<'a, Text>,
-    pub network_target_name: Option<Cow<'a, Text>>,
+    pub network_name: Cow<'a, TextComponent>,
+    pub network_target_name: Option<Cow<'a, TextComponent>>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode)]
@@ -30,7 +30,7 @@ pub enum MessageFilterType {
     PartiallyFiltered,
 }
 
-impl<'a> Encode for PlayerChatS2c<'a> {
+impl Encode for PlayerChatS2c<'_> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         self.sender.encode(&mut w)?;
         self.index.encode(&mut w)?;
@@ -67,7 +67,7 @@ impl<'a> Decode<'a> for PlayerChatS2c<'a> {
         let time_stamp = u64::decode(r)?;
         let salt = u64::decode(r)?;
         let previous_messages = Vec::<MessageSignature>::decode(r)?;
-        let unsigned_content = Option::<Cow<'a, Text>>::decode(r)?;
+        let unsigned_content = Option::<Cow<'a, TextComponent>>::decode(r)?;
         let filter_type = MessageFilterType::decode(r)?;
 
         let filter_type_bits = match filter_type {
@@ -76,8 +76,8 @@ impl<'a> Decode<'a> for PlayerChatS2c<'a> {
         };
 
         let chat_type = VarInt::decode(r)?;
-        let network_name = <Cow<'a, Text>>::decode(r)?;
-        let network_target_name = Option::<Cow<'a, Text>>::decode(r)?;
+        let network_name = <Cow<'a, TextComponent>>::decode(r)?;
+        let network_target_name = Option::<Cow<'a, TextComponent>>::decode(r)?;
 
         Ok(Self {
             sender,
@@ -103,7 +103,7 @@ pub struct MessageSignature<'a> {
     pub signature: Option<&'a [u8; 256]>,
 }
 
-impl<'a> Encode for MessageSignature<'a> {
+impl Encode for MessageSignature<'_> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         VarInt(self.message_id + 1).encode(&mut w)?;
 

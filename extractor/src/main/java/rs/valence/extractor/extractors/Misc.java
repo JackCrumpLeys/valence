@@ -111,7 +111,7 @@ public class Misc implements Main.Extractor {
         for (var variant : registryManager.getOrThrow(
                 RegistryKeys.FROG_VARIANT
         )) {
-            catVariantJson.addProperty(
+            frogVariantJson.addProperty(
                     registryManager
                             .getOrThrow(RegistryKeys.FROG_VARIANT)
                             .getId(variant)
@@ -143,7 +143,7 @@ public class Misc implements Main.Extractor {
         for (var variant : registryManager.getOrThrow(
                 RegistryKeys.PIG_VARIANT
         )) {
-            catVariantJson.addProperty(
+            pigVariant.addProperty(
                     registryManager
                             .getOrThrow(RegistryKeys.PIG_VARIANT)
                             .getId(variant)
@@ -159,7 +159,7 @@ public class Misc implements Main.Extractor {
         for (var variant : registryManager.getOrThrow(
                 RegistryKeys.COW_VARIANT
         )) {
-            catVariantJson.addProperty(
+            cowVariant.addProperty(
                     registryManager
                             .getOrThrow(RegistryKeys.COW_VARIANT)
                             .getId(variant)
@@ -175,7 +175,7 @@ public class Misc implements Main.Extractor {
         for (var variant : registryManager.getOrThrow(
                 RegistryKeys.CHICKEN_VARIANT
         )) {
-            catVariantJson.addProperty(
+            chickenVariant.addProperty(
                     registryManager
                             .getOrThrow(RegistryKeys.CHICKEN_VARIANT)
                             .getId(variant)
@@ -191,7 +191,7 @@ public class Misc implements Main.Extractor {
         for (var variant : registryManager.getOrThrow(
                 RegistryKeys.PAINTING_VARIANT
         )) {
-            catVariantJson.addProperty(
+            paintingVariant.addProperty(
                     registryManager
                             .getOrThrow(RegistryKeys.PAINTING_VARIANT)
                             .getId(variant)
@@ -207,7 +207,7 @@ public class Misc implements Main.Extractor {
         for (var variant : registryManager.getOrThrow(
                 RegistryKeys.WOLF_SOUND_VARIANT
         )) {
-            catVariantJson.addProperty(
+            wolfSoundVariant.addProperty(
                     registryManager
                             .getOrThrow(RegistryKeys.WOLF_SOUND_VARIANT)
                             .getId(variant)

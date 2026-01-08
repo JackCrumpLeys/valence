@@ -3,6 +3,7 @@ use bevy_ecs::prelude::*;
 use uuid::Uuid;
 use valence_protocol::packets::play::{ResourcePackC2s, ResourcePackPushS2c};
 use valence_protocol::text::Text;
+use valence_protocol::text_component::IntoTextComponent;
 use valence_protocol::WritePacket;
 
 use crate::client::Client;
@@ -50,7 +51,7 @@ impl Client {
             url: url.into(),
             hash: hash.into(),
             forced,
-            prompt_message: prompt_message.map(|t| t.into()),
+            prompt_message: prompt_message.map(|t| t.into_cow_text_component()),
         });
 
         uuid
@@ -62,12 +63,11 @@ impl Client {
     /// * `uuid` - The UUID to identify the resource pack.
     /// * `url` - The URL of the resource pack file.
     /// * `hash` - The SHA-1 hash of the resource pack file. The value must be a
-    ///  40-character hexadecimal string.
+    ///   40-character hexadecimal string.
     /// * `forced` - Whether a client should be kicked from the server upon
-    /// declining the pack (this is enforced client-side)
+    ///   declining the pack (this is enforced client-side)
     /// * `prompt_message` - A message to be displayed with the resource pack
-    /// dialog.
-    ///
+    ///   dialog.
     pub fn set_resource_pack_with_uuid(
         &mut self,
         uuid: Uuid,
@@ -81,7 +81,7 @@ impl Client {
             url: url.into(),
             hash: hash.into(),
             forced,
-            prompt_message: prompt_message.map(|t| t.into()),
+            prompt_message: prompt_message.map(|t| t.into_cow_text_component()),
         });
     }
 }

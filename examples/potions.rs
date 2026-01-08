@@ -169,11 +169,11 @@ fn apply_potion_attribute(
     attributes.set_modifier(attr.attribute, name, amount, attr.operation);
 
     // not quite how vanilla does it, but it's close enough
-    if attr.attribute == EntityAttribute::GenericMaxHealth {
+    if attr.attribute == EntityAttribute::MaxHealth {
         if let Some(ref mut health) = health {
             health.0 = health.0.min(
                 attributes
-                    .get_compute_value(EntityAttribute::GenericMaxHealth)
+                    .get_compute_value(EntityAttribute::MaxHealth)
                     .unwrap_or(0.0) as f32,
             );
         }
@@ -188,11 +188,11 @@ fn remove_potion_attribute(
 ) {
     attributes.remove_modifier(attr.attribute, name);
 
-    if attr.attribute == EntityAttribute::GenericMaxHealth {
+    if attr.attribute == EntityAttribute::MaxHealth {
         if let Some(ref mut health) = health {
             health.0 = health.0.min(
                 attributes
-                    .get_compute_value(EntityAttribute::GenericMaxHealth)
+                    .get_compute_value(EntityAttribute::MaxHealth)
                     .unwrap_or(0.0) as f32,
             );
         }
@@ -311,7 +311,7 @@ pub fn handle_status_effect_update(
                         if let Some(ref mut health) = health {
                             health.0 = (health.0 + 1.0).min(
                                 attributes
-                                    .get_compute_value(EntityAttribute::GenericMaxHealth)
+                                    .get_compute_value(EntityAttribute::MaxHealth)
                                     .unwrap_or(0.0) as f32,
                             );
                         }

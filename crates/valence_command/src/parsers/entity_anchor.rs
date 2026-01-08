@@ -23,7 +23,7 @@ impl CommandArg for EntityAnchor {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::EntityAnchor
     }
 }

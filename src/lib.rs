@@ -150,6 +150,7 @@ pub mod prelude {
     pub use valence_server::nbt::Compound;
     pub use valence_server::protocol::packets::play::level_particles_s2c::Particle;
     pub use valence_server::protocol::text::{Color, IntoText, Text};
+    pub use valence_server::protocol::RegistryId;
     pub use valence_server::spawn::{ClientSpawnQuery, ClientSpawnQueryReadOnly, RespawnPosition};
     pub use valence_server::title::SetTitle as _;
     pub use valence_server::{

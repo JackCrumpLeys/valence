@@ -264,8 +264,6 @@ pub mod play {
     pub use set_entity_motion_s2c::SetEntityMotionS2c;
     pub mod set_experience_s2c;
     pub use set_experience_s2c::SetExperienceS2c;
-    pub mod add_experience_orb_s2c;
-    pub use add_experience_orb_s2c::AddExperienceOrbS2c;
     pub mod explode_s2c;
     pub use explode_s2c::ExplodeS2c;
     pub mod move_player_pos_rot_c2s;
@@ -474,6 +472,12 @@ pub mod play {
     pub use set_time_s2c::SetTimeS2c;
     pub mod set_cursor_item_s2c;
     pub use set_cursor_item_s2c::SetCursorItemS2c;
+    pub mod set_test_block_c2s;
+    pub use set_test_block_c2s::SetTestBlockC2s;
+    pub mod test_instance_block_action_c2s;
+    pub use test_instance_block_action_c2s::TestInstanceBlockActionC2s;
+    pub mod test_instance_block_status_s2c;
+    pub use test_instance_block_status_s2c::TestInstanceBlockStatusS2c;
 }
 
 pub mod status {

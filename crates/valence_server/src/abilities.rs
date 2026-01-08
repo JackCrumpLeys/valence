@@ -33,13 +33,13 @@ impl Default for FovModifier {
     }
 }
 
-/// Send if the client sends [`UpdatePlayerAbilitiesC2s::StartFlying`]
+/// Send if the client sends [`PlayerAbilitiesC2s::StartFlying`]
 #[derive(Event)]
 pub struct PlayerStartFlyingEvent {
     pub client: Entity,
 }
 
-/// Send if the client sends [`UpdatePlayerAbilitiesC2s::StopFlying`]
+/// Send if the client sends [`PlayerAbilitiesC2s::StopFlying`]
 #[derive(Event)]
 pub struct PlayerStopFlyingEvent {
     pub client: Entity,
@@ -56,8 +56,8 @@ pub struct PlayerStopFlyingEvent {
 /// 3. `update_player_abilities`: Watch [`GameMode`] changes => Update
 ///    [`PlayerAbilitiesFlags`] according to the [`GameMode`]
 ///
-/// 4. `update_server_player_abilities`: Watch [`UpdatePlayerAbilitiesC2s`]
-///    packets => Update [`PlayerAbilitiesFlags`] according to the packet
+/// 4. `update_server_player_abilities`: Watch [`PlayerAbilitiesC2s`] packets =>
+///    Update [`PlayerAbilitiesFlags`] according to the packet
 pub struct AbilitiesPlugin;
 
 impl Plugin for AbilitiesPlugin {

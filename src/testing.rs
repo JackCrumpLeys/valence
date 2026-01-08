@@ -9,7 +9,6 @@ use bytes::{Buf, BufMut, BytesMut};
 use uuid::Uuid;
 use valence_ident::ident;
 use valence_network::NetworkPlugin;
-use valence_registry::dimension_type::DimensionTypeId;
 use valence_registry::{BiomeRegistry, DimensionTypeRegistry};
 use valence_server::client::{ClientBundle, ClientBundleArgs, ClientConnection, ReceivedPacket};
 use valence_server::keepalive::KeepaliveSettings;
@@ -92,6 +91,7 @@ pub fn create_mock_client<N: Into<String>>(name: N) -> (ClientBundle, MockClient
         ip: IpAddr::V4(Ipv4Addr::LOCALHOST),
         properties: Default::default(),
         conn: Box::new(conn.clone()),
+        view_distance: 2,
         enc: PacketEncoder::new(),
     });
 

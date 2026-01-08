@@ -4,7 +4,6 @@ use std::time::Instant;
 
 use valence::client::{VisibleChunkLayer, VisibleEntityLayers};
 use valence::prelude::*;
-use valence::ServerSettings;
 
 const SPAWN_Y: i32 = 64;
 
@@ -13,10 +12,6 @@ struct TickStart(Instant);
 
 fn main() {
     App::new()
-        .insert_resource(ServerSettings {
-            compression_threshold: Default::default(),
-            ..Default::default()
-        })
         .insert_resource(NetworkSettings {
             connection_mode: ConnectionMode::Offline,
             max_connections: 50_000,

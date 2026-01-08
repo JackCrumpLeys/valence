@@ -19,3 +19,4 @@ uuid = { workspace = true, features = ["serde"] }
 valence_ident.workspace = true
 valence_nbt.workspace = true
 bitfield-struct.workspace = true
+

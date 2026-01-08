@@ -1,6 +1,6 @@
 use crate::{Decode, Encode, Packet};
 
-#[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
+#[derive(Copy, Clone, Debug, Encode, Decode, Packet, PartialEq)]
 pub struct GameEventS2c {
     pub kind: GameEventKind,
     pub value: f32,

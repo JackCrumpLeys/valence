@@ -169,8 +169,9 @@ fn handle_events(state: Arc<RwLock<SharedState>>) {
 
                         while let Ok(packet) = receiver.recv_async().await {
                             let state = state.read().unwrap();
-                            state.packets.write().unwrap().push(packet.clone());
-                            if utils::packet_to_string(&packet).is_err() {
+                            state.packets.write().unwrap().push(packet.clone()); // TODO move one line up before commit
+                            if let Err(e) = utils::packet_to_string(&packet) {
+                                println!("Could not decode {}. Err: {:#?}", packet.name, e);
                                 state
                                     .failed_packets
                                     .write()

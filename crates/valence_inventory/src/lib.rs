@@ -20,6 +20,7 @@ use valence_server::protocol::packets::play::{
     ContainerSetSlotS2c, OpenScreenS2c, PlayerActionC2s, SetCarriedItemC2s, SetCreativeModeSlotC2s,
     SetHeldSlotS2c,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::protocol::{VarInt, WritePacket};
 use valence_server::text::IntoText;
 use valence_server::{GameMode, ItemKind, ItemStack, Text};
@@ -110,9 +111,12 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// assert_eq!(inv.slot(0).item, ItemKind::Diamond);
     /// ```
+    ///
+    /// # Panics
+    /// If the slot index is out of bounds.
     #[track_caller]
     #[inline]
     pub fn set_slot<I: Into<ItemStack>>(&mut self, idx: u16, item: I) {
@@ -128,10 +132,12 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
-    /// let old = inv.replace_slot(0, ItemStack::new(ItemKind::IronIngot, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
+    /// let old = inv.replace_slot(0, ItemStack::new(ItemKind::IronIngot, 1));
     /// assert_eq!(old.item, ItemKind::Diamond);
     /// ```
+    /// # Panics
+    /// If the slot index is out of bounds.
     #[track_caller]
     #[must_use]
     pub fn replace_slot<I: Into<ItemStack>>(&mut self, idx: u16, item: I) -> ItemStack {
@@ -154,11 +160,13 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// assert!(inv.slot(1).is_empty());
     /// inv.swap_slot(0, 1);
     /// assert_eq!(inv.slot(1).item, ItemKind::Diamond);
     /// ```
+    /// # Panics
+    /// If either slot index is out of bounds.
     #[track_caller]
     pub fn swap_slot(&mut self, idx_a: u16, idx_b: u16) {
         assert!(
@@ -189,10 +197,12 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// inv.set_slot_amount(0, 64);
     /// assert_eq!(inv.slot(0).count, 64);
     /// ```
+    /// # Panics
+    /// If the slot index is out of bounds.
     #[track_caller]
     pub fn set_slot_amount(&mut self, idx: u16, amount: i8) {
         assert!(idx < self.slot_count(), "slot index out of range");
@@ -269,9 +279,9 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
-    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 1, None));
-    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
+    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 1));
+    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1));
     /// assert_eq!(inv.first_empty_slot_in(0..6), Some(1));
     /// assert_eq!(inv.first_empty_slot_in(2..6), Some(4));
     /// ```
@@ -293,9 +303,9 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
-    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 1, None));
-    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
+    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 1));
+    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1));
     /// assert_eq!(inv.first_empty_slot(), Some(1));
     /// ```
     #[inline]
@@ -309,10 +319,10 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
-    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 64, None));
-    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1, None));
-    /// inv.set_slot(4, ItemStack::new(ItemKind::GoldIngot, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
+    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 64));
+    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1));
+    /// inv.set_slot(4, ItemStack::new(ItemKind::GoldIngot, 1));
     /// assert_eq!(
     ///     inv.first_slot_with_item_in(ItemKind::GoldIngot, 64, 0..5),
     ///     Some(4)
@@ -343,10 +353,10 @@ impl Inventory {
     /// # use valence_inventory::*;
     /// # use valence_server::item::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
-    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1, None));
-    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 64, None));
-    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1, None));
-    /// inv.set_slot(4, ItemStack::new(ItemKind::GoldIngot, 1, None));
+    /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
+    /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 64));
+    /// inv.set_slot(3, ItemStack::new(ItemKind::IronIngot, 1));
+    /// inv.set_slot(4, ItemStack::new(ItemKind::GoldIngot, 1));
     /// assert_eq!(inv.first_slot_with_item(ItemKind::GoldIngot, 64), Some(4));
     /// ```
     #[inline]
@@ -449,12 +459,12 @@ impl OpenInventory {
 /// # use valence_inventory::*;
 /// # use valence_server::item::*;
 /// let mut player_inventory = Inventory::new(InventoryKind::Player);
-/// player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 1, None));
+/// player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 1));
 ///
 /// let target_inventory = Inventory::new(InventoryKind::Generic9x3);
 /// let window = InventoryWindow::new(&player_inventory, Some(&target_inventory));
 ///
-/// assert_eq!(window.slot(54), &ItemStack::new(ItemKind::Diamond, 1, None));
+/// assert_eq!(window.slot(54), &ItemStack::new(ItemKind::Diamond, 1));
 /// ```
 pub struct InventoryWindow<'a> {
     player_inventory: &'a Inventory,
@@ -507,11 +517,11 @@ impl<'a> InventoryWindow<'a> {
 /// let mut target_inventory = Inventory::new(InventoryKind::Generic9x3);
 /// let mut window = InventoryWindowMut::new(&mut player_inventory, Some(&mut target_inventory));
 ///
-/// window.set_slot(54, ItemStack::new(ItemKind::Diamond, 1, None));
+/// window.set_slot(54, ItemStack::new(ItemKind::Diamond, 1));
 ///
 /// assert_eq!(
 ///     player_inventory.slot(36),
-///     &ItemStack::new(ItemKind::Diamond, 1, None)
+///     &ItemStack::new(ItemKind::Diamond, 1)
 /// );
 /// ```
 pub struct InventoryWindowMut<'a> {
@@ -629,9 +639,8 @@ fn update_player_inventories(
 
             inventory.changed = 0;
             inv_state.slots_changed = 0;
-
-            // Skip updating the cursor item because we just updated the whole inventory.
-            continue;
+            // Skip updating the cursor item because we just updated the whole
+            // inventory.
         } else if inventory.changed != 0 {
             // Send the modified slots.
 
@@ -696,9 +705,9 @@ fn update_open_inventories(
             open_inventory.client_changed = 0;
 
             client.write_packet(&OpenScreenS2c {
-                window_id: inv_state.window_id.into(),
+                window_id: inv_state.window_id,
                 window_type: WindowType::from(inventory.kind),
-                window_title: Cow::Borrowed(&inventory.title),
+                window_title: (&inventory.title).into_cow_text_component(),
             });
 
             client.write_packet(&ContainerSetContentS2c {
@@ -856,32 +865,37 @@ fn handle_click_slot(
             .as_ref()
             .and_then(|open| inventories.get_mut(open.entity).ok());
 
-        if let Err(e) = validate::validate_click_slot_packet(
+        let (new_cursor_item, new_slot_changes) = match validate::validate_click_slot_packet(
             &pkt,
             &client_inv,
             open_inv.as_deref(),
             &cursor_item,
         ) {
-            debug!(
-                "failed to validate click slot packet for client {:#?}: \"{e:#}\" {pkt:#?}",
-                packet.client
-            );
+            Ok(cursor_item) => cursor_item,
+            Err(e) => {
+                debug!(
+                    "failed to validate click slot packet for client {:#?}: \"{e:#}\"
+            {pkt:#?}",
+                    packet.client
+                );
 
-            // Resync the inventory.
+                // Resync the inventory.
+                client.write_packet(&ContainerSetContentS2c {
+                    window_id: if open_inv.is_some() {
+                        inv_state.window_id
+                    } else {
+                        VarInt(0)
+                    },
+                    state_id: VarInt(inv_state.state_id.0),
+                    slots: Cow::Borrowed(open_inv.unwrap_or(client_inv).slot_slice()),
+                    carried_item: Cow::Borrowed(&cursor_item.0),
+                });
 
-            client.write_packet(&ContainerSetContentS2c {
-                window_id: if open_inv.is_some() {
-                    inv_state.window_id
-                } else {
-                    VarInt(0)
-                },
-                state_id: VarInt(inv_state.state_id.0),
-                slots: Cow::Borrowed(open_inv.unwrap_or(client_inv).slot_slice()),
-                carried_item: Cow::Borrowed(&cursor_item.0),
-            });
+                continue;
+            }
+        };
 
-            continue;
-        }
+        println!("got cursor item: {new_cursor_item:?}");
 
         if pkt.slot_idx < 0 && pkt.mode == ClickMode::Click {
             // The client is dropping the cursor item by clicking outside the window.
@@ -924,6 +938,11 @@ fn handle_click_slot(
                         carried_item: Cow::Borrowed(&cursor_item.0),
                     });
 
+                    continue;
+                }
+
+                if pkt.slot_idx == -999 {
+                    // The player was just clicking outside the inventories without holding an item
                     continue;
                 }
 
@@ -1015,6 +1034,12 @@ fn handle_click_slot(
                     continue;
                 }
 
+                if pkt.slot_idx == -999 {
+                    // The player was just clicking outside the inventories without holding an item
+                    continue;
+                }
+
+                // println!("dropping from slot {}", pkt.slot_idx);
                 let stack = client_inv.slot(pkt.slot_idx as u16);
 
                 if !stack.is_empty() {
@@ -1076,9 +1101,10 @@ fn handle_click_slot(
                     continue;
                 }
 
-                let mut new_cursor = pkt.carried_item.clone();
+                // Set the cursor based on what the validation returned
+                let mut new_cursor = new_cursor_item.clone();
 
-                for slot in pkt.slot_changes.iter() {
+                for slot in &new_slot_changes {
                     let transferred_between_inventories =
                         ((0_i16..target_inventory.slot_count() as i16).contains(&pkt.slot_idx)
                             && pkt.mode == ClickMode::Hotbar)
@@ -1150,9 +1176,9 @@ fn handle_click_slot(
                     continue;
                 }
 
-                let mut new_cursor = pkt.carried_item.clone();
+                let mut new_cursor = new_cursor_item.clone();
 
-                for slot in pkt.slot_changes.iter() {
+                for slot in &new_slot_changes {
                     if (0_i16..client_inv.slot_count() as i16).contains(&slot.idx) {
                         if client_inv.readonly {
                             new_cursor = cursor_item.0.clone();
@@ -1191,8 +1217,8 @@ fn handle_click_slot(
                 slot_id: pkt.slot_idx,
                 button: pkt.button,
                 mode: pkt.mode,
-                slot_changes: pkt.slot_changes.into(),
-                carried_item: pkt.carried_item,
+                slot_changes: new_slot_changes,
+                carried_item: new_cursor_item,
             });
         }
     }
@@ -1387,7 +1413,7 @@ pub struct UpdateSelectedSlotEvent {
 fn update_player_selected_slot(mut clients: Query<(&mut Client, &HeldItem), Changed<HeldItem>>) {
     for (mut client, held_item) in &mut clients {
         client.write_packet(&SetHeldSlotS2c {
-            slot: held_item.hotbar_idx(),
+            slot: i32::from(held_item.hotbar_idx()).into(),
         });
     }
 }

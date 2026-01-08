@@ -1,6 +1,6 @@
-use crate::{Decode, Encode, Packet};
+use crate::{Decode, Encode, Packet, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct SetHeldSlotS2c {
-    pub slot: u8,
+    pub slot: VarInt,
 }

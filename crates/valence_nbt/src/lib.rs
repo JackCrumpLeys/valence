@@ -4,7 +4,7 @@
 
 #[cfg(feature = "binary")]
 #[cfg_attr(docsrs, doc(cfg(feature = "binary")))]
-pub use binary::{from_binary, to_binary};
+pub use binary::{from_binary, from_network_binary, to_binary, to_network_binary};
 pub use compound::Compound;
 pub use error::*;
 pub use list::List;

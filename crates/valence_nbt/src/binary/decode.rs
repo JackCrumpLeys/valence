@@ -45,6 +45,21 @@ where
     Ok((root, root_name))
 }
 
+/// Decodes uncompressed network NBT binary data from the provided slice,
+/// Network NBT omits the root compound.
+pub fn from_network_binary<'de, S>(slice: &mut &'de [u8]) -> Result<Compound<S>>
+where
+    S: FromModifiedUtf8<'de> + Hash + Ord,
+{
+    let mut state = DecodeState { slice, depth: 0 };
+
+    let compound = state.read_compound()?;
+
+    debug_assert_eq!(state.depth, 0);
+
+    Ok(compound)
+}
+
 /// Maximum recursion depth to prevent overflowing the call stack.
 const MAX_DEPTH: usize = 512;
 

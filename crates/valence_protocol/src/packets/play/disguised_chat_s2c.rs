@@ -1,13 +1,12 @@
 use std::borrow::Cow;
 
-use valence_text::Text;
-
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct DisguisedChatS2c<'a> {
-    pub message: Cow<'a, Text>,
+    pub message: Cow<'a, TextComponent>,
     pub chat_type: VarInt,
-    pub sender_name: Cow<'a, Text>,
-    pub target_name: Option<Cow<'a, Text>>,
+    pub sender_name: Cow<'a, TextComponent>,
+    pub target_name: Option<Cow<'a, TextComponent>>,
 }

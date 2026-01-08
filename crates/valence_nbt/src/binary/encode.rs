@@ -33,6 +33,20 @@ where
     Ok(())
 }
 
+/// Encodes uncompressed network NBT binary data to the provided writer.
+/// Network NBT omits the root compound.
+pub fn to_network_binary<W, S>(val: &Compound<S>, writer: W) -> Result<()>
+where
+    W: Write,
+    S: ToModifiedUtf8 + Hash + Ord,
+{
+    let mut state = EncodeState { writer };
+
+    state.write_compound(val)?;
+
+    Ok(())
+}
+
 /// Returns the number of bytes that will be written when
 /// [`to_binary`] is called with this compound and root name.
 ///
@@ -389,5 +403,18 @@ impl ToModifiedUtf8 for java_string::JavaString {
 
     fn to_modified_utf8<W: Write>(&self, encoded_len: usize, writer: W) -> std::io::Result<()> {
         <java_string::JavaStr as ToModifiedUtf8>::to_modified_utf8(self, encoded_len, writer)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_network_binary_empty_compound() {
+        let comp: Compound<String> = Compound::new();
+        let mut buf = Vec::new();
+        to_network_binary(&comp, &mut buf).unwrap();
+        assert_eq!(buf, [0x0]);
     }
 }

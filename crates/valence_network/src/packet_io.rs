@@ -73,7 +73,7 @@ impl PacketIo {
             self.dec.queue_bytes(buf);
         }
     }
-    pub(crate) async fn try_recv_packet<'a>(&'a mut self) -> anyhow::Result<PacketFrame> {
+    pub(crate) async fn _try_recv_packet(&mut self) -> anyhow::Result<PacketFrame> {
         loop {
             if let Some(frame) = self.dec.try_next_packet()? {
                 self.frame = frame;
@@ -210,6 +210,8 @@ impl PacketIo {
             username: info.username,
             uuid: info.uuid,
             ip: info.ip,
+            // TODO: limit this by the server
+            view_distance: info.view_distance,
             properties: info.properties.0,
             conn: Box::new(RealClientConnection {
                 send: outgoing_sender,
@@ -240,7 +242,8 @@ impl ClientConnection for RealClientConnection {
         match self.send.try_send(bytes) {
             Ok(()) => Ok(()),
             Err(TrySendError::Full(_)) => bail!(
-                "reached configured outgoing limit of {} bytes",
+                "reached configured outgoing limit of {} bytes. If compression is disabled, \
+                 consider enabling it.",
                 self.send.limit()
             ),
             Err(TrySendError::Disconnected(_)) => bail!("client disconnected"),

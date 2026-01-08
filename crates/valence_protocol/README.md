@@ -6,11 +6,11 @@ A protocol library for _Minecraft: Java Edition_. Use this to build clients, ser
 
 ```rust
 use valence_protocol::{PacketEncoder, PacketDecoder, Difficulty};
-use valence_protocol::packets::play::DifficultyS2c;
+use valence_protocol::packets::play::ChangeDifficultyS2c;
 
 let mut encoder = PacketEncoder::new();
 
-let packet = DifficultyS2c {
+let packet = ChangeDifficultyS2c {
     difficulty: Difficulty::Peaceful,
     locked: true,
 };
@@ -29,7 +29,7 @@ decoder.queue_bytes(bytes);
 // Get the next packet "frame" from the decoder and use that to decode the body of the packet.
 // Packet frames can be thought of as type-erased packet structs.
 let frame = decoder.try_next_packet().unwrap().unwrap();
-let decoded_packet = frame.decode::<DifficultyS2c>().unwrap();
+let decoded_packet = frame.decode::<ChangeDifficultyS2c>().unwrap();
 
 // Check that our original packet struct is the same as the one we just decoded.
 assert_eq!(&packet, &decoded_packet);

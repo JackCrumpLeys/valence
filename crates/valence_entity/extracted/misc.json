@@ -256,10 +256,40 @@
     "red": 7,
     "siamese": 8,
     "tabby": 9,
-    "white": 10,
+    "white": 10
+  },
+  "frog_variant": {
     "cold": 0,
     "temperate": 1,
-    "warm": 2,
+    "warm": 2
+  },
+  "wolf_variant": {
+    "ashen": 0,
+    "black": 1,
+    "chestnut": 2,
+    "pale": 3,
+    "rusty": 4,
+    "snowy": 5,
+    "spotted": 6,
+    "striped": 7,
+    "woods": 8
+  },
+  "pig_variant": {
+    "cold": 0,
+    "temperate": 1,
+    "warm": 2
+  },
+  "cow_variant": {
+    "cold": 0,
+    "temperate": 1,
+    "warm": 2
+  },
+  "chicken_variant": {
+    "cold": 0,
+    "temperate": 1,
+    "warm": 2
+  },
+  "painting_variant": {
     "alban": 0,
     "aztec": 1,
     "aztec2": 2,
@@ -309,7 +339,9 @@
     "wasteland": 46,
     "water": 47,
     "wind": 48,
-    "wither": 49,
+    "wither": 49
+  },
+  "wolf_sound_variant": {
     "angry": 0,
     "big": 1,
     "classic": 2,
@@ -318,23 +350,6 @@
     "puglin": 5,
     "sad": 6
   },
-  "frog_variant": {},
-  "wolf_variant": {
-    "ashen": 0,
-    "black": 1,
-    "chestnut": 2,
-    "pale": 3,
-    "rusty": 4,
-    "snowy": 5,
-    "spotted": 6,
-    "striped": 7,
-    "woods": 8
-  },
-  "pig_variant": {},
-  "cow_variant": {},
-  "chicken_variant": {},
-  "painting_variant": {},
-  "wolf_sound_variant": {},
   "direction": {
     "DOWN": "down",
     "UP": "up",

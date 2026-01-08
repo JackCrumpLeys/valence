@@ -83,8 +83,8 @@ impl EntityAttributeInstance {
     /// If the modifier already exists, it will be overwritten.
     ///
     /// Returns a mutable reference to self.
-    pub fn with_add_modifier(&mut self, id: &String, modifier: f64) -> &mut Self {
-        self.add_modifiers.insert(id.clone(), modifier);
+    pub fn with_add_modifier(&mut self, id: &str, modifier: f64) -> &mut Self {
+        self.add_modifiers.insert(id.to_owned(), modifier);
         self
     }
 
@@ -93,8 +93,8 @@ impl EntityAttributeInstance {
     /// If the modifier already exists, it will be overwritten.
     ///
     /// Returns a mutable reference to self.
-    pub fn with_multiply_base_modifier(&mut self, id: &String, modifier: f64) -> &mut Self {
-        self.multiply_base_modifiers.insert(id.clone(), modifier);
+    pub fn with_multiply_base_modifier(&mut self, id: &str, modifier: f64) -> &mut Self {
+        self.multiply_base_modifiers.insert(id.to_owned(), modifier);
         self
     }
 
@@ -103,8 +103,9 @@ impl EntityAttributeInstance {
     /// If the modifier already exists, it will be overwritten.
     ///
     /// Returns a mutable reference to self.
-    pub fn with_multiply_total_modifier(&mut self, id: &String, modifier: f64) -> &mut Self {
-        self.multiply_total_modifiers.insert(id.clone(), modifier);
+    pub fn with_multiply_total_modifier(&mut self, id: &str, modifier: f64) -> &mut Self {
+        self.multiply_total_modifiers
+            .insert(id.to_owned(), modifier);
         self
     }
 
@@ -115,7 +116,7 @@ impl EntityAttributeInstance {
     /// Returns a mutable reference to self.
     pub fn with_modifier(
         &mut self,
-        id: &String,
+        id: &str,
         modifier: f64,
         operation: EntityAttributeOperation,
     ) -> &mut Self {
@@ -160,29 +161,25 @@ impl EntityAttributeInstance {
             modifiers: self
                 .add_modifiers
                 .iter()
-                .map(|(&ref id, &amount)| TrackedAttributeModifier {
-                    id: id.to_string(),
+                .map(|(id, &amount)| TrackedAttributeModifier {
+                    id: id.clone(),
                     amount,
                     operation: 0,
                 })
-                .chain(
-                    self.multiply_base_modifiers
-                        .iter()
-                        .map(|(&ref id, &amount)| TrackedAttributeModifier {
-                            id: id.to_string(),
-                            amount,
-                            operation: 1,
-                        }),
-                )
-                .chain(
-                    self.multiply_total_modifiers
-                        .iter()
-                        .map(|(&ref id, &amount)| TrackedAttributeModifier {
-                            id: id.to_string(),
-                            amount,
-                            operation: 2,
-                        }),
-                )
+                .chain(self.multiply_base_modifiers.iter().map(|(id, &amount)| {
+                    TrackedAttributeModifier {
+                        id: id.clone(),
+                        amount,
+                        operation: 1,
+                    }
+                }))
+                .chain(self.multiply_total_modifiers.iter().map(|(id, &amount)| {
+                    TrackedAttributeModifier {
+                        id: id.clone(),
+                        amount,
+                        operation: 2,
+                    }
+                }))
                 .collect(),
         }
     }
@@ -279,7 +276,7 @@ impl EntityAttributes {
     }
 
     /// Sets an add modifier of an attribute.
-    pub fn set_add_modifier(&mut self, attribute: EntityAttribute, id: &String, modifier: f64) {
+    pub fn set_add_modifier(&mut self, attribute: EntityAttribute, id: &str, modifier: f64) {
         self.mark_recently_changed(attribute);
         self.attributes
             .entry(attribute)
@@ -291,7 +288,7 @@ impl EntityAttributes {
     pub fn set_multiply_base_modifier(
         &mut self,
         attribute: EntityAttribute,
-        id: &String,
+        id: &str,
         modifier: f64,
     ) {
         self.mark_recently_changed(attribute);
@@ -305,7 +302,7 @@ impl EntityAttributes {
     pub fn set_multiply_total_modifier(
         &mut self,
         attribute: EntityAttribute,
-        id: &String,
+        id: &str,
         modifier: f64,
     ) {
         self.mark_recently_changed(attribute);
@@ -316,10 +313,10 @@ impl EntityAttributes {
     }
 
     /// Sets a value modifier of an attribute based on the operation.
-    pub fn set_modifier(
+    pub fn set_modifier<S: Into<String>>(
         &mut self,
         attribute: EntityAttribute,
-        id: impl Into<String>,
+        id: S,
         modifier: f64,
         operation: EntityAttributeOperation,
     ) {
@@ -331,7 +328,7 @@ impl EntityAttributes {
     }
 
     /// Removes a modifier of an attribute.
-    pub fn remove_modifier(&mut self, attribute: EntityAttribute, id: impl Into<String>) {
+    pub fn remove_modifier<S: Into<String>>(&mut self, attribute: EntityAttribute, id: S) {
         self.mark_recently_changed(attribute);
         if let Some(instance) = self.attributes.get_mut(&attribute) {
             instance.remove_modifier(&id.into());
@@ -347,7 +344,7 @@ impl EntityAttributes {
     }
 
     /// Checks if a modifier exists on an attribute.
-    pub fn has_modifier(&self, attribute: EntityAttribute, id: impl Into<String>) -> bool {
+    pub fn has_modifier<S: Into<String>>(&self, attribute: EntityAttribute, id: S) -> bool {
         self.attributes
             .get(&attribute)
             .is_some_and(|inst| inst.has_modifier(&id.into()))
@@ -356,7 +353,7 @@ impl EntityAttributes {
     /// **For internal use only.**
     ///
     /// Converts to a [`Vec`] of [`AttributeProperty`]s.
-    pub fn to_properties(&self) -> Vec<AttributeProperty> {
+    pub fn to_properties(&self) -> Vec<AttributeProperty<'_>> {
         self.attributes
             .iter()
             .filter(|(_, instance)| instance.attribute().tracked())
@@ -440,13 +437,13 @@ mod tests {
 
     #[test]
     fn test_compute_value() {
-        let add_id = "my_attr".to_string();
+        let add_id = "my_attr".to_owned();
         let mut attributes = EntityAttributes::new();
         attributes.set_base_value(EntityAttribute::MaxHealth, 20.0);
         attributes.set_add_modifier(EntityAttribute::MaxHealth, &add_id, 10.0);
-        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, &"1".to_string(), 0.2);
-        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, &"2".to_string(), 0.2);
-        attributes.set_multiply_total_modifier(EntityAttribute::MaxHealth, &"3".to_string(), 0.5);
+        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, "1", 0.2);
+        attributes.set_multiply_base_modifier(EntityAttribute::MaxHealth, "2", 0.2);
+        attributes.set_multiply_total_modifier(EntityAttribute::MaxHealth, "3", 0.5);
 
         assert_eq!(
             attributes.get_compute_value(EntityAttribute::MaxHealth),

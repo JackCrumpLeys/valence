@@ -15,7 +15,7 @@ impl CommandArg for Rotation {
         Ok(Rotation(vec2))
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Rotation
     }
 }

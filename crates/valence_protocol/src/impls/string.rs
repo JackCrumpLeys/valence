@@ -1,8 +1,11 @@
 use std::io::Write;
-use std::str::FromStr;
 
 use anyhow::{ensure, Context};
-use valence_text::Text;
+use serde::de::IntoDeserializer;
+use serde::{Deserialize, Serialize};
+use valence_nbt::compound::NetworkCompound;
+use valence_nbt::serde::ser::CompoundSerializer;
+use valence_text::{JsonText, Text};
 
 use crate::{Bounded, Decode, Encode, VarInt};
 
@@ -97,7 +100,26 @@ impl<const MAX_CHARS: usize> Decode<'_> for Bounded<Box<str>, MAX_CHARS> {
     }
 }
 
+impl Decode<'_> for Text {
+    fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
+        let c = NetworkCompound::decode(r)
+            .context("decoding text from NBT")?
+            .compound;
+        Text::deserialize(c.into_deserializer()).context("deserializing text NBT")
+    }
+}
+
 impl Encode for Text {
+    fn encode(&self, w: impl Write) -> anyhow::Result<()> {
+        let c = self
+            .serialize(CompoundSerializer)
+            .context("serializing text as compound")?;
+
+        NetworkCompound::from(c).encode(w)
+    }
+}
+
+impl Encode for JsonText {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {
         let s = serde_json::to_string(self).context("serializing text JSON")?;
 
@@ -105,10 +127,43 @@ impl Encode for Text {
     }
 }
 
-impl Decode<'_> for Text {
+impl Decode<'_> for JsonText {
     fn decode(r: &mut &[u8]) -> anyhow::Result<Self> {
         let str = Bounded::<&str, MAX_TEXT_CHARS>::decode(r)?.0;
 
-        Self::from_str(str).context("deserializing text JSON")
+        serde_json::from_str(str).context("deserializing text JSON")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use valence_text::{Color, IntoText};
+
+    use super::*;
+
+    #[test]
+    fn test_text_encoding() {
+        let text = Text::from("Hello, world!").color(Color::RED);
+        let mut encoded = Vec::new();
+        text.encode(&mut encoded).unwrap();
+
+        let decoded: Text = Text::decode(&mut encoded.as_slice()).unwrap();
+        assert_eq!(decoded, text);
+
+        let text = "Italic text".italic();
+        let mut encoded = Vec::new();
+        text.encode(&mut encoded).unwrap();
+        let decoded: Text = Text::decode(&mut encoded.as_slice()).unwrap();
+        assert_eq!(decoded, text);
+    }
+
+    #[test]
+    fn test_json_text_encoding() {
+        let json_text = JsonText(Text::from("Hello, world!").color(Color::RED));
+        let mut encoded = Vec::new();
+        json_text.encode(&mut encoded).unwrap();
+
+        let decoded: JsonText = JsonText::decode(&mut encoded.as_slice()).unwrap();
+        assert_eq!(decoded, json_text);
     }
 }

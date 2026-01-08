@@ -90,7 +90,7 @@ fn write_packets(packets: &Vec<Packet>) -> anyhow::Result<()> {
     }
 
     consts.extend([quote! {
-        pub const STD_PACKETS: [crate::packet_registry::Packet; #len] = [
+        pub static STD_PACKETS: [crate::packet_registry::Packet; #len] = [
             #(#p),*
         ];
     }]);

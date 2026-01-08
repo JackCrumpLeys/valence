@@ -1,5 +1,6 @@
 //! Handles new connections to the server and the log-in process.
 
+use std::borrow::Cow;
 use std::io;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -11,7 +12,7 @@ use hmac::{Hmac, Mac};
 use num_bigint::BigInt;
 use reqwest::StatusCode;
 use rsa::Pkcs1v15Encrypt;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha1::Sha1;
 use sha2::{Digest, Sha256};
@@ -23,31 +24,36 @@ use valence_protocol::packets::configuration::select_known_packs_s2c::KnownPack;
 use valence_protocol::packets::configuration::{
     ClientInformationC2s, CustomPayloadS2c, FinishConfigurationC2s, FinishConfigurationS2c,
     RegistryDataS2c, SelectKnownPacksC2s, SelectKnownPacksS2c, UpdateEnabledFeaturesS2c,
+    UpdateTagsS2c,
 };
 use valence_protocol::packets::login::{LoginAcknowledgedC2s, LoginFinishedS2c};
 use valence_protocol::packets::status::{
     PingRequestC2s, PongResponseS2c, StatusRequestC2s, StatusResponseS2c,
 };
 use valence_protocol::profile::Property;
-use valence_protocol::{Bounded, Decode};
+use valence_protocol::{Bounded, Decode, JsonText};
 use valence_server::client::Properties;
-use valence_server::protocol::packets::handshake::intention_c2s::HandshakeNextState;
+use valence_server::nbt::serde::ser::CompoundSerializer;
+use valence_server::protocol::packets::handshake::intention_c2s::HandShakeIntent;
 use valence_server::protocol::packets::handshake::IntentionC2s;
 use valence_server::protocol::packets::login::{
     CustomQueryAnswerC2s, CustomQueryS2c, HelloC2s, HelloS2c, KeyC2s, LoginCompressionS2c,
     LoginDisconnectS2c,
 };
 use valence_server::protocol::{PacketDecoder, PacketEncoder, RawBytes, VarInt};
-use valence_server::registry::{RegistryCodec, TagsRegistry};
+use valence_server::registry::{BiomeRegistry, DimensionTypeRegistry, RegistryCodec};
 use valence_server::text::{Color, IntoText};
 use valence_server::{ident, Ident, Text, MINECRAFT_VERSION, PROTOCOL_VERSION};
 
 use crate::legacy_ping::try_handle_legacy_ping;
 use crate::packet_io::PacketIo;
-use crate::{CleanupOnDrop, ConnectionMode, NewClientInfo, ServerListPing, SharedNetworkState};
+use crate::{
+    CleanupOnDrop, ConnectionMode, NewClientInfo, ServerListPing, SharedNetworkState,
+    WorldLoginState,
+};
 
 /// Accepts new connections to the server as they occur.
-pub(super) async fn do_accept_loop(shared: SharedNetworkState) {
+pub(super) async fn do_accept_loop(shared: SharedNetworkState, world_state: WorldLoginState) {
     let listener = match TcpListener::bind(shared.0.address).await {
         Ok(listener) => listener,
         Err(e) => {
@@ -59,15 +65,15 @@ pub(super) async fn do_accept_loop(shared: SharedNetworkState) {
     let timeout = Duration::from_secs(5);
 
     loop {
+        let world_state = world_state.clone();
         match shared.0.connection_sema.clone().acquire_owned().await {
             Ok(permit) => match listener.accept().await {
                 Ok((stream, remote_addr)) => {
                     let shared = shared.clone();
-
                     tokio::spawn(async move {
                         if let Err(e) = tokio::time::timeout(
                             timeout,
-                            handle_connection(shared, stream, remote_addr),
+                            handle_connection(shared, stream, remote_addr, world_state),
                         )
                         .await
                         {
@@ -91,6 +97,7 @@ async fn handle_connection(
     shared: SharedNetworkState,
     mut stream: TcpStream,
     remote_addr: SocketAddr,
+    world_state: WorldLoginState,
 ) {
     trace!("handling connection");
 
@@ -109,7 +116,7 @@ async fn handle_connection(
 
     let io = PacketIo::new(stream, PacketEncoder::new(), PacketDecoder::new());
 
-    if let Err(e) = handle_handshake(shared, io, remote_addr).await {
+    if let Err(e) = handle_handshake(shared, io, remote_addr, world_state).await {
         // EOF can happen if the client disconnects while joining, which isn't
         // very erroneous.
         if let Some(e) = e.downcast_ref::<io::Error>() {
@@ -137,10 +144,11 @@ async fn handle_handshake(
     shared: SharedNetworkState,
     mut io: PacketIo,
     remote_addr: SocketAddr,
+    world_state: WorldLoginState,
 ) -> anyhow::Result<()> {
     let handshake = io.recv_packet::<IntentionC2s>().await?;
 
-    let next_state = handshake.next_state;
+    let next_state = handshake.intent;
 
     let handshake = HandshakeData {
         protocol_version: handshake.protocol_version.0,
@@ -156,11 +164,11 @@ async fn handle_handshake(
     );
 
     match next_state {
-        HandshakeNextState::Status => handle_status(shared, io, remote_addr, handshake)
+        HandShakeIntent::Status => handle_status(shared, io, remote_addr, handshake)
             .await
             .context("handling status"),
-        HandshakeNextState::Login => {
-            match handle_login(&shared, &mut io, remote_addr, handshake)
+        HandShakeIntent::Login => {
+            match handle_login(&shared, &mut io, remote_addr, handshake, world_state)
                 .await
                 .context("handling login")?
             {
@@ -178,6 +186,10 @@ async fn handle_handshake(
                 }
                 None => Ok(()),
             }
+        }
+        HandShakeIntent::Transfer => {
+            // TODO
+            todo!()
         }
     }
 }
@@ -249,9 +261,10 @@ async fn handle_status(
         ServerListPing::Ignore => return Ok(()),
     }
 
-    let PingRequestC2s { payload } = io.recv_packet().await?;
+    let PingRequestC2s { timestamp: payload } = io.recv_packet().await?;
 
-    io.send_packet(&PongResponseS2c { payload }).await?;
+    io.send_packet(&PongResponseS2c { timestamp: payload })
+        .await?;
 
     Ok(())
 }
@@ -262,13 +275,15 @@ async fn handle_login(
     io: &mut PacketIo,
     remote_addr: SocketAddr,
     handshake: HandshakeData,
+    world_state: WorldLoginState,
 ) -> anyhow::Result<Option<(NewClientInfo, CleanupOnDrop)>> {
     if handshake.protocol_version != PROTOCOL_VERSION {
         io.send_packet(&LoginDisconnectS2c {
             // TODO: use correct translation key.
-            reason: format!("Mismatched Minecraft version (server is on {MINECRAFT_VERSION})")
-                .color(Color::RED)
-                .into(),
+            reason: Cow::Owned(JsonText(
+                format!("Mismatched Minecraft version (server is on {MINECRAFT_VERSION})")
+                    .color(Color::RED),
+            )),
         })
         .await?;
 
@@ -282,7 +297,7 @@ async fn handle_login(
 
     let username = username.0.to_owned();
 
-    let info = match shared.connection_mode() {
+    let mut info = match shared.connection_mode() {
         ConnectionMode::Online { .. } => login_online(shared, io, remote_addr, username).await?,
         ConnectionMode::Offline => login_offline(remote_addr, username)?,
         ConnectionMode::BungeeCord => {
@@ -305,7 +320,7 @@ async fn handle_login(
         Err(reason) => {
             info!("disconnect at login: \"{reason}\"");
             io.send_packet(&LoginDisconnectS2c {
-                reason: reason.into(),
+                reason: Cow::Owned(JsonText(reason)),
             })
             .await?;
             return Ok(None);
@@ -321,7 +336,9 @@ async fn handle_login(
 
     let LoginAcknowledgedC2s {} = io.recv_packet().await?;
     let _: CustomQueryAnswerC2s = io.recv_packet().await?;
-    let _: ClientInformationC2s = io.recv_packet().await?;
+    let client_info: ClientInformationC2s = io.recv_packet().await?;
+
+    info.view_distance = client_info.view_distance;
 
     io.send_packet(&CustomPayloadS2c {
         channel: Ident::new("minecraft:brand").unwrap(),
@@ -345,7 +362,58 @@ async fn handle_login(
 
     let _: SelectKnownPacksC2s = io.recv_packet().await?;
 
-    for (id, entries) in RegistryCodec::default().registries.into_iter() {
+    // We have valence support for the `worldgen/biome` and `dimension_type`
+    // registries, therefore we use the current state of these registries here
+    // (instead of the default values) This means the server can add/remove
+    // biomes and dimensions at runtime.
+
+    // BiomeRegistry
+    io.send_packet(&RegistryDataS2c {
+        id: BiomeRegistry::KEY.into(),
+        entries: world_state
+            .biome_registry
+            .iter()
+            .map(|(_, biome_ident, biome)| {
+                (
+                    biome_ident.into(),
+                    Some(
+                        biome
+                            .serialize(CompoundSerializer)
+                            .expect("failed to serialize biome"),
+                    ),
+                )
+            })
+            .collect(),
+    })
+    .await?;
+
+    // DimensionTypeRegistry
+    io.send_packet(&RegistryDataS2c {
+        id: DimensionTypeRegistry::KEY.into(),
+        entries: world_state
+            .dimension_registry
+            .iter()
+            .map(|(_, dimension_ident, dimension_type)| {
+                (
+                    dimension_ident.into(),
+                    Some(
+                        dimension_type
+                            .serialize(CompoundSerializer)
+                            .expect("failed to serialize dimension type"),
+                    ),
+                )
+            })
+            .collect(),
+    })
+    .await?;
+
+    // Send all other registries.
+    for (id, entries) in RegistryCodec::default().registries {
+        if id == ident!("worldgen/biome") || id == ident!("dimension_type") {
+            // We already sent these registries.
+            continue;
+        }
+
         io.send_packet(&RegistryDataS2c {
             id: id.into(),
             entries: entries
@@ -356,7 +424,12 @@ async fn handle_login(
         .await?;
     }
 
-    io.send_packet(&TagsRegistry::default_tags()).await?;
+    // TagsRegistry
+    io.send_packet(&UpdateTagsS2c {
+        groups: Cow::Owned(world_state.tag_registry),
+    })
+    .await?;
+
     io.send_packet(&FinishConfigurationS2c {}).await?;
 
     let _: FinishConfigurationC2s = io.recv_packet().await?;
@@ -432,9 +505,10 @@ async fn login_online(
     match resp.status() {
         StatusCode::OK => {}
         StatusCode::NO_CONTENT => {
-            let reason = Text::translate(keys::MULTIPLAYER_DISCONNECT_UNVERIFIED_USERNAME, []);
+            let reason =
+                Text::translate(keys::MULTIPLAYER_DISCONNECT_UNVERIFIED_USERNAME, [], None);
             io.send_packet(&LoginDisconnectS2c {
-                reason: reason.into(),
+                reason: Cow::Owned(JsonText(reason)),
             })
             .await?;
             bail!("session server could not verify username");
@@ -460,6 +534,7 @@ async fn login_online(
         username,
         ip: remote_addr.ip(),
         properties: Properties(profile.properties),
+        view_distance: 0, // Will be changed later.
     })
 }
 
@@ -479,6 +554,7 @@ fn login_offline(remote_addr: SocketAddr, username: String) -> anyhow::Result<Ne
         username,
         properties: Default::default(),
         ip: remote_addr.ip(),
+        view_distance: 0, // Will be changed later.
     })
 }
 
@@ -517,6 +593,7 @@ fn login_bungeecord(
         username,
         properties: Properties(properties),
         ip,
+        view_distance: 0, // Will be changed later.
     })
 }
 
@@ -591,6 +668,7 @@ async fn login_velocity(
         username,
         properties: Properties(properties),
         ip: remote_addr,
+        view_distance: 0, // Will be changed later.
     })
 }
 

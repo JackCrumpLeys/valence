@@ -1,7 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-use std::borrow::Cow;
-
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use valence_server::client::{
@@ -12,6 +10,7 @@ pub use valence_server::protocol::packets::play::boss_event_s2c::{
     BossBarAction, BossBarColor, BossBarDivision, BossBarFlags,
 };
 use valence_server::protocol::packets::play::BossEventS2c;
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::protocol::WritePacket;
 use valence_server::{ChunkView, Despawned, EntityLayer, Layer, UniqueId};
 
@@ -106,7 +105,7 @@ fn update_boss_bar_layer_view(
                         client.write_packet(&BossEventS2c {
                             id: id.0,
                             action: BossBarAction::Add {
-                                title: Cow::Borrowed(&title.0),
+                                title: (&title.0).into_cow_text_component(),
                                 health: health.0,
                                 color: style.color,
                                 division: style.division,
@@ -118,7 +117,7 @@ fn update_boss_bar_layer_view(
                     client.write_packet(&BossEventS2c {
                         id: id.0,
                         action: BossBarAction::Add {
-                            title: Cow::Borrowed(&title.0),
+                            title: (&title.0).into_cow_text_component(),
                             health: health.0,
                             color: style.color,
                             division: style.division,
@@ -199,7 +198,7 @@ fn update_boss_bar_chunk_view(
                     client.write_packet(&BossEventS2c {
                         id: id.0,
                         action: BossBarAction::Add {
-                            title: Cow::Borrowed(&title.0),
+                            title: (&title.0).into_cow_text_component(),
                             health: health.0,
                             color: style.color,
                             division: style.division,

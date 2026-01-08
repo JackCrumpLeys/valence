@@ -25,7 +25,7 @@ impl CommandArg for Swizzle {
         Ok(swizzle)
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Swizzle
     }
 }

@@ -22,7 +22,7 @@ impl CommandArg for GameMode {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::GameMode
     }
 }

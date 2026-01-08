@@ -15,7 +15,7 @@ fn round_trip() {
 
     let (decoded, root_name) = from_binary(&mut buf.as_slice()).unwrap();
 
-    assert_eq!(root_name, Some(ROOT_NAME.to_string()));
+    assert_eq!(root_name, Some(ROOT_NAME.to_owned()));
     assert_eq!(compound, decoded);
 }
 

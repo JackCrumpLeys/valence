@@ -1,3 +1,4 @@
+use crate::protocol::packets::play::game_event_s2c::GameEventKind;
 use crate::protocol::packets::play::GameEventS2c;
 use crate::testing::*;
 use crate::weather::{Rain, Thunder, WeatherBundle};
@@ -12,10 +13,46 @@ fn test_client_initialization_on_join() {
 
     app.update();
 
-    // Check if two game state change packets were sent, one for rain and one for
-    // thunder
+    // Check if three game state change packets were sent
+    // 1. GameEventKind::StartWaitingForLevelChunks
+    // 2. GameEventKind::RainLevelChange
+    // 3. GameEventKind::ThunderLevel
+
     let frames = helper.collect_received();
-    frames.assert_count::<GameEventS2c>(2);
+    let game_event_frames = frames
+        .0
+        .iter()
+        .filter_map(|f| f.decode::<GameEventS2c>().ok())
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        game_event_frames[0],
+        GameEventS2c {
+            kind: GameEventKind::StartWaitingForLevelChunks,
+            value: 0.0,
+        }
+    );
+
+    // Check that we have rain and thunder packets in any order
+    let rain_packet = GameEventS2c {
+        kind: GameEventKind::RainLevelChange,
+        value: 0.5,
+    };
+    let thunder_packet = GameEventS2c {
+        kind: GameEventKind::ThunderLevelChange,
+        value: 0.5,
+    };
+
+    assert!(
+        game_event_frames[1..].contains(&rain_packet),
+        "Missing rain packet"
+    );
+    assert!(
+        game_event_frames[1..].contains(&thunder_packet),
+        "Missing thunder packet"
+    );
+
+    frames.assert_count::<GameEventS2c>(3);
 }
 
 #[test]
@@ -25,13 +62,51 @@ fn test_chunk_layer_initialization_on_join() {
         mut helper,
         ..
     } = prepare(false);
+    // When client_weather is false, the weather is only visible for this client
 
     app.update();
 
-    // Check if two game state change packets were sent, one for rain and one for
-    // thunder
+    // Check if three game state change packets were sent
+    // 1. GameEventKind::StartWaitingForLevelChunks
+    // 2. GameEventKind::RainLevelChange
+    // 3. GameEventKind::ThunderLevel
+
     let frames = helper.collect_received();
-    frames.assert_count::<GameEventS2c>(2);
+    let game_event_frames = frames
+        .0
+        .iter()
+        .filter_map(|f| f.decode::<GameEventS2c>().ok())
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        game_event_frames[0],
+        GameEventS2c {
+            kind: GameEventKind::StartWaitingForLevelChunks,
+            value: 0.0,
+        }
+    );
+
+    // The order of the rain and thunder packet is non-deterministic if applied to
+    // the chunk layer (for some reason)
+    let rain_packet = GameEventS2c {
+        kind: GameEventKind::RainLevelChange,
+        value: 0.5,
+    };
+    let thunder_packet = GameEventS2c {
+        kind: GameEventKind::ThunderLevelChange,
+        value: 0.5,
+    };
+
+    assert!(
+        game_event_frames[1..].contains(&rain_packet),
+        "Missing rain packet"
+    );
+    assert!(
+        game_event_frames[1..].contains(&thunder_packet),
+        "Missing thunder packet"
+    );
+
+    frames.assert_count::<GameEventS2c>(3);
 }
 
 #[test]

@@ -16,7 +16,7 @@ impl CommandArg for bool {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Bool
     }
 }

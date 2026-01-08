@@ -58,8 +58,8 @@ impl CommandArg for Time {
         })
     }
 
-    fn display() -> Parser {
-        Parser::Time
+    fn display() -> Parser<'static> {
+        Parser::Time { min: 0 }
     }
 }
 

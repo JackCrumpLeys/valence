@@ -18,7 +18,7 @@ pub trait Chunk {
     ///
     /// May panic if the position is out of bounds.
     #[track_caller]
-    fn block(&self, x: u32, y: u32, z: u32) -> BlockRef {
+    fn block(&self, x: u32, y: u32, z: u32) -> BlockRef<'_> {
         BlockRef {
             state: self.block_state(x, y, z),
             nbt: self.block_entity(x, y, z),
@@ -249,7 +249,7 @@ impl IntoBlock for Block {
     }
 }
 
-impl<'a> IntoBlock for BlockRef<'a> {
+impl IntoBlock for BlockRef<'_> {
     fn into_block(self) -> Block {
         Block {
             state: self.state,

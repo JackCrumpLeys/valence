@@ -48,7 +48,7 @@ impl CommandArg for Color {
         }
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Color
     }
 }

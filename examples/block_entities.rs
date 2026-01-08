@@ -11,6 +11,13 @@ const SKULL_POS: BlockPos = BlockPos::new(3, FLOOR_Y + 1, 3);
 
 pub fn main() {
     App::new()
+        // We need online mode for the player head
+        .insert_resource(NetworkSettings {
+            connection_mode: ConnectionMode::Online {
+                prevent_proxy_connections: false
+            },
+            ..Default::default()
+        })
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
         .add_systems(
@@ -53,7 +60,7 @@ fn setup(
             state: BlockState::OAK_SIGN.set(PropName::Rotation, PropValue::_4),
             nbt: Some(compound! {
                 "front_text" => compound! {
-                    "messages" => List::String(vec![
+                    "messages" => List::Compound(vec![
                         // All 4 lines are required, otherwise no text is displayed.
                         "Type in chat:".color(Color::RED).into(),
                         "".into_text().into(),
@@ -105,7 +112,7 @@ fn init_clients(
 }
 
 fn event_handler(
-    clients: Query<(&Username, &Properties, &UniqueId)>,
+    clients: Query<&Username>,
     mut messages: EventReader<ChatMessageEvent>,
     mut block_interacts: EventReader<InteractBlockEvent>,
     mut layers: Query<&mut ChunkLayer>,
@@ -116,14 +123,14 @@ fn event_handler(
         client, message, ..
     } in messages.read()
     {
-        let Ok((username, _, _)) = clients.get(*client) else {
+        let Ok(username) = clients.get(*client) else {
             continue;
         };
 
         let nbt = layer.block_entity_mut(SIGN_POS).unwrap();
         nbt.merge(compound! {
             "front_text" => compound! {
-                "messages" => List::String(vec![
+                "messages" => List::Compound(vec![
                     "Type in chat:".color(Color::RED).into(),
                     message.to_string().color(Color::DARK_GREEN).into(),
                     format!("~{username}").italic().into(),
@@ -141,23 +148,12 @@ fn event_handler(
     } in block_interacts.read()
     {
         if *hand == Hand::Main && *position == SKULL_POS {
-            let Ok((_, properties, uuid)) = clients.get(*client) else {
-                continue;
-            };
-
-            let Some(textures) = properties.textures() else {
+            let Ok(username) = clients.get(*client) else {
                 continue;
             };
 
             *layer.block_entity_mut(SKULL_POS).unwrap() = compound! {
-                "SkullOwner" => compound! {
-                    "Id" => uuid.0,
-                    "Properties" => compound! {
-                        "textures" => List::Compound(vec![compound! {
-                            "Value" => textures.value.clone(),
-                        }])
-                    }
-                }
+                "profile" => username.0.clone(),
             };
         }
     }

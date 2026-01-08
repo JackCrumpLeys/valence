@@ -15,7 +15,7 @@ macro_rules! impl_parser_for_number {
                 })
             }
 
-            fn display() -> Parser {
+            fn display() -> Parser<'static> {
                 Parser::$parser {
                     min: None,
                     max: None,

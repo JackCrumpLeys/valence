@@ -6,6 +6,7 @@
 //! Some of the tests in this file may be inferior duplicates of real tests.
 
 use bevy_app::App;
+use valence_server::protocol::movement_flags::MovementFlags;
 
 use crate::client::Client;
 use crate::entity::Position;
@@ -44,7 +45,7 @@ fn example_test_client_position() {
     // Send a packet as the client to the server.
     let packet = MovePlayerPosC2s {
         position: DVec3::new(12.0, 64.0, 0.0),
-        on_ground: true,
+        flags: MovementFlags::new().with_on_ground(true),
     };
     helper.send(&packet);
 

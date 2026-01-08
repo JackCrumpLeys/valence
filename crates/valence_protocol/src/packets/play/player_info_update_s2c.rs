@@ -3,9 +3,9 @@ use std::io::Write;
 
 use bitfield_struct::bitfield;
 use uuid::Uuid;
-use valence_text::Text;
 
 use crate::profile::Property;
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, GameMode, Packet, VarInt};
 
 #[derive(Clone, Debug, Packet)]
@@ -36,7 +36,7 @@ pub struct PlayerListEntry<'a> {
     pub listed: bool,
     pub ping: i32,
     pub game_mode: GameMode,
-    pub display_name: Option<Cow<'a, Text>>,
+    pub display_name: Option<Cow<'a, TextComponent>>,
     pub priority: i32,
 }
 
@@ -49,7 +49,7 @@ pub struct ChatData<'a> {
     pub public_key_signature: &'a [u8],
 }
 
-impl<'a> Encode for PlayerInfoUpdateS2c<'a> {
+impl Encode for PlayerInfoUpdateS2c<'_> {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
         self.actions.0.encode(&mut w)?;
 

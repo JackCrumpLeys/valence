@@ -5,6 +5,7 @@ use bevy_ecs::prelude::*;
 use valence_protocol::encode::WritePacket;
 use valence_protocol::packets::play::{ChatC2s, SystemChatS2c};
 use valence_protocol::text::IntoText;
+use valence_protocol::text_component::IntoTextComponent;
 
 use crate::event_loop::{EventLoopPreUpdate, PacketEvent};
 
@@ -27,14 +28,14 @@ pub trait SendMessage {
 impl<T: WritePacket> SendMessage for T {
     fn send_chat_message<'a>(&mut self, msg: impl IntoText<'a>) {
         self.write_packet(&SystemChatS2c {
-            chat: msg.into_cow_text(),
+            chat: msg.into_cow_text_component(),
             overlay: false,
         });
     }
 
     fn send_action_bar_message<'a>(&mut self, msg: impl IntoText<'a>) {
         self.write_packet(&SystemChatS2c {
-            chat: msg.into_cow_text(),
+            chat: msg.into_cow_text_component(),
             overlay: true,
         });
     }

@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 
-use valence_text::Text;
-
 use super::set_objective_s2c::NumberFormat;
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
@@ -12,6 +11,6 @@ pub struct SetScoreS2c<'a> {
     pub entity_name: &'a str,
     pub objective_name: &'a str,
     pub value: VarInt,
-    pub display_name: Option<Cow<'a, Text>>,
+    pub display_name: Option<Cow<'a, TextComponent>>,
     pub number_format: Option<NumberFormat<'a>>,
 }

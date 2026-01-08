@@ -18,6 +18,7 @@ use valence_server::client::{Client, FlushPacketsSet, SpawnClientsSet};
 use valence_server::protocol::packets::play::{
     update_advancements_s2c as packet, SelectAdvancementsTabS2c,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::protocol::{
     anyhow, packet_id, Encode, Packet, PacketSide, PacketState, RawBytes, VarInt, WritePacket,
 };
@@ -87,13 +88,13 @@ struct UpdateAdvancementCachedBytesQuery<'w, 's> {
     criteria_query: Query<'w, 's, &'static AdvancementCriteria>,
 }
 
-impl<'w, 's> UpdateAdvancementCachedBytesQuery<'w, 's> {
+impl UpdateAdvancementCachedBytesQuery<'_, '_> {
     fn write(
         &self,
         a_identifier: &Advancement,
         a_requirements: &AdvancementRequirements,
         a_display: Option<&AdvancementDisplay>,
-        a_children: Option<&Children>,
+        _a_children: Option<&Children>,
         a_parent: Option<&Parent>,
         w: impl Write,
     ) -> anyhow::Result<()> {
@@ -116,8 +117,8 @@ impl<'w, 's> UpdateAdvancementCachedBytesQuery<'w, 's> {
 
         if let Some(a_display) = a_display {
             pkt.display_data = Some(packet::AdvancementDisplay {
-                title: Cow::Borrowed(&a_display.title),
-                description: Cow::Borrowed(&a_display.description),
+                title: a_display.title.clone().into_cow_text_component(),
+                description: a_display.title.clone().into_cow_text_component(),
                 icon: &a_display.icon,
                 frame_type: VarInt(a_display.frame_type as i32),
                 flags: a_display.flags(),
@@ -191,7 +192,7 @@ pub(crate) struct AdvancementUpdateEncodeS2c<'w, 's, 'a> {
     queries: &'a SingleAdvancementUpdateQuery<'w, 's>,
 }
 
-impl<'w, 's, 'a> Encode for AdvancementUpdateEncodeS2c<'w, 's, 'a> {
+impl Encode for AdvancementUpdateEncodeS2c<'_, '_, '_> {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {
         let SingleAdvancementUpdateQuery {
             advancement_bytes: advancement_bytes_query,
@@ -213,6 +214,7 @@ impl<'w, 's, 'a> Encode for AdvancementUpdateEncodeS2c<'w, 's, 'a> {
             advancement_mapping: vec![],
             identifiers: vec![],
             progress_mapping: vec![],
+            show_advancements: false,
         };
 
         for new_advancement in new_advancements {
@@ -254,7 +256,7 @@ impl<'w, 's, 'a> Encode for AdvancementUpdateEncodeS2c<'w, 's, 'a> {
     }
 }
 
-impl<'w, 's, 'a> Packet for AdvancementUpdateEncodeS2c<'w, 's, 'a> {
+impl Packet for AdvancementUpdateEncodeS2c<'_, '_, '_> {
     const ID: i32 = packet_id::PLAY_UPDATE_ADVANCEMENTS_S2C;
     const NAME: &'static str = "AdvancementUpdateEncodeS2c";
     const SIDE: PacketSide = PacketSide::Clientbound;
@@ -400,6 +402,7 @@ pub struct AdvancementClientUpdate {
     /// Also with this flag, client will not show a toast for advancements,
     /// which are completed. When the packet is sent, turns to false
     pub reset: bool,
+    // TODO handle toasts
 }
 
 impl Default for AdvancementClientUpdate {

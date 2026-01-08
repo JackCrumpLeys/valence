@@ -1,4 +1,5 @@
-use std::{fmt::Debug, io::Write};
+use std::fmt::Debug;
+use std::io::Write;
 
 use anyhow::Error;
 use valence_generated::registry_id::RegistryId;
@@ -12,7 +13,7 @@ pub enum IdOr<T: Encode + Clone + Debug + PartialEq> {
 }
 
 impl<T: Encode + Clone + Debug + PartialEq> IdOr<T> {
-    pub fn id(id: impl Into<RegistryId>) -> Self {
+    pub fn id<I: Into<RegistryId>>(id: I) -> Self {
         Self::Id(id.into())
     }
 
@@ -26,10 +27,9 @@ impl<T: Encode + Clone + Debug + PartialEq> Encode for IdOr<T> {
         match self {
             Self::Id(id) => (id.id() + 1).encode(buf),
             Self::Inline(value) => {
-                0.encode(&mut buf).unwrap();
+                VarInt(0).encode(&mut buf).unwrap();
                 value.encode(&mut buf)
             }
-            _ => Ok(()),
         }
     }
 }

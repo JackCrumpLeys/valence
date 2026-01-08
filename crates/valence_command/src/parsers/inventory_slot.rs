@@ -14,7 +14,7 @@ impl CommandArg for InventorySlot {
         Ok(InventorySlot(slot))
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::ItemSlot
     }
 }

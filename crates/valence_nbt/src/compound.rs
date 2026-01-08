@@ -2,7 +2,7 @@ use std::borrow::{Borrow, Cow};
 use std::fmt;
 use std::hash::Hash;
 use std::iter::FusedIterator;
-use std::ops::{Index, IndexMut};
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 use crate::Value;
 
@@ -10,6 +10,31 @@ use crate::Value;
 #[derive(Clone, Default)]
 pub struct Compound<S = String> {
     map: Map<S>,
+}
+
+/// A wrapper around Compound that encodes and decodes as network NBT
+#[derive(Clone, Default)]
+pub struct NetworkCompound<S = String> {
+    pub compound: Compound<S>,
+}
+
+impl<S> NetworkCompound<S> {
+    pub fn from(inner: Compound<S>) -> NetworkCompound<S> {
+        NetworkCompound::<S> { compound: inner }
+    }
+}
+
+impl<S> Deref for NetworkCompound<S> {
+    type Target = Compound<S>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.compound
+    }
+}
+impl<S> DerefMut for NetworkCompound<S> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.compound
+    }
 }
 
 #[cfg(not(feature = "preserve_order"))]
@@ -208,7 +233,7 @@ where
         }
     }
 
-    pub fn entry<K>(&mut self, k: K) -> Entry<S>
+    pub fn entry<K>(&mut self, k: K) -> Entry<'_, S>
     where
         K: Into<S>,
     {
@@ -232,31 +257,31 @@ where
         self.map.is_empty()
     }
 
-    pub fn iter(&self) -> Iter<S> {
+    pub fn iter(&self) -> Iter<'_, S> {
         Iter {
             iter: self.map.iter(),
         }
     }
 
-    pub fn iter_mut(&mut self) -> IterMut<S> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, S> {
         IterMut {
             iter: self.map.iter_mut(),
         }
     }
 
-    pub fn keys(&self) -> Keys<S> {
+    pub fn keys(&self) -> Keys<'_, S> {
         Keys {
             iter: self.map.keys(),
         }
     }
 
-    pub fn values(&self) -> Values<S> {
+    pub fn values(&self) -> Values<'_, S> {
         Values {
             iter: self.map.values(),
         }
     }
 
-    pub fn values_mut(&mut self) -> ValuesMut<S> {
+    pub fn values_mut(&mut self) -> ValuesMut<'_, S> {
         ValuesMut {
             iter: self.map.values_mut(),
         }

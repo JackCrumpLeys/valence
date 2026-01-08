@@ -15,6 +15,7 @@ extern crate self as valence_protocol;
 mod array;
 mod biome_pos;
 mod bit_set;
+mod bit_storage;
 pub mod block_pos;
 mod bounded;
 mod byte_angle;
@@ -27,6 +28,7 @@ pub mod encode;
 pub mod game_mode;
 mod global_pos;
 mod hand;
+mod hash_utils;
 pub mod id_or;
 pub mod id_set;
 mod impls;
@@ -47,6 +49,7 @@ use anyhow::Context;
 pub use array::FixedArray;
 pub use biome_pos::BiomePos;
 pub use bit_set::FixedBitSet;
+pub use bit_storage::BitStorage;
 pub use block::{BlockKind, BlockState};
 pub use block_pos::BlockPos;
 pub use bounded::Bounded;
@@ -68,7 +71,8 @@ pub use packets::play::level_particles_s2c::Particle;
 pub use raw::RawBytes;
 use serde::{Deserialize, Serialize};
 pub use sound::Sound;
-pub use text::Text;
+pub use text::{JsonText, Text};
+pub use valence_generated::registry_id::RegistryId;
 pub use valence_generated::{block, packet_id, status_effects};
 pub use valence_ident::Ident;
 pub use valence_protocol_macros::{Decode, Encode, Packet};
@@ -84,11 +88,11 @@ pub use {
 pub const MAX_PACKET_SIZE: i32 = 2097152;
 
 /// The Minecraft protocol version this library currently targets.
-pub const PROTOCOL_VERSION: i32 = 769;
+pub const PROTOCOL_VERSION: i32 = 770;
 
 /// The stringified name of the Minecraft version this library currently
 /// targets.
-pub const MINECRAFT_VERSION: &str = "1.21.4";
+pub const MINECRAFT_VERSION: &str = "1.21.5";
 
 /// How large a packet should be before it is compressed by the packet encoder.
 ///
@@ -405,7 +409,7 @@ mod tests {
                 f: BlockPos::new(1, 2, 3),
                 g: Hand::Off,
                 h: Ident::new("minecraft:whatever").unwrap(),
-                i: ItemStack::new(ItemKind::WoodenSword, 12, Vec::new()),
+                i: ItemStack::new(ItemKind::WoodenSword, 12),
                 j: "my ".into_text() + "fancy".italic() + " text",
                 k: VarInt(123),
                 l: VarLong(456),

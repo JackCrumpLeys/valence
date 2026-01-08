@@ -78,7 +78,7 @@ impl CommandArg for EntitySelector {
         Err(CommandArgParseError::InvalidArgLength)
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Entity {
             only_players: false,
             single: false,

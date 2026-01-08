@@ -14,7 +14,7 @@ impl CommandArg for Angle {
         Ok(Angle(angle))
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Angle
     }
 }

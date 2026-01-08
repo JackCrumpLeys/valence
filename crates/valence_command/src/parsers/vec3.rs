@@ -17,7 +17,7 @@ impl CommandArg for Vec3 {
         Ok(Vec3 { x, y, z })
     }
 
-    fn display() -> Parser {
+    fn display() -> Parser<'static> {
         Parser::Vec3
     }
 }

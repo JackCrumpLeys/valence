@@ -23,7 +23,13 @@ pub(super) fn derive_packet(item: TokenStream) -> Result<TokenStream> {
         .unwrap_or_else(|| parse_quote!(::valence_protocol::PacketState::Play));
 
     // Get phase from the last part of the module path
-    let phase = state.to_token_stream().to_string().split("::").last().unwrap().to_shouty_snake_case();
+    let phase = state
+        .to_token_stream()
+        .to_string()
+        .split("::")
+        .last()
+        .unwrap()
+        .to_shouty_snake_case();
     let suffix = phase + "_";
 
     let packet_id: Expr = match packet_attr.id {
@@ -55,7 +61,6 @@ pub(super) fn derive_packet(item: TokenStream) -> Result<TokenStream> {
             "missing `side = PacketSide::...` value from `packet` attribute",
         ));
     };
-
 
     Ok(quote! {
         impl #impl_generics ::valence_protocol::__private::Packet for #name #ty_generics

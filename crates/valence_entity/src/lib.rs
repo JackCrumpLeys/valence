@@ -1,5 +1,9 @@
 #![doc = include_str!("../README.md")]
-#![allow(clippy::unseparated_literal_suffix, clippy::manual_string_new)]
+#![allow(
+    clippy::unseparated_literal_suffix,
+    clippy::manual_string_new,
+    clippy::needless_raw_strings
+)]
 
 pub mod active_status_effects;
 pub mod attributes;
@@ -322,11 +326,11 @@ pub struct HeadYaw(pub f32);
 
 /// Entity velocity in m/s.
 #[derive(Component, Copy, Clone, Default, Debug, Deref, DerefMut)]
-pub struct Velocity(pub Vec3);
+pub struct Velocity(pub DVec3);
 
 impl Velocity {
     pub fn to_packet_units(self) -> valence_protocol::Velocity {
-        valence_protocol::Velocity::from_ms_f32(self.0.into())
+        valence_protocol::Velocity::from_ms_f64(self.0.into())
     }
 }
 
@@ -502,6 +506,13 @@ pub enum CatKind {
     AllBlack,
 }
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Encode, Decode)]
+pub enum CowKind {
+    Cold,
+    #[default]
+    Temperate,
+    Warm,
+}
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Encode, Decode)]
 pub enum WolfKind {
     Ashen,
     Black,
@@ -513,6 +524,17 @@ pub enum WolfKind {
     Spotted,
     Striped,
     Woods,
+}
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Encode, Decode)]
+pub enum WolfSoundKind {
+    Angry,
+    Big,
+    #[default]
+    Classic,
+    Cute,
+    Grumpy,
+    Puglin,
+    Sad,
 }
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Encode, Decode)]
 pub enum ArmadilloState {
@@ -530,7 +552,20 @@ pub enum FrogKind {
     Warm,
     Cold,
 }
-
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Encode, Decode)]
+pub enum PigKind {
+    #[default]
+    Temperate,
+    Warm,
+    Cold,
+}
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Encode, Decode)]
+pub enum ChickenKind {
+    #[default]
+    Temperate,
+    Warm,
+    Cold,
+}
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Encode, Decode)]
 pub enum PaintingKind {
     #[default]

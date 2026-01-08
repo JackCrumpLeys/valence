@@ -10,6 +10,10 @@ pub fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
+        .insert_resource(NetworkSettings {
+            connection_mode: ConnectionMode::Offline,
+            ..Default::default()
+        })
         .add_systems(
             Update,
             (
