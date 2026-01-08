@@ -71,7 +71,6 @@ valence_server.workspace = true
 valence_text.workspace = true
 valence_weather = { workspace = true, optional = true }
 valence_world_border = { workspace = true, optional = true }
-crc32c = { workspace = true }
 
 [dev-dependencies]
 anyhow.workspace = true

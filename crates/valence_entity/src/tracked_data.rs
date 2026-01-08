@@ -3,9 +3,9 @@ use tracing::warn;
 use valence_protocol::Encode;
 
 /// Cache for all the tracked data of an entity. Used for the
-/// [`EntityTrackerUpdateS2c`][packet] packet.
+/// [`SetEntityDataS2c`][packet] packet.
 ///
-/// [packet]: valence_protocol::packets::play::EntityTrackerUpdateS2c
+/// [packet]: valence_protocol::packets::play::SetEntityDataS2c
 #[derive(Component, Default, Debug)]
 pub struct TrackedData {
     init_data: Vec<u8>,
@@ -17,19 +17,19 @@ pub struct TrackedData {
 
 impl TrackedData {
     /// Returns initial tracked data for the entity, ready to be sent in the
-    /// [`EntityTrackerUpdateS2c`][packet] packet. This is used when the entity
+    /// [`SetEntityDataS2c`][packet] packet. This is used when the entity
     /// enters the view of a client.
     ///
-    /// [packet]: valence_protocol::packets::play::EntityTrackerUpdateS2c
+    /// [packet]: valence_protocol::packets::play::SetEntityDataS2c
     pub fn init_data(&self) -> Option<&[u8]> {
         (self.init_data.len() > 1).then_some(&self.init_data)
     }
 
     /// Contains updated tracked data for the entity, ready to be sent in the
-    /// [`EntityTrackerUpdateS2c`][packet] packet. This is used when tracked
+    /// [`SetEntityDataS2c`][packet] packet. This is used when tracked
     /// data is changed and the client is already in view of the entity.
     ///
-    /// [packet]: valence_protocol::packets::play::EntityTrackerUpdateS2c
+    /// [packet]: valence_protocol::packets::play::SetEntityDataS2c
     pub fn update_data(&self) -> Option<&[u8]> {
         (self.update_data.len() > 1).then_some(&self.update_data)
     }

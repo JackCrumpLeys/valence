@@ -460,7 +460,7 @@ pub(super) fn validate_click_slot_packet(
                 );
 
                 // Items are spread out from a stack, to get the real item we need to find the
-                // cursor TOOD: add a lot of testing
+                // cursor TODO: add a lot of testing
 
                 for hashed_change in packet.slot_changes.iter() {
                     let current_slot = window.slot(hashed_change.idx as u16);

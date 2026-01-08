@@ -142,8 +142,8 @@
 //         assert_eq!(comp.hash(), expected_hash);
 
 //         let comp = ItemComponent::ItemName { name: "Item
-// name".to_string().into() };         let expceted_hash = 789562212;
-//         assert_eq!(comp.hash(), expceted_hash);
+// name".to_string().into() };         let expected_hash = 789562212;
+//         assert_eq!(comp.hash(), expected_hash);
 
 //         let comp = ItemComponent::ItemModel { model: ident!("model").into()
 // };         let expected_hash = 1591847691;
