@@ -454,7 +454,7 @@ pub trait NetworkCallbacks: Send + Sync + 'static {
     ///
     /// TODO
     ///
-    /// [`Client`]: valence::client::Client
+    /// [`Client`]: valence_server::client::Client
     async fn login(
         &self,
         shared: &SharedNetworkState,

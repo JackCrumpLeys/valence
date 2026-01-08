@@ -536,7 +536,7 @@ pub enum ItemComponent {
     ShulkerColor(DyeColor),
 }
 
-/// A helper struct for protcol fields that start with a "Mode" byte.
+/// A helper struct for protocol fields that start with a "Mode" byte.
 ///
 /// In 1.21, several components (like Jukebox Songs or Trim Materials) are
 /// encoded as:
@@ -1425,7 +1425,7 @@ impl ItemStack {
                     // We need to record the length of the component data.
                     // Then we encode len then the data.
                     //
-                    // We use a dummy writer to avoid allocator pressue at the cost of cpu.
+                    // We use a dummy writer to avoid allocator pressure at the cost of cpu.
 
                     struct ByteCounter {
                         count: usize,

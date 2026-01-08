@@ -1,5 +1,9 @@
 #![doc = include_str!("../README.md")]
-#![allow(clippy::unseparated_literal_suffix, clippy::manual_string_new)]
+#![allow(
+    clippy::unseparated_literal_suffix,
+    clippy::manual_string_new,
+    clippy::needless_raw_strings
+)]
 
 pub mod active_status_effects;
 pub mod attributes;

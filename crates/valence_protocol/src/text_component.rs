@@ -15,7 +15,7 @@ pub struct TextComponent {
 }
 
 impl TextComponent {
-    /// Zero-copy cast from a Cow<Text> to a Cow<TextComponent>.
+    /// Zero-copy cast from a `Cow<Text>` to a `Cow<TextComponent>`.
     ///
     /// # Safety
     /// This is safe because `TextComponent` is #[repr(transparent)] wrapper

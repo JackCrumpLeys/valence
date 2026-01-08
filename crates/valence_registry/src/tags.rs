@@ -28,7 +28,7 @@ impl TagsRegistry {
         }
     }
 
-    /// Returns bytes of the cached [`SynchronizeTagsS2c`] packet.
+    /// Returns bytes of the cached [`UpdateTagsS2c`] packet.
     pub fn sync_tags_packet(&self) -> &[u8] {
         &self.cached_packet
     }
