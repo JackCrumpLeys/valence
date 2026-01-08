@@ -2,8 +2,8 @@ use std::borrow::Cow;
 
 use bevy_ecs::prelude::*;
 use valence_nbt::Compound;
-use valence_text::Text;
 
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
@@ -15,13 +15,13 @@ pub struct SetObjectiveS2c<'a> {
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
 pub enum ObjectiveMode<'a> {
     Create {
-        objective_display_name: Cow<'a, Text>,
+        objective_display_name: Cow<'a, TextComponent>,
         render_type: ObjectiveRenderType,
         number_format: Option<NumberFormat<'a>>,
     },
     Remove,
     Update {
-        objective_display_name: Cow<'a, Text>,
+        objective_display_name: Cow<'a, TextComponent>,
         render_type: ObjectiveRenderType,
         number_format: Option<NumberFormat<'a>>,
     },
@@ -45,5 +45,5 @@ pub enum ObjectiveRenderType {
 pub enum NumberFormat<'a> {
     Blank,
     Styled { styling: Compound },
-    Fixed { content: Cow<'a, Text> },
+    Fixed { content: Cow<'a, TextComponent> },
 }

@@ -3,6 +3,7 @@ use valence_protocol::packets::play::{
     ClearTitlesS2c, SetActionBarTextS2c, SetSubtitleTextS2c, SetTitleTextS2c, SetTitlesAnimationS2c,
 };
 use valence_protocol::text::IntoText;
+use valence_protocol::text_component::IntoTextComponent;
 
 pub trait SetTitle {
     /// Displays a title to a client.
@@ -30,19 +31,19 @@ pub trait SetTitle {
 impl<T: WritePacket> SetTitle for T {
     fn set_title<'a>(&mut self, text: impl IntoText<'a>) {
         self.write_packet(&SetTitleTextS2c {
-            title_text: text.into_cow_text(),
+            title_text: text.into_cow_text_component(),
         });
     }
 
     fn set_subtitle<'a>(&mut self, text: impl IntoText<'a>) {
         self.write_packet(&SetSubtitleTextS2c {
-            subtitle_text: text.into_cow_text(),
+            subtitle_text: text.into_cow_text_component(),
         });
     }
 
     fn set_action_bar<'a>(&mut self, text: impl IntoText<'a>) {
         self.write_packet(&SetActionBarTextS2c {
-            action_bar_text: text.into_cow_text(),
+            action_bar_text: text.into_cow_text_component(),
         });
     }
 

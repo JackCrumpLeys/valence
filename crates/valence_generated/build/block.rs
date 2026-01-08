@@ -734,7 +734,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         }
 
         impl BlockKind {
-            /// Construct a block kind from its snake_case name.
+            /// Construct a block kind from its `snake_case` name.
             ///
             /// Returns `None` if the name is invalid.
             pub fn from_str(name: &str) -> Option<Self> {
@@ -744,7 +744,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            /// Get the snake_case name of this block kind.
+            /// Get the `snake_case` name of this block kind.
             pub const fn to_str(self) -> &'static str {
                 match self {
                     #block_kind_to_str_arms
@@ -822,7 +822,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
 
         impl From<BlockKind> for RegistryId {
             fn from(kind: BlockKind) -> Self {
-                RegistryId::new(kind.to_raw() as i32)
+                RegistryId::new(i32::from(kind.to_raw()))
             }
         }
 
@@ -842,7 +842,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         }
 
         impl PropName {
-            /// Construct a property name from its snake_case name.
+            /// Construct a property name from its `snake_case` name.
             ///
             /// Returns `None` if the given name is not valid.
             pub fn from_str(name: &str) -> Option<Self> {
@@ -853,7 +853,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            /// Get the snake_case name of this property name.
+            /// Get the `snake_case` name of this property name.
             pub const fn to_str(self) -> &'static str {
                 match self {
                     #prop_name_to_str_arms
@@ -873,7 +873,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         }
 
         impl PropValue {
-            /// Construct a property value from its snake_case name.
+            /// Construct a property value from its `snake_case` name.
             ///
             /// Returns `None` if the given name is not valid.
             pub fn from_str(name: &str) -> Option<Self> {
@@ -883,7 +883,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            /// Get the snake_case name of this property value.
+            /// Get the `snake_case` name of this property value.
             pub const fn to_str(self) -> &'static str {
                 match self {
                     #prop_value_to_str_arms

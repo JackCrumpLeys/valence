@@ -35,7 +35,7 @@ pub use vec2::Vec2;
 pub use vec3::Vec3;
 
 pub trait CommandArg: Sized {
-    fn arg_from_str<'a>(string: &'a str) -> Result<Self, CommandArgParseError> {
+    fn arg_from_str(string: &str) -> Result<Self, CommandArgParseError> {
         Self::parse_arg(&mut ParseInput::new(string))
     }
 

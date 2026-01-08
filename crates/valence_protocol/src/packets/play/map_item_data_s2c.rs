@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 use std::io::Write;
 
-use valence_text::Text;
-
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, PartialEq, Debug, Packet)]
@@ -21,7 +20,7 @@ pub struct Icon<'a> {
     pub position: [i8; 2],
     /// 0 is a vertical icon and increments by 22.5°
     pub direction: i8,
-    pub display_name: Option<Cow<'a, Text>>,
+    pub display_name: Option<Cow<'a, TextComponent>>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode)]

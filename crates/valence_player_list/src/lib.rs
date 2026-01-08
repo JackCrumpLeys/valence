@@ -12,6 +12,7 @@ use valence_server::protocol::encode::PacketWriter;
 use valence_server::protocol::packets::play::{
     player_info_update_s2c as packet, PlayerInfoRemoveS2c, PlayerInfoUpdateS2c, TabListS2c,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::protocol::WritePacket;
 use valence_server::text::IntoText;
 use valence_server::uuid::Uuid;
@@ -146,8 +147,8 @@ fn update_header_footer(player_list: ResMut<PlayerList>, server: Res<Server>) {
         );
 
         w.write_packet(&TabListS2c {
-            header: (&player_list.header).into(),
-            footer: (&player_list.footer).into(),
+            header: (&player_list.header).into_cow_text_component(),
+            footer: (&player_list.footer).into_cow_text_component(),
         });
 
         player_list.changed_header_or_footer = false;
@@ -207,7 +208,10 @@ fn init_player_list_for_clients(
                             listed: listed.0,
                             ping: ping.0,
                             game_mode: *game_mode,
-                            display_name: display_name.0.as_ref().map(Cow::Borrowed),
+                            display_name: display_name
+                                .0
+                                .as_ref()
+                                .map(IntoTextComponent::into_cow_text_component),
                             priority: 0,
                             // priority: todo!("Implement priority"),
                         }
@@ -224,8 +228,8 @@ fn init_player_list_for_clients(
 
             if !player_list.header.is_empty() || !player_list.footer.is_empty() {
                 client.write_packet(&TabListS2c {
-                    header: Cow::Borrowed(&player_list.header),
-                    footer: Cow::Borrowed(&player_list.footer),
+                    header: (&player_list.header).into_cow_text_component(),
+                    footer: (&player_list.footer).into_cow_text_component(),
                 });
             }
         }
@@ -345,7 +349,10 @@ fn update_entries(
             listed: listed.0,
             ping: ping.0,
             game_mode: *game_mode,
-            display_name: display_name.0.as_ref().map(|x| x.into()),
+            display_name: display_name
+                .0
+                .as_ref()
+                .map(IntoTextComponent::into_cow_text_component),
             priority: 0,
             // priority: todo!("Implement priority"),
         };

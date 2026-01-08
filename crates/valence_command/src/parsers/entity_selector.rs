@@ -23,7 +23,7 @@ impl CommandArg for EntitySelector {
     // `<player_name>`] or a full selector: [`@e[<selector>]`, `@a[<selector>]`,
     // `@p[<selector>]`, `@r[<selector>]`] the selectors can have spaces in
     // them, so we need to be careful
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let mut simple_selector = None;
         while let Some(c) = input.peek() {

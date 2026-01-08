@@ -17,8 +17,8 @@ use valence_server::protocol::packets::play::set_objective_s2c::{
 use valence_server::protocol::packets::play::{
     ResetScoreS2c, SetDisplayObjectiveS2c, SetObjectiveS2c, SetScoreS2c,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::protocol::{VarInt, WritePacket};
-use valence_server::text::IntoText;
 use valence_server::{Despawned, EntityLayer};
 
 /// Provides all necessary systems to manage scoreboards.
@@ -72,13 +72,13 @@ fn create_or_update_objectives(
         }
         let mode = if objective.is_added() {
             ObjectiveMode::Create {
-                objective_display_name: (&display.0).into_cow_text(),
+                objective_display_name: (&display.0).into_cow_text_component(),
                 render_type: *render_type,
                 number_format: None,
             }
         } else {
             ObjectiveMode::Update {
-                objective_display_name: (&display.0).into_cow_text(),
+                objective_display_name: (&display.0).into_cow_text_component(),
                 render_type: *render_type,
                 number_format: None,
             }
@@ -206,7 +206,7 @@ fn handle_new_clients(
             client.write_packet(&SetObjectiveS2c {
                 objective_name: &objective.0,
                 mode: ObjectiveMode::Create {
-                    objective_display_name: (&display.0).into_cow_text(),
+                    objective_display_name: (&display.0).into_cow_text_component(),
                     render_type: *render_type,
                     number_format: None,
                 },

@@ -171,7 +171,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
 
         impl From<EntityAttribute> for RegistryId {
             fn from(attribute: EntityAttribute) -> Self {
-                RegistryId::new(attribute.get_id() as i32)
+                RegistryId::new(i32::from(attribute.get_id()))
             }
         }
     ))

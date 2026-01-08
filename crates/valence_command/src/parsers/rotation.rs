@@ -8,7 +8,7 @@ use crate::parsers::{CommandArg, CommandArgParseError, ParseInput};
 pub struct Rotation(pub Vec2);
 
 impl CommandArg for Rotation {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let vec2 = Vec2::parse_arg(input)?;
 

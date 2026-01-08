@@ -7,6 +7,7 @@ use valence::protocol::decode::PacketDecoder;
 use valence::protocol::encode::{PacketEncoder, PacketWriter, WritePacket};
 use valence::protocol::packets::play::level_chunk_with_light_s2c::{HeightMap, HeightMapKind};
 use valence::protocol::packets::play::{AddEntityS2c, LevelChunkWithLightS2c, TabListS2c};
+use valence::protocol::text_component::IntoTextComponent;
 use valence::protocol::{ByteAngle, FixedArray, VarInt};
 use valence::text::IntoText;
 use valence_server::protocol::Velocity;
@@ -40,13 +41,14 @@ pub(crate) fn setup<'a>() -> (
     };
 
     let player_list_header_packet = TabListS2c {
-        header: ("this".italic() + " is the " + "header".bold().color(Color::RED)).into(),
+        header: ("this".italic() + " is the " + "header".bold().color(Color::RED))
+            .into_cow_text_component(),
         footer: ("this".italic()
             + " is the "
             + "footer".bold().color(Color::BLUE)
             + ". I am appending some extra text so that the packet goes over the compression \
                threshold.")
-            .into(),
+            .into_cow_text_component(),
     };
 
     let spawn_entity_packet = AddEntityS2c {

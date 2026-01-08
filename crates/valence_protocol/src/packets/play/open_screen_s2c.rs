@@ -1,14 +1,13 @@
 use std::borrow::Cow;
 
-use valence_text::Text;
-
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct OpenScreenS2c<'a> {
     pub window_id: VarInt,
     pub window_type: WindowType,
-    pub window_title: Cow<'a, Text>,
+    pub window_title: Cow<'a, TextComponent>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode)]

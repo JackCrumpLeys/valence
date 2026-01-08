@@ -35,8 +35,6 @@ where
 
 /// Encodes uncompressed network NBT binary data to the provided writer.
 /// Network NBT omits the root compound.
-///
-/// Unlike [`to_binary`], this function does allow passing in [`Value`]
 pub fn to_network_binary<W, S>(val: &Compound<S>, writer: W) -> Result<()>
 where
     W: Write,
@@ -416,7 +414,7 @@ mod tests {
     fn test_network_binary_empty_compound() {
         let comp: Compound<String> = Compound::new();
         let mut buf = Vec::new();
-        to_network_binary(&comp.into(), &mut buf).unwrap();
+        to_network_binary(&comp, &mut buf).unwrap();
         assert_eq!(buf, [0x0]);
     }
 }

@@ -7,7 +7,7 @@ use crate::parsers::{CommandArg, CommandArgParseError, ParseInput};
 pub struct InventorySlot(pub u32);
 
 impl CommandArg for InventorySlot {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let slot = u32::parse_arg(input)?;
 

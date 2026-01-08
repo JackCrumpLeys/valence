@@ -4,7 +4,7 @@ use valence_server::GameMode;
 use crate::parsers::{CommandArg, CommandArgParseError, ParseInput};
 
 impl CommandArg for GameMode {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         if input.match_next("survival") {
             Ok(GameMode::Survival)

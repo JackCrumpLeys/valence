@@ -10,7 +10,7 @@ pub enum ScoreHolder {
 }
 
 impl CommandArg for ScoreHolder {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         if input.peek() == Some('*') {
             Ok(ScoreHolder::All)

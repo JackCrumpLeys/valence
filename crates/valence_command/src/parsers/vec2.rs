@@ -8,7 +8,7 @@ pub struct Vec2 {
 }
 
 impl CommandArg for Vec2 {
-    fn parse_arg<'a>(input: &'a mut ParseInput) -> Result<Self, CommandArgParseError> {
+    fn parse_arg(input: &mut ParseInput) -> Result<Self, CommandArgParseError> {
         input.skip_whitespace();
         let x = AbsoluteOrRelative::<f32>::parse_arg(input)?;
         input.skip_whitespace();

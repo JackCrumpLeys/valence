@@ -20,6 +20,7 @@ use valence_server::protocol::packets::play::{
     ContainerSetSlotS2c, OpenScreenS2c, PlayerActionC2s, SetCarriedItemC2s, SetCreativeModeSlotC2s,
     SetHeldSlotS2c,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::protocol::{VarInt, WritePacket};
 use valence_server::text::IntoText;
 use valence_server::{GameMode, ItemKind, ItemStack, Text};
@@ -706,7 +707,7 @@ fn update_open_inventories(
             client.write_packet(&OpenScreenS2c {
                 window_id: inv_state.window_id,
                 window_type: WindowType::from(inventory.kind),
-                window_title: Cow::Borrowed(&inventory.title),
+                window_title: (&inventory.title).into_cow_text_component(),
             });
 
             client.write_packet(&ContainerSetContentS2c {
@@ -942,7 +943,7 @@ fn handle_click_slot(
 
                 if pkt.slot_idx == -999 {
                     // The player was just clicking outside the inventories without holding an item
-                    continue
+                    continue;
                 }
 
                 if (0_i16..target_inventory.slot_count() as i16).contains(&pkt.slot_idx) {

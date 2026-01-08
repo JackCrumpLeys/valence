@@ -1,4 +1,5 @@
 #![allow(clippy::unseparated_literal_suffix)]
+#![allow(clippy::needless_raw_strings)]
 
 pub mod block;
 pub mod registry_id;

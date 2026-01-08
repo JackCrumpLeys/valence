@@ -3,8 +3,8 @@ use std::io::Write;
 
 use anyhow::bail;
 use bitfield_struct::bitfield;
-use valence_text::Text;
 
+use crate::text_component::TextComponent;
 use crate::{Decode, Encode, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
@@ -16,24 +16,24 @@ pub struct SetPlayerTeamS2c<'a> {
 #[derive(Clone, PartialEq, Debug)]
 pub enum Mode<'a> {
     CreateTeam {
-        team_display_name: Cow<'a, Text>,
+        team_display_name: Cow<'a, TextComponent>,
         friendly_flags: TeamFlags,
         name_tag_visibility: NameTagVisibility,
         collision_rule: CollisionRule,
         team_color: TeamColor,
-        team_prefix: Cow<'a, Text>,
-        team_suffix: Cow<'a, Text>,
+        team_prefix: Cow<'a, TextComponent>,
+        team_suffix: Cow<'a, TextComponent>,
         entities: Vec<&'a str>,
     },
     RemoveTeam,
     UpdateTeamInfo {
-        team_display_name: Cow<'a, Text>,
+        team_display_name: Cow<'a, TextComponent>,
         friendly_flags: TeamFlags,
         name_tag_visibility: NameTagVisibility,
         collision_rule: CollisionRule,
         team_color: TeamColor,
-        team_prefix: Cow<'a, Text>,
-        team_suffix: Cow<'a, Text>,
+        team_prefix: Cow<'a, TextComponent>,
+        team_suffix: Cow<'a, TextComponent>,
     },
     AddEntities {
         entities: Vec<&'a str>,

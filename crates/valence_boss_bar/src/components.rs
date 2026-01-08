@@ -6,6 +6,7 @@ use valence_entity::EntityLayerId;
 use valence_server::protocol::packets::play::boss_event_s2c::{
     BossBarAction, BossBarColor, BossBarDivision, BossBarFlags,
 };
+use valence_server::protocol::text_component::IntoTextComponent;
 use valence_server::{Text, UniqueId};
 
 /// The bundle of components that make up a boss bar.
@@ -25,7 +26,7 @@ pub struct BossBarTitle(pub Text);
 
 impl ToPacketAction for BossBarTitle {
     fn to_packet_action(&self) -> BossBarAction<'_> {
-        BossBarAction::UpdateTitle(Cow::Borrowed(&self.0))
+        BossBarAction::UpdateTitle(Cow::Borrowed(&self.0).into_cow_text_component())
     }
 }
 
