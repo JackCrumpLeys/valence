@@ -369,7 +369,7 @@ impl Client {
     }
 
     /// `velocity` is in m/s.
-    pub fn set_velocity<V: Into<Vec3>>(&mut self, velocity: V) {
+    pub fn set_velocity<V: Into<DVec3>>(&mut self, velocity: V) {
         self.write_packet(&SetEntityMotionS2c {
             entity_id: VarInt(0),
             velocity: Velocity(velocity.into()).to_packet_units(),

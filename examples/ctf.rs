@@ -971,7 +971,7 @@ fn handle_combat_events(
         let victim_pos = victim.pos.0.xz();
         let attacker_pos = attacker.pos.0.xz();
 
-        let dir = (victim_pos - attacker_pos).normalize().as_vec2();
+        let dir = (victim_pos - attacker_pos).normalize();
 
         let knockback_xz = if attacker.state.has_bonus_knockback {
             18.0
