@@ -7,4 +7,4 @@ use crate::{Decode, Encode, Packet, PacketState};
 /// [`KeepAliveC2s`](crate::packets::configuration::KeepAliveC2s) packet with
 /// the same id. If the client does not receive a `KeepAliveS2c` packet within
 /// 20 seconds, it should disconnect.
-pub struct KeepAliveS2c(pub i32);
+pub struct KeepAliveS2c(pub i64);
