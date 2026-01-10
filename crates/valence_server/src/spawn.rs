@@ -201,6 +201,11 @@ pub(super) fn respawn(
             sea_level: VarInt(0),       // TODO
             data_kept: DataKeptFlags::new(),
         });
+
+        client.write_packet(&GameEventS2c {
+            kind: GameEventKind::StartWaitingForLevelChunks,
+            value: 0.0,
+        });
     }
 }
 
