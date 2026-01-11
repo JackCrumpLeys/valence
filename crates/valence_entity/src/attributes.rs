@@ -345,7 +345,7 @@ impl EntityAttributes {
 
     /// Clears all attributes and their modifiers.
     pub fn clear(&mut self) {
-        let keys: Vec<_> = self.attributes.keys().cloned().collect();
+        let keys: Vec<_> = self.attributes.keys().copied().collect();
         for attribute in keys {
             self.clear_modifiers(attribute);
         }
