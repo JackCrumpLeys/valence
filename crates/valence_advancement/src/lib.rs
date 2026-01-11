@@ -117,8 +117,8 @@ impl UpdateAdvancementCachedBytesQuery<'_, '_> {
 
         if let Some(a_display) = a_display {
             pkt.display_data = Some(packet::AdvancementDisplay {
-                title: a_display.title.clone().into_cow_text_component(),
-                description: a_display.title.clone().into_cow_text_component(),
+                title: (&a_display.title).into_cow_text_component(),
+                description: (&a_display.description).into_cow_text_component(),
                 icon: &a_display.icon,
                 frame_type: VarInt(a_display.frame_type as i32),
                 flags: a_display.flags(),
