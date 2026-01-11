@@ -25,8 +25,11 @@ const SPAWN_Y: i32 = 64;
 // - Slow Falling
 // - Levitation
 // - Dolphin's Grace
-// - Conduit Power (the haste is implemented by the client, but should be verified by the server. The water breathing is not implemented due to lack of underwater breathing mechanics)
-// - Weaving (spawning cobwebs around the player isn't implemented, but the dampening of the slowness from cobwebs is)
+// - Conduit Power (the haste is implemented by the client, but should be
+//   verified by the server. The water breathing is not implemented due to lack
+//   of underwater breathing mechanics)
+// - Weaving (spawning cobwebs around the player isn't implemented, but the
+//   dampening of the slowness from cobwebs is)
 //
 // There are also a few different potion effects that are implemented by the
 // server. Some can be implemented right now, for example:
@@ -38,7 +41,8 @@ const SPAWN_Y: i32 = 64;
 // - Jump Boost (SafeFallDistance attribute, not jump strength)
 // - Weakness
 // - Health Boost (max health attribute)
-// - Absorption (extra health via Absorption component, but also MaxAbsorption attribute)
+// - Absorption (extra health via Absorption component, but also MaxAbsorption
+//   attribute)
 // - Luck
 // - Unluck
 // - Instant Health
