@@ -68,7 +68,7 @@ impl ActiveStatusEffects {
 
     /// Instantly clears all [`ActiveStatusEffect`]s without waiting for the next
     /// tick.
-    /// 
+    ///
     /// Useful for respawning players.
     pub fn clear_instantly(&mut self) {
         self.current_effects.clear();
