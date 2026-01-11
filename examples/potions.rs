@@ -5,6 +5,7 @@ use valence::entity::active_status_effects::{ActiveStatusEffect, ActiveStatusEff
 use valence::log::LogPlugin;
 use valence::network::ConnectionMode;
 use valence::prelude::*;
+use valence::status::RequestRespawnEvent;
 use valence::status_effects::{AttributeModifier, StatusEffect};
 use valence_server::entity::attributes::{EntityAttribute, EntityAttributes};
 use valence_server::entity::entity::Flags;
@@ -65,6 +66,7 @@ fn main() {
                 init_clients,
                 despawn_disconnected_clients,
                 handle_status_effect_update,
+                necromancy,
             ),
         )
         .run();
@@ -337,6 +339,46 @@ pub fn handle_status_effect_update(
                 }
                 _ => {}
             }
+        }
+    }
+}
+
+fn necromancy(
+    mut clients: Query<(
+        &EntityLayerId,
+        &mut VisibleChunkLayer,
+        &mut VisibleEntityLayers,
+        &mut RespawnPosition,
+        &mut Health,
+        &mut Absorption,
+        &mut ActiveStatusEffects,
+        &mut EntityAttributes,
+    )>,
+    mut events: EventReader<RequestRespawnEvent>,
+) {
+    for event in events.read() {
+        if let Ok((
+            layer_id,
+            mut visible_chunk_layer,
+            mut visible_entity_layers,
+            mut respawn_pos,
+            mut health,
+            mut absorption,
+            mut status_effects,
+            mut attributes,
+        )) = clients.get_mut(event.client)
+        {
+            respawn_pos.pos = BlockPos::new(0, SPAWN_Y, 0);
+
+            let layer = layer_id.0;
+            visible_chunk_layer.0 = layer;
+            visible_entity_layers.0.clear();
+            visible_entity_layers.0.insert(layer);
+            health.0 = 20.0;
+            status_effects.clear_instantly();
+            absorption.0 = 0.0;
+            attributes.set_base_value(EntityAttribute::MaxHealth, 20.0);
+            attributes.set_base_value(EntityAttribute::MaxAbsorption, 20.0);
         }
     }
 }
