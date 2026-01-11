@@ -67,60 +67,32 @@ impl From<Text> for TextComponent {
     }
 }
 
-/// A wrapper around `Text` that encodes and decodes as an NBT String.
-#[derive(Clone, Debug, PartialEq)]
-pub struct NbtStringText(pub Text);
-
-impl Encode for NbtStringText {
-    fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
-        w.write_u8(Tag::String as u8)?;
-
-        let string = self.0.to_legacy_lossy();
-        // Assuming modified_utf8 logic is on the string type
-        let len = string.len(); // Simplified for snippet context
-
-        match u16::try_from(len) {
-            Ok(n) => w.write_u16::<BigEndian>(n)?,
-            Err(_) => {
-                return Err(anyhow::anyhow!(
-                    "string of length {len} exceeds maximum of u16::MAX"
-                ));
-            }
-        }
-
-        // Write string bytes... (placeholder for `to_modified_utf8`)
-        w.write_all(string.as_bytes())?;
-        Ok(())
-    }
-}
-
-impl Decode<'_> for NbtStringText {
-    fn decode(r: &mut &'_ [u8]) -> anyhow::Result<Self> {
-        let len = r.read_u16::<BigEndian>()?.into();
-        ensure!(
-            len <= r.len(),
-            "string of length {} exceeds remainder of input {}",
-            len,
-            r.len()
-        );
-
-        let (left, right) = r.split_at(len);
-
-        // Placeholder for from_modified_utf8
-        let string_val = String::from_utf8_lossy(left).into_owned();
-        *r = right;
-
-        // Assuming String can turn into Text
-        Ok(Self(Text::from(string_val)))
-    }
-}
-
 impl Encode for TextComponent {
     fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
-        // Logic moved here: Check plainness to decide format
         if self.text.is_plain() {
             // Encode as NBT String
-            NbtStringText(self.text.clone()).encode(w)
+            let mut w = w;
+            w.write_u8(Tag::String as u8)?;
+
+            let valence_text::TextContent::Text { text: string } = &self.text.content else {
+                // is_plain should mean this is unreachable
+                unreachable!()
+            };
+
+            let len = string.len();
+
+            match u16::try_from(len) {
+                Ok(n) => w.write_u16::<BigEndian>(n)?,
+                Err(_) => {
+                    return Err(anyhow::anyhow!(
+                        "string of length {len} exceeds maximum of u16::MAX"
+                    ));
+                }
+            }
+
+            // Write string bytes... (placeholder for `to_modified_utf8`)
+            w.write_all(string.as_bytes())?;
+            Ok(())
         } else {
             // Encode as Compound
             w.write_u8(Tag::Compound as u8)?;
@@ -133,13 +105,23 @@ impl Decode<'_> for TextComponent {
     fn decode(r: &mut &'_ [u8]) -> anyhow::Result<Self> {
         let tag_id = r.read_u8()?;
         match tag_id {
-            val if val == Tag::String as u8 => {
-                // Decode specific NBT String logic
-                let nbt_string_text = NbtStringText::decode(r)?;
-                Ok(TextComponent {
-                    text: nbt_string_text.0,
-                })
-            }
+            val if val == Tag::String as u8 => Ok(TextComponent {
+                text: {
+                    let len = r.read_u16::<BigEndian>()?.into();
+                    ensure!(
+                        len <= r.len(),
+                        "string of length {} exceeds remainder of input {}",
+                        len,
+                        r.len()
+                    );
+
+                    let (left, right) = r.split_at(len);
+
+                    *r = right; // make sure reader cusor is correctly possitioned
+
+                    String::from_utf8_lossy(left).into_owned().into()
+                },
+            }),
             val if val == Tag::Compound as u8 => {
                 // Standard Text decode
                 Ok(TextComponent {
