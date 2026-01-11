@@ -314,11 +314,11 @@ fn build_spawn_box(layer: &mut LayerBundle, pos: impl Into<BlockPos>, commands: 
             state: BlockState::OAK_WALL_SIGN.set(PropName::Rotation, PropValue::_3),
             nbt: Some(compound! {
                 "front_text" => compound! {
-                    "messages" => List::String(vec![
-                        "Capture".color(Color::YELLOW).bold().to_string(),
-                        "the".color(Color::YELLOW).bold().to_string(),
-                        "Flag!".color(Color::YELLOW).bold().to_string(),
-                        "Select a Team".color(Color::WHITE).italic().to_string(),
+                    "messages" => List::Compound(vec![
+                        "Capture".color(Color::YELLOW).bold().into(),
+                        "the".color(Color::YELLOW).bold().into(),
+                        "Flag!".color(Color::YELLOW).bold().into(),
+                        "Select a Team".color(Color::WHITE).italic().into(),
                     ])
                 },
             }),
@@ -331,11 +331,11 @@ fn build_spawn_box(layer: &mut LayerBundle, pos: impl Into<BlockPos>, commands: 
             state: BlockState::OAK_WALL_SIGN.set(PropName::Rotation, PropValue::_3),
             nbt: Some(compound! {
                 "front_text" => compound! {
-                    "messages" => List::String(vec![
-                        "".into_text().to_string(),
-                        ("Join ".bold().color(Color::WHITE) + Team::Red.team_text()).to_string(),
-                        "=>".bold().color(Color::WHITE).to_string(),
-                        "".into_text().to_string(),
+                    "messages" => List::Compound(vec![
+                        "".into_text().into(),
+                        ("Join ".bold().color(Color::WHITE) + Team::Red.team_text()).into(),
+                        "=>".bold().color(Color::WHITE).into(),
+                        "".into_text().into(),
                     ])
                 },
             }),
@@ -348,11 +348,11 @@ fn build_spawn_box(layer: &mut LayerBundle, pos: impl Into<BlockPos>, commands: 
             state: BlockState::OAK_WALL_SIGN.set(PropName::Rotation, PropValue::_3),
             nbt: Some(compound! {
                 "front_text" => compound! {
-                    "messages" => List::String(vec![
-                        "".into_text().to_string(),
-                        ("Join ".bold().color(Color::WHITE) + Team::Blue.team_text()).to_string(),
-                        "<=".bold().color(Color::WHITE).to_string(),
-                        "".into_text().to_string(),
+                    "messages" => List::Compound(vec![
+                        "".into_text().into(),
+                        ("Join ".bold().color(Color::WHITE) + Team::Blue.team_text()).into(),
+                        "<=".bold().color(Color::WHITE).into(),
+                        "".into_text().into(),
                     ])
                 },
             }),
