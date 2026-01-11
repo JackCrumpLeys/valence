@@ -24,26 +24,45 @@ const SPAWN_Y: i32 = 64;
 // - Darkness
 // - Slow Falling
 // - Levitation
-// Perhaps also (haven't tested):
 // - Dolphin's Grace
-// - Conduit Power
+// - Conduit Power (the haste is implemented by the client, but should be verified by the server. The water breathing is not implemented due to lack of underwater breathing mechanics)
+// - Weaving (spawning cobwebs around the player isn't implemented, but the dampening of the slowness from cobwebs is)
 //
 // There are also a few different potion effects that are implemented by the
 // server. Some can be implemented right now, for example:
 // - Speed
+// - Slowness
+// - Haste
+// - Mining Fatigue
+// - Strength
+// - Jump Boost (SafeFallDistance attribute, not jump strength)
+// - Weakness
+// - Health Boost (max health attribute)
+// - Absorption (extra health via Absorption component, but also MaxAbsorption attribute)
+// - Luck
+// - Unluck
 // - Instant Health
+// - Instant Damage
 // - Regeneration
-// - Absorption
+// - Poison
+// - Wither
 // - Glowing
-// - etc. (i.e. the ones with AttributeModifiers, direct health changes or other
-//   trivial effects)
+// - Invisibility
 //
 // Some can't be implemented right now because they require features that aren't
 // implemented yet or must be implemented yourself, for example:
+// - Resistance (requires damage types)
 // - Water Breathing (requires the ability to breathe underwater)
 // - Fire Resistance (requires the ability to not take damage from fire)
 // - Hunger (requires the ability to get hungry)
+// - Saturation (requires the ability to get hungry)
 // - Bad Omen (requires the ability to get a raid)
+// - Hero of the Village (requires villagers)
+// - Trial Omen (requires trial chambers)
+// - Raid Omen (requires raids)
+// - Wind Charged (requires spawning bursts of wind)
+// - Oozing (requires spawning slimes)
+// - Infested (requires spawning silverfish)
 fn main() {
     App::new()
         .insert_resource(NetworkSettings {
@@ -91,6 +110,16 @@ fn setup(
             layer
                 .chunk
                 .set_block([x, SPAWN_Y, z], BlockState::GRASS_BLOCK);
+
+            if (-25..-20).contains(&z)
+                || (20..25).contains(&z)
+                || (-25..-20).contains(&x)
+                || (20..25).contains(&x)
+            {
+                for y in SPAWN_Y + 1..SPAWN_Y + 6 {
+                    layer.chunk.set_block([x, y, z], BlockState::WATER);
+                }
+            }
         }
     }
 
@@ -229,12 +258,16 @@ pub fn handle_status_effect_added(
                 }
                 StatusEffect::InstantHealth => {
                     if let Some(mut health) = health {
-                        health.0 += (4 << effect.amplifier().min(31)) as f32;
+                        let max_health = attributes
+                            .get_compute_value(EntityAttribute::MaxHealth)
+                            .unwrap_or(20.0) as f32;
+                        health.0 =
+                            (health.0 + (4 << effect.amplifier().min(31)) as f32).min(max_health);
                     }
                 }
                 StatusEffect::InstantDamage => {
                     if let Some(mut health) = health {
-                        health.0 -= (6 << effect.amplifier().min(31)) as f32;
+                        health.0 = (health.0 - (6 << effect.amplifier().min(31)) as f32).max(0.0);
                     }
                 }
                 StatusEffect::Glowing => {
@@ -353,6 +386,7 @@ fn necromancy(
         &mut Absorption,
         &mut ActiveStatusEffects,
         &mut EntityAttributes,
+        &mut Flags,
     )>,
     mut events: EventReader<RequestRespawnEvent>,
 ) {
@@ -366,6 +400,7 @@ fn necromancy(
             mut absorption,
             mut status_effects,
             mut attributes,
+            mut flags,
         )) = clients.get_mut(event.client)
         {
             respawn_pos.pos = BlockPos::new(0, SPAWN_Y, 0);
@@ -375,10 +410,11 @@ fn necromancy(
             visible_entity_layers.0.clear();
             visible_entity_layers.0.insert(layer);
             health.0 = 20.0;
-            status_effects.clear_instantly();
             absorption.0 = 0.0;
-            attributes.set_base_value(EntityAttribute::MaxHealth, 20.0);
-            attributes.set_base_value(EntityAttribute::MaxAbsorption, 20.0);
+            status_effects.clear_instantly();
+            attributes.clear();
+            flags.set_glowing(false);
+            flags.set_invisible(false);
         }
     }
 }
