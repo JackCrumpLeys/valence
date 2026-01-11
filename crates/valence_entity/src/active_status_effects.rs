@@ -66,6 +66,15 @@ impl ActiveStatusEffects {
         self.changes.push(StatusEffectChange::RemoveAll);
     }
 
+    /// Instantly clears all [`ActiveStatusEffect`]s without waiting for the next
+    /// tick.
+    /// 
+    /// Useful for respawning players.
+    pub fn clear_instantly(&mut self) {
+        self.current_effects.clear();
+        self.changes.clear();
+    }
+
     /// Returns true if there are no effects of the given type.
     pub fn no_effect(&self, effect: StatusEffect) -> bool {
         self.current_effects
