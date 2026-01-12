@@ -72,6 +72,10 @@ impl Aabb {
         Self::new(self.min.min(other.min), self.max.max(other.max))
     }
 
+    /// Does this bounding box intersect with another bounding box (including
+    /// touching)?
+    ///
+    /// See [`Aabb::intersects_strict`] if you don't want to include touching.
     pub fn intersects(self, other: Self) -> bool {
         self.max.x >= other.min.x
             && other.max.x >= self.min.x
@@ -79,6 +83,19 @@ impl Aabb {
             && other.max.y >= self.min.y
             && self.max.z >= other.min.z
             && other.max.z >= self.min.z
+    }
+
+    /// Does this bounding box intersect with another bounding box (not
+    /// including touching)?
+    ///
+    /// See [`Aabb::intersects`] if you want to include touching.
+    pub fn intersects_strict(self, other: Self) -> bool {
+        self.max.x > other.min.x
+            && other.max.x > self.min.x
+            && self.max.y > other.min.y
+            && other.max.y > self.min.y
+            && self.max.z > other.min.z
+            && other.max.z > self.min.z
     }
 
     /// Does this bounding box contain the given point?
