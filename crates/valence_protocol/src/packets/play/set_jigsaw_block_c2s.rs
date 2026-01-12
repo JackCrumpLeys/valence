@@ -2,8 +2,8 @@ use std::borrow::Cow;
 
 use valence_ident::Ident;
 
-use crate::Packet;
 use crate::BlockPos;
+use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

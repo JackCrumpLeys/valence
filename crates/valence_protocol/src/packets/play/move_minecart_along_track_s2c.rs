@@ -1,5 +1,5 @@
-use crate::Packet;
 use crate::ByteAngle;
+use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

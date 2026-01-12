@@ -3,8 +3,8 @@ use std::io::Write;
 
 use bitfield_struct::bitfield;
 
-use crate::Packet;
 use crate::chunk_section_pos::ChunkSectionPos;
+use crate::Packet;
 use valence_binary::{Decode, Encode, VarLong};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

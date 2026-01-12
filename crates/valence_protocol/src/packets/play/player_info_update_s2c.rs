@@ -4,9 +4,9 @@ use std::io::Write;
 use bitfield_struct::bitfield;
 use uuid::Uuid;
 
-use crate::Packet;
 use crate::profile::Property;
 use crate::GameMode;
+use crate::Packet;
 use valence_binary::{Decode, Encode, TextComponent, VarInt};
 
 #[derive(Clone, Debug, Packet)]

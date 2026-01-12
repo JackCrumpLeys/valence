@@ -1,6 +1,6 @@
-use crate::Packet;
 use crate::movement_flags::MovementFlags;
 use crate::ByteAngle;
+use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]

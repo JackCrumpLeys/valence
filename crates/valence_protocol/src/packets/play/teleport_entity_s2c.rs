@@ -1,8 +1,8 @@
 use valence_math::DVec3;
 
-use crate::Packet;
 use crate::packets::play::player_position_s2c::TeleportRelativeFlags;
 use crate::ByteAngle;
+use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]

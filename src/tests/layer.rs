@@ -11,9 +11,9 @@ use crate::protocol::packets::play::{
     AddEntityS2c, BlockEntityDataS2c, ForgetLevelChunkS2c, LevelChunkWithLightS2c,
     MoveEntityPosS2c, RemoveEntitiesS2c, SectionBlocksUpdateS2c,
 };
+use crate::protocol::Packet;
 use crate::testing::ScenarioSingleClient;
 use crate::{BlockState, ChunkView, Despawned, Server};
-use crate::protocol::Packet;
 
 #[test]
 fn block_create_destroy() {

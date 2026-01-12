@@ -1,5 +1,5 @@
-use crate::Packet;
 use crate::Difficulty;
+use crate::Packet;
 use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, Packet)]

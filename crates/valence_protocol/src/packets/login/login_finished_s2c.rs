@@ -2,8 +2,8 @@ use std::borrow::Cow;
 
 use uuid::Uuid;
 
-use crate::{Packet, PacketState};
 use crate::profile::Property;
+use crate::{Packet, PacketState};
 use valence_binary::{Bounded, Decode, Encode};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

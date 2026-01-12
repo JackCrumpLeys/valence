@@ -1,7 +1,7 @@
 use valence_math::Vec3;
 
-use crate::Packet;
 use crate::Hand;
+use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
