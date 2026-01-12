@@ -4,8 +4,7 @@ use bevy_ecs::prelude::Component;
 use bitfield_struct::bitfield;
 use uuid::Uuid;
 
-use crate::text_component::TextComponent;
-use crate::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode, Packet, TextComponent};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct BossEventS2c<'a> {

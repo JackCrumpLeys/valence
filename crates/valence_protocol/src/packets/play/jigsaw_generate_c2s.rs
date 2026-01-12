@@ -1,4 +1,5 @@
-use crate::{BlockPos, Decode, Encode, Packet, VarInt};
+use crate::BlockPos;
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct JigsawGenerateC2s {

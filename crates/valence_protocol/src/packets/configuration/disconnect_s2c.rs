@@ -1,9 +1,8 @@
 use std::borrow::Cow;
 
-use valence_protocol_macros::{Decode, Encode, Packet};
-
-use crate::text_component::TextComponent;
-use crate::PacketState;
+use valence_binary::PacketState;
+use valence_binary::TextComponent;
+use valence_binary::{Decode, Encode, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Configuration)]

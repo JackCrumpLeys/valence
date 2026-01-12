@@ -5,8 +5,8 @@ use bitfield_struct::bitfield;
 use uuid::Uuid;
 
 use crate::profile::Property;
-use crate::text_component::TextComponent;
-use crate::{Decode, Encode, GameMode, Packet, VarInt};
+use crate::GameMode;
+use valence_binary::{Decode, Encode, Packet, TextComponent, VarInt};
 
 #[derive(Clone, Debug, Packet)]
 pub struct PlayerInfoUpdateS2c<'a> {

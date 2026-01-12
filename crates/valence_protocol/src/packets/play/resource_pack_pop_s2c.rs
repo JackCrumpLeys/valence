@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode, Packet};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 /// If uuid is None, all resource packs are removed. Else, only the resource

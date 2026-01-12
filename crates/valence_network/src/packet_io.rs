@@ -10,10 +10,11 @@ use tokio::net::TcpStream;
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 use tracing::{debug, warn};
+use valence_binary::{Decode, Encode, Packet};
 use valence_protocol::CompressionThreshold;
 use valence_server::client::{ClientBundleArgs, ClientConnection, ReceivedPacket};
 use valence_server::protocol::decode::PacketFrame;
-use valence_server::protocol::{Decode, Encode, Packet, PacketDecoder, PacketEncoder};
+use valence_server::protocol::{PacketDecoder, PacketEncoder};
 
 use crate::byte_channel::{byte_channel, ByteSender, TrySendError};
 use crate::{CleanupOnDrop, NewClientInfo};

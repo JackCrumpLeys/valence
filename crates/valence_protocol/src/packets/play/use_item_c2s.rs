@@ -1,4 +1,5 @@
-use crate::{Decode, Encode, Hand, Packet, VarInt};
+use crate::Hand;
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct UseItemC2s {

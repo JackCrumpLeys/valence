@@ -4,7 +4,8 @@ use bitfield_struct::bitfield;
 use valence_ident::Ident;
 
 use crate::game_mode::OptGameMode;
-use crate::{Decode, Encode, GameMode, GlobalPos, Packet, VarInt};
+use crate::{GameMode, GlobalPos};
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode, Packet)]
 pub struct RespawnS2c<'a> {

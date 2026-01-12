@@ -1,4 +1,5 @@
-use crate::{BlockPos, Decode, Direction, Encode, Packet, VarInt};
+use crate::{BlockPos, Direction};
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct PlayerActionC2s {

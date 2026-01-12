@@ -1,6 +1,5 @@
 use crate::sound::{SoundCategory, SoundId};
-use crate::{Decode, Encode, Packet, VarInt};
-
+use valence_binary::{Decode, Encode, Packet, VarInt};
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SoundEntityS2c {
     pub id: SoundId,

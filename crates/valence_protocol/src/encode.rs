@@ -8,8 +8,9 @@ use anyhow::ensure;
 use bytes::{BufMut, BytesMut};
 use tracing::warn;
 
-use crate::var_int::VarInt;
-use crate::{CompressionThreshold, Encode, Packet, MAX_PACKET_SIZE};
+use crate::{CompressionThreshold, MAX_PACKET_SIZE};
+use valence_binary::VarInt;
+use valence_binary::{Decode, Encode, Packet};
 
 /// The AES block cipher with a 128 bit key, using the CFB-8 mode of
 /// operation.

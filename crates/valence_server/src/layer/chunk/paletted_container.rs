@@ -2,7 +2,8 @@ use std::array;
 use std::io::Write;
 
 use arrayvec::ArrayVec;
-use valence_protocol::{Encode, VarInt};
+use valence_binary::Encode;
+use valence_protocol::VarInt;
 
 use super::chunk::bit_width;
 

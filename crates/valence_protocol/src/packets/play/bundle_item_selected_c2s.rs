@@ -1,4 +1,4 @@
-use crate::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct BundleItemSelectedC2s {

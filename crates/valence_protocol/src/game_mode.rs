@@ -4,7 +4,7 @@ use anyhow::bail;
 use bevy_ecs::prelude::*;
 use derive_more::{From, Into};
 
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default, Encode, Decode, Component)]
 pub enum GameMode {

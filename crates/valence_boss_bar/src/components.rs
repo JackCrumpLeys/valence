@@ -6,7 +6,7 @@ use valence_entity::EntityLayerId;
 use valence_server::protocol::packets::play::boss_event_s2c::{
     BossBarAction, BossBarColor, BossBarDivision, BossBarFlags,
 };
-use valence_server::protocol::text_component::IntoTextComponent;
+use valence_server::protocol::IntoTextComponent;
 use valence_server::{Text, UniqueId};
 
 /// The bundle of components that make up a boss bar.

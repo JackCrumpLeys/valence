@@ -3,7 +3,8 @@ use std::borrow::Cow;
 use valence_generated::registry_id::RegistryId;
 use valence_ident::Ident;
 
-use crate::{Decode, Encode, IDSet, ItemStack, Packet, VarInt};
+use valence_binary::{Decode, Encode, IDSet, Packet, VarInt};
+use valence_item::ItemStack;
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct UpdateRecipesS2c<'a> {

@@ -3,7 +3,7 @@ use valence_protocol::packets::play::{
     ClearTitlesS2c, SetActionBarTextS2c, SetSubtitleTextS2c, SetTitleTextS2c, SetTitlesAnimationS2c,
 };
 use valence_protocol::text::IntoText;
-use valence_protocol::text_component::IntoTextComponent;
+use valence_protocol::IntoTextComponent;
 
 pub trait SetTitle {
     /// Displays a title to a client.

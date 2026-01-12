@@ -1,6 +1,6 @@
 use valence_math::DVec3;
 
-use crate::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct EntityPositionSyncS2c {

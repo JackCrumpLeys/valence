@@ -1,6 +1,6 @@
 use bitfield_struct::bitfield;
 
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 #[bitfield(u8)]
 #[derive(PartialEq, Eq, Encode, Decode)]

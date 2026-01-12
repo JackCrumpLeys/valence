@@ -3,8 +3,7 @@ use std::io::Write;
 
 use uuid::Uuid;
 
-use crate::text_component::TextComponent;
-use crate::{Bounded, Decode, Encode, Packet, VarInt};
+use valence_binary::{Bounded, Decode, Encode, Packet, TextComponent, VarInt};
 
 #[derive(Clone, PartialEq, Debug, Packet)]
 pub struct PlayerChatS2c<'a> {

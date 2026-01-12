@@ -4,6 +4,7 @@ use std::mem;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use parking_lot::Mutex; // Using nonstandard mutex to avoid poisoning API.
+use valence_binary::Encode;
 use valence_generated::block::{PropName, PropValue};
 use valence_nbt::Compound;
 use valence_protocol::encode::{PacketWriter, WritePacket};
@@ -14,9 +15,7 @@ use valence_protocol::packets::play::section_blocks_update_s2c::ChunkDeltaUpdate
 use valence_protocol::packets::play::{
     BlockEntityDataS2c, BlockUpdateS2c, LevelChunkWithLightS2c, SectionBlocksUpdateS2c,
 };
-use valence_protocol::{
-    BitStorage, BlockPos, BlockState, ChunkPos, ChunkSectionPos, Encode, FixedArray,
-};
+use valence_protocol::{BitStorage, BlockPos, BlockState, ChunkPos, ChunkSectionPos, FixedArray};
 use valence_registry::biome::BiomeId;
 use valence_registry::RegistryIdx;
 

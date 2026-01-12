@@ -1,7 +1,6 @@
 use valence_math::DVec3;
 
-use crate::{Decode, Encode, Packet, VarInt};
-
+use valence_binary::{Decode, Encode, Packet, VarInt};
 /// Instructs a client to face an entity.
 #[derive(Copy, Clone, PartialEq, Debug, Encode, Decode, Packet)]
 pub struct PlayerLookAtS2c {

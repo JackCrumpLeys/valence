@@ -2,7 +2,8 @@ use std::borrow::Cow;
 
 use valence_ident::Ident;
 
-use crate::{BlockPos, Decode, Encode, Packet, VarInt};
+use crate::BlockPos;
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SetJigsawBlockC2s<'a> {

@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::*;
 use tracing::warn;
-use valence_protocol::Encode;
+use valence_binary::Encode;
 
 /// Cache for all the tracked data of an entity. Used for the
 /// [`SetEntityDataS2c`][packet] packet.

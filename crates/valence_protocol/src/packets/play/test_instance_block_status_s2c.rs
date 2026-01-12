@@ -1,7 +1,6 @@
 use valence_math::DVec3;
 
-use crate::text_component::TextComponent;
-use crate::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode, Packet, TextComponent};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct TestInstanceBlockStatusS2c {

@@ -1,4 +1,4 @@
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, PartialEq, Eq, Default, Debug, Encode, Decode)]
 pub enum Hand {

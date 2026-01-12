@@ -1,8 +1,8 @@
 pub use valence_generated::sound::Sound;
 use valence_ident::Ident;
 
-use crate::id_or::IdOr;
-use crate::{Decode, Encode};
+use valence_binary::IdOr;
+use valence_binary::{Decode, Encode};
 
 pub type SoundId = IdOr<SoundDirect>;
 
