@@ -3,8 +3,6 @@ use std::borrow::Cow;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use valence_server::item::ItemComponent;
-// use valence_item::ItemComponent;
-// use valence_server::protocol::IntoTextComponent;
 use valence_server::protocol::text_component::IntoTextComponent;
 
 use crate::inventory::{
