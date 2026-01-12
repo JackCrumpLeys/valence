@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
 use uuid::Uuid;
+use valence_binary::{Bounded, Decode, Encode, TextComponent};
 
 use crate::Packet;
-use valence_binary::{Bounded, Decode, Encode, TextComponent};
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode, Packet)]
 pub struct ResourcePackPushS2c<'a> {

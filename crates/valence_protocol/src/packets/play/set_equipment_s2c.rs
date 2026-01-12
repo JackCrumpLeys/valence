@@ -1,8 +1,9 @@
 use std::io::Write;
 
-use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 use valence_item::ItemStack;
+
+use crate::Packet;
 
 #[derive(Clone, PartialEq, Debug, Packet)]
 pub struct SetEquipmentS2c {

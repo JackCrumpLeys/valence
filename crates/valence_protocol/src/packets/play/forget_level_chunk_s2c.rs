@@ -1,6 +1,6 @@
-use crate::ChunkPos;
-use crate::Packet;
 use valence_binary::{Decode, Encode};
+
+use crate::{ChunkPos, Packet};
 
 #[derive(Copy, Clone, Debug, Decode, Packet)]
 pub struct ForgetLevelChunkS2c {

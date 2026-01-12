@@ -2,7 +2,8 @@ use std::io::Write;
 
 use uuid::Uuid;
 use valence_binary::{Decode, Encode, IDSet, IdOr, TextComponent, VarInt};
-use valence_generated::{attributes::EntityAttributeOperation, registry_id::RegistryId};
+use valence_generated::attributes::EntityAttributeOperation;
+use valence_generated::registry_id::RegistryId;
 use valence_ident::Ident;
 use valence_nbt::Compound;
 use valence_text::Text;

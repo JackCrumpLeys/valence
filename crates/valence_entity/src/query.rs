@@ -11,8 +11,7 @@ use valence_protocol::packets::play::{
     MoveEntityPosS2c, MoveEntityRotS2c, RotateHeadS2c, SetEntityDataS2c, SetEntityMotionS2c,
     UpdateAttributesS2c,
 };
-use valence_protocol::ByteAngle;
-use valence_protocol::VarInt;
+use valence_protocol::{ByteAngle, VarInt};
 use valence_server_common::UniqueId;
 
 use crate::attributes::TrackedEntityAttributes;

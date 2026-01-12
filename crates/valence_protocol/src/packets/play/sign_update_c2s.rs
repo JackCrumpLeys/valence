@@ -1,6 +1,6 @@
-use crate::BlockPos;
-use crate::Packet;
 use valence_binary::{Bounded, Decode, Encode};
+
+use crate::{BlockPos, Packet};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct SignUpdateC2s<'a> {

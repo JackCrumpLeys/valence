@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
-use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
+
+use crate::Packet;
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SetPassengersS2c<'a> {
     /// Vehicle's entity id

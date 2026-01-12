@@ -1,9 +1,9 @@
+use valence_binary::{Decode, Encode};
 use valence_math::DVec3;
 
 use crate::block_pos::BlockPos;
 use crate::chunk_section_pos::ChunkSectionPos;
 use crate::BiomePos;
-use valence_binary::{Decode, Encode};
 
 /// The X and Z position of a chunk.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash, Debug, Encode, Decode)]

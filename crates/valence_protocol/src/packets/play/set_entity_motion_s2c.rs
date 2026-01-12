@@ -1,6 +1,6 @@
-use crate::Packet;
-use crate::Velocity;
 use valence_binary::{Decode, Encode, VarInt};
+
+use crate::{Packet, Velocity};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct SetEntityMotionS2c {

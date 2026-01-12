@@ -1,5 +1,4 @@
 use bevy_ecs::prelude::*;
-
 use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, Component)]

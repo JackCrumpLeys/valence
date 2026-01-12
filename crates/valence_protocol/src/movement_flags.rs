@@ -1,5 +1,4 @@
 use bitfield_struct::bitfield;
-
 use valence_binary::{Decode, Encode};
 
 #[bitfield(u8)]

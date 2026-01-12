@@ -1,6 +1,8 @@
-use crate::Packet;
 use std::borrow::Cow;
+
 use valence_binary::{Decode, Encode, TextComponent, VarInt};
+
+use crate::Packet;
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct CommandSuggestionsS2c<'a> {

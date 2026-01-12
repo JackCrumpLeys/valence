@@ -3,11 +3,10 @@ use std::io::Write;
 
 use bitfield_struct::bitfield;
 use uuid::Uuid;
+use valence_binary::{Decode, Encode, TextComponent, VarInt};
 
 use crate::profile::Property;
-use crate::GameMode;
-use crate::Packet;
-use valence_binary::{Decode, Encode, TextComponent, VarInt};
+use crate::{GameMode, Packet};
 
 #[derive(Clone, Debug, Packet)]
 pub struct PlayerInfoUpdateS2c<'a> {

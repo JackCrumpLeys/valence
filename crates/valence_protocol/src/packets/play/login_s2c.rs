@@ -1,12 +1,11 @@
 use std::borrow::Cow;
 use std::collections::BTreeSet;
 
+use valence_binary::{Decode, Encode, VarInt};
 use valence_ident::Ident;
 
 use crate::game_mode::OptGameMode;
-use crate::Packet;
-use crate::{GameMode, GlobalPos};
-use valence_binary::{Decode, Encode, VarInt};
+use crate::{GameMode, GlobalPos, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct LoginS2c<'a> {

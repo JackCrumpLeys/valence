@@ -1,13 +1,12 @@
-use std::{fmt::Debug, io::Write};
+use std::fmt::Debug;
+use std::io::Write;
 
 use valence_binary::{Encode, VarInt};
 use valence_generated::item::ItemKind;
 
-use crate::{
-    components::{ItemComponent, Patchable},
-    vanilla_components::ItemKindExt,
-    NUM_ITEM_COMPONENTS,
-};
+use crate::components::{ItemComponent, Patchable};
+use crate::vanilla_components::ItemKindExt;
+use crate::NUM_ITEM_COMPONENTS;
 
 /// A stack of items in an inventory.
 #[derive(Clone, PartialEq)]

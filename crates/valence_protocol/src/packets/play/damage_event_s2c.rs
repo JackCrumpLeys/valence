@@ -1,7 +1,7 @@
+use valence_binary::{Decode, Encode, VarInt};
 use valence_math::DVec3;
 
 use crate::Packet;
-use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct DamageEventS2c {

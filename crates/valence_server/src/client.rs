@@ -36,9 +36,7 @@ use valence_protocol::packets::play::{
 use valence_protocol::profile::Property;
 use valence_protocol::sound::{Sound, SoundCategory, SoundDirect, SoundId};
 use valence_protocol::text::{IntoText, Text};
-use valence_protocol::IntoTextComponent;
-use valence_protocol::VarInt;
-use valence_protocol::{BlockPos, ChunkPos, GameMode, Packet};
+use valence_protocol::{BlockPos, ChunkPos, GameMode, IntoTextComponent, Packet, VarInt};
 use valence_registry::RegistrySet;
 use valence_server_common::{Despawned, UniqueId};
 

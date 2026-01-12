@@ -1,7 +1,6 @@
-use crate::Packet;
 use valence_binary::{Bounded, Decode, Encode, RawBytes, VarInt};
 
-use crate::FixedBitSet;
+use crate::{FixedBitSet, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ChatCommandSignedC2s<'a> {

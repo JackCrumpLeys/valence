@@ -1,6 +1,7 @@
 use valence_generated::item::ItemKind;
 
-use crate::{components::Patchable, ItemComponent, NUM_ITEM_COMPONENTS};
+use crate::components::Patchable;
+use crate::{ItemComponent, NUM_ITEM_COMPONENTS};
 
 pub(crate) trait ItemKindExt {
     /// Returns the default components for the [`ItemKind`].

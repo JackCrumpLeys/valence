@@ -1,7 +1,6 @@
 use base64::prelude::*;
 use serde::{Deserialize, Serialize};
 use url::Url;
-
 use valence_binary::{Decode, Encode};
 
 /// A property from the game profile.

@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
-use crate::BlockPos;
-use crate::Packet;
 use valence_binary::{Decode, Encode};
+
+use crate::{BlockPos, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SetTestBlockC2s<'a> {

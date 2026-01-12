@@ -1,5 +1,6 @@
-use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt, VarLong};
+
+use crate::Packet;
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct InitializeBorderS2c {

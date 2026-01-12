@@ -1,5 +1,6 @@
-use crate::Packet;
 use valence_binary::{Decode, Encode};
+
+use crate::Packet;
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet, PartialEq)]
 pub struct GameEventS2c {

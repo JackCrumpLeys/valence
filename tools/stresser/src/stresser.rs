@@ -13,9 +13,9 @@ use valence_protocol::packets::play::{
     AcceptTeleportationC2s, KeepAliveC2s, KeepAliveS2c, LoginS2c, MovePlayerPosC2s,
     PlayerPositionS2c,
 };
-use valence_protocol::Packet;
-use valence_protocol::VarInt;
-use valence_protocol::{CompressionThreshold, PacketDecoder, PacketEncoder, PROTOCOL_VERSION};
+use valence_protocol::{
+    CompressionThreshold, Packet, PacketDecoder, PacketEncoder, VarInt, PROTOCOL_VERSION,
+};
 
 pub struct SessionParams<'a> {
     pub socket_addr: SocketAddr,

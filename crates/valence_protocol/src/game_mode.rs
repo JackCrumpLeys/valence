@@ -3,7 +3,6 @@ use std::io::Write;
 use anyhow::bail;
 use bevy_ecs::prelude::*;
 use derive_more::{From, Into};
-
 use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default, Encode, Decode, Component)]

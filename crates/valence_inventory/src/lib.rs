@@ -20,8 +20,7 @@ use valence_server::protocol::packets::play::{
     ContainerSetSlotS2c, OpenScreenS2c, PlayerActionC2s, SetCarriedItemC2s, SetCreativeModeSlotC2s,
     SetHeldSlotS2c,
 };
-use valence_server::protocol::IntoTextComponent;
-use valence_server::protocol::{VarInt, WritePacket};
+use valence_server::protocol::{IntoTextComponent, VarInt, WritePacket};
 use valence_server::text::IntoText;
 use valence_server::{GameMode, Hand, ItemKind, ItemStack, Text};
 

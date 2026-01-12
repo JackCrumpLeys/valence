@@ -3,9 +3,9 @@ use std::borrow::Cow;
 use bevy_ecs::prelude::Component;
 use bitfield_struct::bitfield;
 use uuid::Uuid;
+use valence_binary::{Decode, Encode, TextComponent};
 
 use crate::Packet;
-use valence_binary::{Decode, Encode, TextComponent};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct BossEventS2c<'a> {

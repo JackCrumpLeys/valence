@@ -1,8 +1,8 @@
 use bitfield_struct::bitfield;
+use valence_binary::{Decode, Encode, VarInt};
 use valence_math::DVec3;
 
 use crate::Packet;
-use valence_binary::{Decode, Encode, VarInt};
 #[derive(Copy, Clone, PartialEq, Debug, Encode, Decode, Packet)]
 pub struct PlayerPositionS2c {
     pub teleport_id: VarInt,

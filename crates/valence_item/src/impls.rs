@@ -3,11 +3,9 @@ use std::io::Write;
 use valence_binary::{cautious_capacity, Decode, Encode, VarInt};
 use valence_generated::item::ItemKind;
 
-use crate::{
-    components::{BlockPredicate, ExactComponentMatcher, ItemComponent, Patchable},
-    vanilla_components::ItemKindExt,
-    HashedItemStack, ItemStack, MAX_RECURSION_DEPTH, NUM_ITEM_COMPONENTS,
-};
+use crate::components::{BlockPredicate, ExactComponentMatcher, ItemComponent, Patchable};
+use crate::vanilla_components::ItemKindExt;
+use crate::{HashedItemStack, ItemStack, MAX_RECURSION_DEPTH, NUM_ITEM_COMPONENTS};
 
 impl Encode for ItemStack {
     fn encode(&self, w: impl Write) -> anyhow::Result<()> {

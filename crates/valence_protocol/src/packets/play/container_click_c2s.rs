@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
-use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 use valence_item::{HashedItemStack, ItemStack};
+
+use crate::Packet;
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ContainerClickC2s<'a> {

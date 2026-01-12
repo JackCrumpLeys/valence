@@ -1,8 +1,8 @@
+use valence_binary::{Decode, Encode};
 use valence_math::DVec3;
 
-use crate::Packet;
-use crate::{sound::SoundId, Particle};
-use valence_binary::{Decode, Encode};
+use crate::sound::SoundId;
+use crate::{Packet, Particle};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ExplodeS2c {
