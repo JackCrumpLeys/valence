@@ -2123,9 +2123,6 @@ impl Decode<'_> for HashedItemStack {
 
 pub trait ItemKindExt {
     /// Returns the default components for the [`ItemKind`].
-    // The reason we use two lifetimes is to tell the compiler that
-    // the ref self is not the same as the ref for the returned ItemComponents
-    // so we can drop Self
     fn default_components(&self) -> [Patchable<Box<ItemComponent>>; NUM_ITEM_COMPONENTS];
 }
 
