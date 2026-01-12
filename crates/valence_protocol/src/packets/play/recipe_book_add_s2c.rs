@@ -1,7 +1,7 @@
 use valence_generated::registry_id::RegistryId;
 
-use crate::Packet;
 use crate::packets::play::update_recipes_s2c::SlotDisplay;
+use crate::Packet;
 use valence_binary::{Decode, Encode, IDSet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

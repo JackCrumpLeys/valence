@@ -1,7 +1,7 @@
 use bitfield_struct::bitfield;
 
-use crate::Packet;
 use crate::BlockPos;
+use crate::Packet;
 use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]

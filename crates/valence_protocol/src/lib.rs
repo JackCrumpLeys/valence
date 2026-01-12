@@ -27,7 +27,6 @@ pub mod game_mode;
 mod global_pos;
 mod hand;
 mod hash_utils;
-pub mod item;
 pub mod movement_flags;
 pub mod packets;
 pub mod profile;

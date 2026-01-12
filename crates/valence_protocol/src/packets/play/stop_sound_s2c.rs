@@ -3,8 +3,8 @@ use std::io::Write;
 
 use valence_ident::Ident;
 
-use crate::Packet;
 use crate::sound::SoundCategory;
+use crate::Packet;
 use valence_binary::{Decode, Encode};
 
 #[derive(Clone, PartialEq, Debug, Packet)]

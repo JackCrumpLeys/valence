@@ -1,7 +1,7 @@
 use bitfield_struct::bitfield;
 
-use crate::Packet;
 use crate::packets::configuration::client_information_c2s::ParticleMode;
+use crate::Packet;
 use valence_binary::{Bounded, Decode, Encode};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

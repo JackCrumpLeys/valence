@@ -1,5 +1,5 @@
-use crate::Packet;
 use crate::packets::configuration::custom_report_details_s2c::CustomReportDetail;
+use crate::Packet;
 use valence_binary::{Decode, Encode};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

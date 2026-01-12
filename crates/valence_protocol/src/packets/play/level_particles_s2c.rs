@@ -1,8 +1,8 @@
 use valence_generated::block::BlockState;
 use valence_math::{DVec3, Vec3};
 
-use crate::Packet;
 use crate::BlockPos;
+use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 use valence_item::ItemStack;
 
