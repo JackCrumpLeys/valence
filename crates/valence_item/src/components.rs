@@ -12,6 +12,7 @@ use crate::stack::ItemStack;
 
 #[derive(Clone, PartialEq, Debug, Copy)]
 pub(crate) enum Patchable<T> {
+    #[allow(dead_code)]
     Default(T),
     /// `T`, `crc32c hash`
     Added((T, i32)),
@@ -19,6 +20,7 @@ pub(crate) enum Patchable<T> {
     None,
 }
 impl<T> Patchable<T> {
+    #[allow(clippy::wrong_self_convention)]
     pub(crate) fn to_option(self) -> Option<T> {
         match self {
             Patchable::Default(t) => Some(t),
