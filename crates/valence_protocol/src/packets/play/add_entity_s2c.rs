@@ -1,7 +1,8 @@
 use uuid::Uuid;
 use valence_math::DVec3;
 
-use crate::{ByteAngle, Decode, Encode, Packet, VarInt, Velocity};
+use crate::{ByteAngle, Velocity};
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 /// Sent by the server when a vehicle or other non-living entity is created.
 ///

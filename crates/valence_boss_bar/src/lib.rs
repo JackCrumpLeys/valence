@@ -10,7 +10,7 @@ pub use valence_server::protocol::packets::play::boss_event_s2c::{
     BossBarAction, BossBarColor, BossBarDivision, BossBarFlags,
 };
 use valence_server::protocol::packets::play::BossEventS2c;
-use valence_server::protocol::text_component::IntoTextComponent;
+use valence_server::protocol::IntoTextComponent;
 use valence_server::protocol::WritePacket;
 use valence_server::{ChunkView, Despawned, EntityLayer, Layer, UniqueId};
 

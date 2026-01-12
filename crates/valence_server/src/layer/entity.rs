@@ -4,10 +4,11 @@ use std::collections::BTreeSet;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use rustc_hash::FxHashMap;
+use valence_binary::{Encode, Packet};
 use valence_entity::query::UpdateEntityQuery;
 use valence_entity::{EntityId, EntityLayerId, OldEntityLayerId, OldPosition, Position};
 use valence_protocol::encode::{PacketWriter, WritePacket};
-use valence_protocol::{BlockPos, ChunkPos, CompressionThreshold, Encode, Packet};
+use valence_protocol::{BlockPos, ChunkPos, CompressionThreshold};
 use valence_server_common::{Despawned, Server};
 
 use super::bvh::GetChunkPos;

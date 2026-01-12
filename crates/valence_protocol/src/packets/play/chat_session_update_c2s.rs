@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{Bounded, Decode, Encode, Packet};
+use valence_binary::{Bounded, Decode, Encode, Packet};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct ChatSessionUpdateC2s<'a> {

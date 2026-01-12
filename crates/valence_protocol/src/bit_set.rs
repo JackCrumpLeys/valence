@@ -1,7 +1,7 @@
 use std::fmt;
 use std::io::Write;
 
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 // TODO: when better const exprs are available, compute BYTE_COUNT from
 // BIT_COUNT.

@@ -1,7 +1,9 @@
 use valence_generated::block::BlockState;
 use valence_math::{DVec3, Vec3};
 
-use crate::{BlockPos, Decode, Encode, ItemStack, Packet, VarInt};
+use crate::BlockPos;
+use valence_binary::{Decode, Encode, Packet, VarInt};
+use valence_item::ItemStack;
 
 #[derive(Clone, Debug, Packet, Encode, Decode)]
 pub struct LevelParticlesS2c {

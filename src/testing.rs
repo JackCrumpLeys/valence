@@ -7,6 +7,7 @@ use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bytes::{Buf, BufMut, BytesMut};
 use uuid::Uuid;
+use valence_binary::{Decode, Encode, Packet};
 use valence_ident::ident;
 use valence_network::NetworkPlugin;
 use valence_registry::{BiomeRegistry, DimensionTypeRegistry};
@@ -14,7 +15,7 @@ use valence_server::client::{ClientBundle, ClientBundleArgs, ClientConnection, R
 use valence_server::keepalive::KeepaliveSettings;
 use valence_server::protocol::decode::PacketFrame;
 use valence_server::protocol::packets::play::{AcceptTeleportationC2s, PlayerPositionS2c};
-use valence_server::protocol::{Decode, Encode, Packet, PacketDecoder, PacketEncoder, VarInt};
+use valence_server::protocol::{PacketDecoder, PacketEncoder, VarInt};
 use valence_server::{ChunkLayer, EntityLayer, Server, ServerSettings};
 
 use crate::DefaultPlugins;

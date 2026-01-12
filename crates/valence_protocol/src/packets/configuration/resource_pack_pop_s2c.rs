@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{Decode, Encode, Packet, PacketState};
+use valence_binary::{Decode, Encode, Packet, PacketState};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Configuration)]

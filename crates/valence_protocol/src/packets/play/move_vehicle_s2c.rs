@@ -1,6 +1,6 @@
 use valence_math::DVec3;
 
-use crate::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode, Packet};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct MoveVehicleS2c {

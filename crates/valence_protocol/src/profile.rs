@@ -2,7 +2,7 @@ use base64::prelude::*;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 /// A property from the game profile.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Encode, Decode)]

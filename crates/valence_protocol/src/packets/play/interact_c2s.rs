@@ -1,6 +1,7 @@
 use valence_math::Vec3;
 
-use crate::{Decode, Encode, Hand, Packet, VarInt};
+use crate::Hand;
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct InteractC2s {

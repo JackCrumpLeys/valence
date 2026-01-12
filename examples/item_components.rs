@@ -1,6 +1,6 @@
-use valence::item::ItemComponent;
 use valence::prelude::*;
-use valence::protocol::text_component::IntoTextComponent;
+use valence::protocol::IntoTextComponent;
+use valence_item::ItemComponent;
 
 fn main() {
     App::new()

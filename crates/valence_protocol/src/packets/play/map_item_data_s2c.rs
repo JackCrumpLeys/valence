@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 use std::io::Write;
 
-use crate::text_component::TextComponent;
-use crate::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, Packet, TextComponent, VarInt};
 
 #[derive(Clone, PartialEq, Debug, Packet)]
 pub struct MapItemDataS2c<'a> {

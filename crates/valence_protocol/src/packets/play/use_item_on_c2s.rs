@@ -1,6 +1,7 @@
 use valence_math::Vec3;
 
-use crate::{BlockPos, Decode, Direction, Encode, Hand, Packet, VarInt};
+use crate::{BlockPos, Direction, Hand};
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct UseItemOnC2s {

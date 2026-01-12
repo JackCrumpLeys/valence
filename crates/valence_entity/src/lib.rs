@@ -20,8 +20,8 @@ pub use manager::EntityManager;
 use paste::paste;
 use tracing::warn;
 use tracked_data::TrackedData;
+use valence_binary::{Decode, Encode, VarInt};
 use valence_math::{DVec3, Vec3};
-use valence_protocol::{Decode, Encode, VarInt};
 use valence_server_common::{Despawned, UniqueId};
 
 use crate::attributes::TrackedEntityAttributes;

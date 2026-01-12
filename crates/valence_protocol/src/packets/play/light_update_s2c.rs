@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::array::FixedArray;
-use crate::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, Packet, VarInt};
 // TODO: fix this
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct LightUpdateS2c<'a> {

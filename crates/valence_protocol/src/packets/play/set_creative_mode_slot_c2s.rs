@@ -1,5 +1,5 @@
-use crate::item::decode_item_stack_recursive;
-use crate::{Decode, Encode, ItemStack, Packet};
+use valence_binary::{Decode, Encode, Packet};
+use valence_item::{decode_item_stack_recursive, ItemStack};
 
 #[derive(Clone, Debug, Packet)]
 pub struct SetCreativeModeSlotC2s {

@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode, Packet};
 //Teleports the player to the given entity. The player must be in spectator
 // mode.
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]

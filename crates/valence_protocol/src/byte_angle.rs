@@ -2,7 +2,7 @@ use std::f32::consts::TAU;
 use std::fmt;
 use std::io::Write;
 
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 /// Represents an angle in steps of 1/256 of a full turn.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

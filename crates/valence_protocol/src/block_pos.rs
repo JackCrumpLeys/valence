@@ -9,7 +9,7 @@ use thiserror::Error;
 use valence_math::{DVec3, IVec3};
 
 use crate::direction::Direction;
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 /// Represents an absolute block position in world space.
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

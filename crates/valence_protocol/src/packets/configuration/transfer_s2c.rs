@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use valence_ident::Ident;
 
-use crate::{Decode, Encode, Packet, PacketState, VarInt};
+use valence_binary::{Decode, Encode, Packet, PacketState, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Configuration)]

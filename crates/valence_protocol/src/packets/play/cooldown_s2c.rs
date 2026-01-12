@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use crate::{Decode, Encode, Ident, Packet, VarInt};
+use crate::Ident;
+use valence_binary::{Decode, Encode, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct CooldownS2c<'a> {

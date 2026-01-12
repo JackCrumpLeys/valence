@@ -4,7 +4,8 @@ use valence_generated::block::BlockEntityKind;
 use valence_nbt::Compound;
 
 use crate::array::FixedArray;
-use crate::{ChunkPos, Decode, Encode, Packet};
+use crate::ChunkPos;
+use valence_binary::{Decode, Encode, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct LevelChunkWithLightS2c<'a> {

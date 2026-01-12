@@ -19,6 +19,7 @@ use sha2::{Digest, Sha256};
 use tokio::net::{TcpListener, TcpStream};
 use tracing::{error, info, trace, warn};
 use uuid::Uuid;
+use valence_binary::{Bounded, Decode, RawBytes};
 use valence_lang::keys;
 use valence_protocol::packets::configuration::select_known_packs_s2c::KnownPack;
 use valence_protocol::packets::configuration::{
@@ -31,7 +32,7 @@ use valence_protocol::packets::status::{
     PingRequestC2s, PongResponseS2c, StatusRequestC2s, StatusResponseS2c,
 };
 use valence_protocol::profile::Property;
-use valence_protocol::{Bounded, Decode, JsonText};
+use valence_protocol::JsonText;
 use valence_server::client::Properties;
 use valence_server::nbt::serde::ser::CompoundSerializer;
 use valence_server::protocol::packets::handshake::intention_c2s::HandShakeIntent;
@@ -40,7 +41,7 @@ use valence_server::protocol::packets::login::{
     CustomQueryAnswerC2s, CustomQueryS2c, HelloC2s, HelloS2c, KeyC2s, LoginCompressionS2c,
     LoginDisconnectS2c,
 };
-use valence_server::protocol::{PacketDecoder, PacketEncoder, RawBytes, VarInt};
+use valence_server::protocol::{PacketDecoder, PacketEncoder, VarInt};
 use valence_server::registry::{BiomeRegistry, DimensionTypeRegistry, RegistryCodec};
 use valence_server::text::{Color, IntoText};
 use valence_server::{ident, Ident, Text, MINECRAFT_VERSION, PROTOCOL_VERSION};

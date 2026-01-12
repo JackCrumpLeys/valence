@@ -2,7 +2,7 @@ use std::fmt;
 
 use derive_more::{From, Into};
 
-use crate::{Decode, Encode};
+use valence_binary::{Decode, Encode};
 
 /// Quantized entity velocity.
 #[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, From, Into)]

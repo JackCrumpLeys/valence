@@ -26,6 +26,7 @@ valence_server_common.workspace = true
 valence_nbt.workspace = true
 valence_generated.workspace = true
 valence_protocol.workspace = true
+valence_binary.workspace = true
 indexmap.workspace = true
 
 [build-dependencies]

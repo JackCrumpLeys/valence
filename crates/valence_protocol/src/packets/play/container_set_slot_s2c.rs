@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use crate::{Decode, Encode, ItemStack, Packet, VarInt};
+use valence_binary::{Decode, Encode, Packet, VarInt};
+use valence_item::ItemStack;
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ContainerSetSlotS2c<'a> {

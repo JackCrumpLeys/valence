@@ -68,6 +68,8 @@ valence_player_list = { workspace = true, optional = true }
 valence_registry.workspace = true
 valence_scoreboard = { workspace = true, optional = true }
 valence_server.workspace = true
+valence_item.workspace = true
+valence_binary.workspace = true
 valence_text.workspace = true
 valence_weather = { workspace = true, optional = true }
 valence_world_border = { workspace = true, optional = true }
@@ -192,8 +194,10 @@ valence_boss_bar = { path = "crates/valence_boss_bar", version = "0.2.0-alpha.1"
 valence_build_utils = { path = "crates/valence_build_utils", version = "0.2.0-alpha.1" }
 valence_command = { path = "crates/valence_command", version = "0.2.0-alpha.1" }
 valence_command_macros = { path = "crates/valence_command_macros", version = "0.2.0-alpha.1" }
+valence_binary = { path = "crates/valence_binary", version = "0.2.0-alpha.1" }
 valence_entity = { path = "crates/valence_entity", version = "0.2.0-alpha.1" }
 valence_generated = { path = "crates/valence_generated", version = "0.2.0-alpha.1" }
+valence_item = { path = "crates/valence_item", version = "0.2.0-alpha.1" }
 valence_ident = { path = "crates/valence_ident", version = "0.2.0-alpha.1" }
 valence_ident_macros = { path = "crates/valence_ident_macros", version = "0.2.0-alpha.1" }
 valence_equipment = { path = "crates/valence_equipment", version = "0.2.0-alpha.1" }

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use uuid::Uuid;
 
-use crate::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode, Packet};
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode, Packet)]
 pub struct PlayerInfoRemoveS2c<'a> {

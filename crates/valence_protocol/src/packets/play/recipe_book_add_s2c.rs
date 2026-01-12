@@ -1,7 +1,7 @@
 use valence_generated::registry_id::RegistryId;
 
 use crate::packets::play::update_recipes_s2c::SlotDisplay;
-use crate::{Decode, Encode, IDSet, Packet, VarInt};
+use valence_binary::{Decode, Encode, IDSet, Packet, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct RecipeBookAddS2c<'a> {

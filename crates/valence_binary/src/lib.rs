@@ -1,0 +1,225 @@
+use std::io::Write;
+
+mod bounded;
+mod id_or;
+mod id_set;
+mod impls;
+mod raw;
+mod text_component;
+mod var_int;
+mod var_long;
+
+use anyhow::Context;
+pub use bounded::Bounded;
+pub use id_or::IdOr;
+pub use id_set::IDSet;
+pub use impls::cautious_capacity;
+pub use raw::RawBytes;
+use serde::{Deserialize, Serialize};
+pub use text_component::{IntoTextComponent, TextComponent};
+pub use var_int::{VarInt, VarIntDecodeError};
+pub use var_long::VarLong;
+
+#[doc(hidden)]
+pub mod __private {
+    pub use anyhow::{anyhow, bail, ensure, Context, Result};
+
+    pub use crate::VarInt;
+    pub use crate::{Decode, Encode, Packet};
+}
+
+pub use valence_protocol_macros::{Decode, Encode, Packet};
+
+// pub use impls::cautious_capacity;
+
+/// The `Encode` trait allows objects to be written to the Minecraft protocol.
+/// It is the inverse of [`Decode`].
+///
+/// # Deriving
+///
+/// This trait can be implemented automatically for structs and enums by using
+/// the [`Encode`][macro] derive macro. All components of the type must
+/// implement `Encode`. Components are encoded in the order they appear in the
+/// type definition.
+///
+/// For enums, the variant to encode is marked by a leading [`VarInt`]
+/// discriminant (tag). The discriminant value can be changed using the
+/// `#[packet(tag = ...)]` attribute on the variant in question. Discriminant
+/// values are assigned to variants using rules similar to regular enum
+/// discriminants.
+///
+/// ```
+/// use valence_protocol::Encode;
+///
+/// #[derive(Encode)]
+/// struct MyStruct<'a> {
+///     first: i32,
+///     second: &'a str,
+///     third: [f64; 3],
+/// }
+///
+/// #[derive(Encode)]
+/// enum MyEnum {
+///     First,  // tag = 0
+///     Second, // tag = 1
+///     #[packet(tag = 25)]
+///     Third, // tag = 25
+///     Fourth, // tag = 26
+/// }
+///
+/// let value = MyStruct {
+///     first: 10,
+///     second: "hello",
+///     third: [1.5, 3.14, 2.718],
+/// };
+///
+/// let mut buf = vec![];
+/// value.encode(&mut buf).unwrap();
+///
+/// println!("{buf:?}");
+/// ```
+///
+/// [macro]: valence_protocol_macros::Encode
+/// [`VarInt`]: var_int::VarInt
+pub trait Encode {
+    /// Writes this object to the provided writer.
+    ///
+    /// If this type also implements [`Decode`] then successful calls to this
+    /// function returning `Ok(())` must always successfully [`decode`] using
+    /// the data that was written to the writer. The exact number of bytes
+    /// that were originally written must be consumed during the decoding.
+    ///
+    /// [`decode`]: Decode::decode
+    fn encode(&self, w: impl Write) -> anyhow::Result<()>;
+
+    /// Like [`Encode::encode`], except that a whole slice of values is encoded.
+    ///
+    /// This method must be semantically equivalent to encoding every element of
+    /// the slice in sequence with no leading length prefix (which is exactly
+    /// what the default implementation does), but a more efficient
+    /// implementation may be used.
+    ///
+    /// This method is important for some types like `u8` where the entire slice
+    /// can be encoded in a single call to [`write_all`]. Because impl
+    /// specialization is unavailable in stable Rust at the time of writing,
+    /// we must make the slice specialization part of this trait.
+    ///
+    /// [`write_all`]: Write::write_all
+    fn encode_slice(slice: &[Self], mut w: impl Write) -> anyhow::Result<()>
+    where
+        Self: Sized,
+    {
+        for value in slice {
+            value.encode(&mut w)?;
+        }
+
+        Ok(())
+    }
+}
+
+/// The `Decode` trait allows objects to be read from the Minecraft protocol. It
+/// is the inverse of [`Encode`].
+///
+/// `Decode` is parameterized by a lifetime. This allows the decoded value to
+/// borrow data from the byte slice it was read from.
+///
+/// # Deriving
+///
+/// This trait can be implemented automatically for structs and enums by using
+/// the [`Decode`][macro] derive macro. All components of the type must
+/// implement `Decode`. Components are decoded in the order they appear in the
+/// type definition.
+///
+/// For enums, the variant to decode is determined by a leading [`VarInt`]
+/// discriminant (tag). The discriminant value can be changed using the
+/// `#[packet(tag = ...)]` attribute on the variant in question. Discriminant
+/// values are assigned to variants using rules similar to regular enum
+/// discriminants.
+///
+/// ```
+/// use valence_protocol::Decode;
+///
+/// #[derive(PartialEq, Debug, Decode)]
+/// struct MyStruct {
+///     first: i32,
+///     second: MyEnum,
+/// }
+///
+/// #[derive(PartialEq, Debug, Decode)]
+/// enum MyEnum {
+///     First,  // tag = 0
+///     Second, // tag = 1
+///     #[packet(tag = 25)]
+///     Third, // tag = 25
+///     Fourth, // tag = 26
+/// }
+///
+/// let mut r: &[u8] = &[0, 0, 0, 0, 26];
+///
+/// let value = MyStruct::decode(&mut r).unwrap();
+/// let expected = MyStruct {
+///     first: 0,
+///     second: MyEnum::Fourth,
+/// };
+///
+/// assert_eq!(value, expected);
+/// assert!(r.is_empty());
+/// ```
+///
+/// [macro]: valence_protocol_macros::Decode
+/// [`VarInt`]: var_int::VarInt
+pub trait Decode<'a>: Sized {
+    /// Reads this object from the provided byte slice.
+    ///
+    /// Implementations of `Decode` are expected to shrink the slice from the
+    /// front as bytes are read.
+    fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self>;
+}
+
+/// Types considered to be Minecraft packets.
+///
+/// In serialized form, a packet begins with a [`VarInt`] packet ID followed by
+/// the body of the packet. If present, the implementations of [`Encode`] and
+/// [`Decode`] on `Self` are expected to only encode/decode the _body_ of this
+/// packet without the leading ID.
+pub trait Packet: std::fmt::Debug {
+    /// The leading `VarInt` ID of this packet.
+    const ID: i32;
+    /// The name of this packet for debugging purposes.
+    const NAME: &'static str;
+    /// The side this packet is intended for.
+    const SIDE: PacketSide;
+    /// The state in which this packet is used.
+    const STATE: PacketState;
+
+    /// Encodes this packet's `VarInt` ID first, followed by the packet's body.
+    fn encode_with_id(&self, mut w: impl Write) -> anyhow::Result<()>
+    where
+        Self: Encode,
+    {
+        VarInt(Self::ID)
+            .encode(&mut w)
+            .context("failed to encode packet ID")?;
+
+        self.encode(w)
+    }
+}
+
+/// The side a packet is intended for.
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
+pub enum PacketSide {
+    /// Server -> Client
+    Clientbound,
+    /// Client -> Server
+    Serverbound,
+}
+
+/// The state in  which a packet is used.
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
+pub enum PacketState {
+    Handshake,
+    Status,
+    Login,
+    Configuration,
+    Play,
+}

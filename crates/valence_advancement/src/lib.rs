@@ -18,10 +18,12 @@ use valence_server::client::{Client, FlushPacketsSet, SpawnClientsSet};
 use valence_server::protocol::packets::play::{
     update_advancements_s2c as packet, SelectAdvancementsTabS2c,
 };
-use valence_server::protocol::text_component::IntoTextComponent;
-use valence_server::protocol::{
-    anyhow, packet_id, Encode, Packet, PacketSide, PacketState, RawBytes, VarInt, WritePacket,
-};
+use valence_server::protocol::IntoTextComponent;
+use valence_server::protocol::{anyhow, VarInt, WritePacket};
+
+use valence_binary::{Encode, Packet, PacketSide, PacketState, RawBytes};
+use valence_generated::packet_id;
+
 use valence_server::{Ident, ItemStack, Text};
 
 pub struct AdvancementPlugin;

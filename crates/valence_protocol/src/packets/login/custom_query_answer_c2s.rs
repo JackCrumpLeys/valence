@@ -1,4 +1,4 @@
-use crate::{Bounded, Decode, Encode, Packet, PacketState, RawBytes, VarInt};
+use valence_binary::{Bounded, Decode, Encode, Packet, PacketState, RawBytes, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Login)]

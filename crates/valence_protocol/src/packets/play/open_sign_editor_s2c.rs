@@ -1,4 +1,5 @@
-use crate::{BlockPos, Decode, Encode, Packet};
+use crate::BlockPos;
+use valence_binary::{Decode, Encode, Packet};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct OpenSignEditorS2c {
