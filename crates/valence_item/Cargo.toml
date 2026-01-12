@@ -7,14 +7,14 @@ documentation.workspace = true
 license.workspace = true
 
 [dependencies]
-uuid.workspace = true
-valence_generated.workspace = true
-valence_nbt.workspace = true
-valence_binary.workspace = true
-valence_ident.workspace = true
-valence_text.workspace = true
-valence_protocol_macros.workspace = true
 anyhow.workspace = true
+uuid.workspace = true
+valence_binary.workspace = true
+valence_generated.workspace = true
+valence_ident.workspace = true
+valence_nbt.workspace = true
+valence_protocol_macros.workspace = true
+valence_text.workspace = true
 
 [lints]
 workspace = true

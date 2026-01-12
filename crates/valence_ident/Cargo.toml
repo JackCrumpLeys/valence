@@ -12,6 +12,6 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-thiserror.workspace = true
 serde.workspace = true
+thiserror.workspace = true
 valence_ident_macros.workspace = true

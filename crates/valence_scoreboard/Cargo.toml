@@ -15,5 +15,5 @@ workspace = true
 bevy_app.workspace = true
 bevy_ecs.workspace = true
 derive_more.workspace = true
-valence_server.workspace = true
 tracing.workspace = true
+valence_server.workspace = true

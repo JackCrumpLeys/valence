@@ -12,11 +12,10 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+bitfield-struct.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 thiserror.workspace = true
 uuid = { workspace = true, features = ["serde"] }
 valence_ident.workspace = true
 valence_nbt.workspace = true
-bitfield-struct.workspace = true
-
