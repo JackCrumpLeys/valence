@@ -16,7 +16,10 @@ anyhow.workspace = true
 bevy_app.workspace = true
 bevy_ecs.workspace = true
 bitfield-struct.workspace = true
-derive_more.workspace = true
+derive_more = { workspace = true, features = [
+    "deref",
+    "deref_mut",
+] }
 indexmap.workspace = true
 paste.workspace = true
 rustc-hash.workspace = true

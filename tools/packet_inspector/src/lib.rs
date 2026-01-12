@@ -21,10 +21,10 @@ use valence_protocol::packets::{configuration, play};
 use valence_protocol::text::color::NamedColor;
 use valence_protocol::text::{Color, IntoText};
 use valence_protocol::{
-    CompressionThreshold, Decode, Encode, JsonText, Packet as ValencePacket, PacketSide,
+    CompressionThreshold, JsonText, Packet as ValencePacket, PacketSide,
     PacketState,
 };
-
+use valence_binary::{Decode, Encode};
 use crate::packet_io::PacketIo;
 pub use crate::packet_registry::{Packet, PacketRegistry};
 

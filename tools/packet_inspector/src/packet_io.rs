@@ -7,7 +7,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use valence_protocol::decode::{PacketDecoder, PacketFrame};
 use valence_protocol::encode::PacketEncoder;
-use valence_protocol::{CompressionThreshold, Encode, VarInt, MAX_PACKET_SIZE};
+use valence_protocol::{CompressionThreshold, VarInt, MAX_PACKET_SIZE};
+use valence_binary::Encode;
 
 pub(crate) struct PacketIoReader {
     reader: tokio::io::ReadHalf<tokio::net::TcpStream>,
