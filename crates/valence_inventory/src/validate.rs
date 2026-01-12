@@ -918,7 +918,8 @@ mod tests {
         player_inventory.set_slot(9, ItemStack::new(ItemKind::Lead, 2));
         let cursor_item = CursorItem::default();
 
-        let packets = [ContainerClickC2s {
+        let packets = [
+            ContainerClickC2s {
                 window_id: VarInt(0),
                 button: 0,
                 mode: ClickMode::ShiftClick,
@@ -987,7 +988,8 @@ mod tests {
                 .into()]
                 .into(),
                 carried_item: ItemStack::EMPTY.into(),
-            }];
+            },
+        ];
 
         for (i, packet) in packets.iter().enumerate() {
             validate_click_slot_packet(packet, &player_inventory, None, &cursor_item).expect_err(
