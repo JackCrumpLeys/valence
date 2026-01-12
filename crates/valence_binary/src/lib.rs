@@ -9,13 +9,11 @@ mod text_component;
 mod var_int;
 mod var_long;
 
-use anyhow::Context;
 pub use bounded::Bounded;
 pub use id_or::IdOr;
 pub use id_set::IDSet;
 pub use impls::cautious_capacity;
 pub use raw::RawBytes;
-use serde::{Deserialize, Serialize};
 pub use text_component::{IntoTextComponent, TextComponent};
 pub use var_int::{VarInt, VarIntDecodeError};
 pub use var_long::VarLong;
@@ -29,8 +27,6 @@ pub mod __private {
 }
 
 pub use valence_protocol_macros::{Decode, Encode};
-
-// pub use impls::cautious_capacity;
 
 /// The `Encode` trait allows objects to be written to the Minecraft protocol.
 /// It is the inverse of [`Decode`].
