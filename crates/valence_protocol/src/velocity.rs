@@ -1,7 +1,6 @@
 use std::fmt;
 
 use derive_more::{From, Into};
-
 use valence_binary::{Decode, Encode};
 
 /// Quantized entity velocity.

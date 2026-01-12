@@ -2,12 +2,11 @@
 use aes::cipher::{generic_array::GenericArray, BlockDecryptMut, BlockSizeUser, KeyIvInit};
 use anyhow::{bail, ensure, Context};
 use bytes::{Buf, BytesMut};
+use valence_binary::{Decode, VarInt, VarIntDecodeError};
 
 #[cfg(feature = "compression")]
 use crate::CompressionThreshold;
 use crate::{Packet, MAX_PACKET_SIZE};
-use valence_binary::Decode;
-use valence_binary::{VarInt, VarIntDecodeError};
 
 /// The AES block cipher with a 128 bit key, using the CFB-8 mode of
 /// operation.

@@ -3,8 +3,7 @@ use bevy_ecs::prelude::*;
 use uuid::Uuid;
 use valence_protocol::packets::play::{ResourcePackC2s, ResourcePackPushS2c};
 use valence_protocol::text::Text;
-use valence_protocol::IntoTextComponent;
-use valence_protocol::WritePacket;
+use valence_protocol::{IntoTextComponent, WritePacket};
 
 use crate::client::Client;
 use crate::event_loop::{EventLoopPreUpdate, PacketEvent};

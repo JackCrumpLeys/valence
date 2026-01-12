@@ -12,8 +12,7 @@ use valence_server::protocol::encode::PacketWriter;
 use valence_server::protocol::packets::play::{
     player_info_update_s2c as packet, PlayerInfoRemoveS2c, PlayerInfoUpdateS2c, TabListS2c,
 };
-use valence_server::protocol::IntoTextComponent;
-use valence_server::protocol::WritePacket;
+use valence_server::protocol::{IntoTextComponent, WritePacket};
 use valence_server::text::IntoText;
 use valence_server::uuid::Uuid;
 use valence_server::{Despawned, GameMode, Server, Text, UniqueId};

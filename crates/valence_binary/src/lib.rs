@@ -22,8 +22,7 @@ pub use var_long::VarLong;
 pub mod __private {
     pub use anyhow::{anyhow, bail, ensure, Context, Result};
 
-    pub use crate::VarInt;
-    pub use crate::{Decode, Encode};
+    pub use crate::{Decode, Encode, VarInt};
 }
 
 pub use valence_protocol_macros::{Decode, Encode};

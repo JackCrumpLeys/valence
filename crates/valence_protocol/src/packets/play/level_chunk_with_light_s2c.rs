@@ -1,12 +1,11 @@
 use std::borrow::Cow;
 
+use valence_binary::{Decode, Encode};
 use valence_generated::block::BlockEntityKind;
 use valence_nbt::Compound;
 
 use crate::array::FixedArray;
-use crate::ChunkPos;
-use crate::Packet;
-use valence_binary::{Decode, Encode};
+use crate::{ChunkPos, Packet};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct LevelChunkWithLightS2c<'a> {

@@ -1,8 +1,7 @@
 use uuid::Uuid;
+use valence_binary::{Bounded, Decode, Encode, TextComponent};
 
 use crate::{Packet, PacketState};
-use valence_binary::TextComponent;
-use valence_binary::{Bounded, Decode, Encode};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Configuration, )]

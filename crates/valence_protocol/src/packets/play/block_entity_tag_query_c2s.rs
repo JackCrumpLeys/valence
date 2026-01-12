@@ -1,7 +1,6 @@
-use crate::Packet;
 use valence_binary::{Decode, Encode, VarInt};
 
-use crate::BlockPos;
+use crate::{BlockPos, Packet};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct BlockEntityTagQueryC2s {

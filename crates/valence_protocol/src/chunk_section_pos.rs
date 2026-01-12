@@ -4,9 +4,9 @@ use std::io::Write;
 use bitfield_struct::bitfield;
 use derive_more::From;
 use thiserror::Error;
+use valence_binary::{Decode, Encode};
 
 use crate::{BiomePos, BlockPos};
-use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct ChunkSectionPos {

@@ -2,9 +2,9 @@ use std::borrow::Cow;
 use std::io::Write;
 
 use uuid::Uuid;
+use valence_binary::{Bounded, Decode, Encode, TextComponent, VarInt};
 
 use crate::Packet;
-use valence_binary::{Bounded, Decode, Encode, TextComponent, VarInt};
 
 #[derive(Clone, PartialEq, Debug, Packet)]
 pub struct PlayerChatS2c<'a> {

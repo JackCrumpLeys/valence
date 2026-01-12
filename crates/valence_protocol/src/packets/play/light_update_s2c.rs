@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
+use valence_binary::{Decode, Encode, VarInt};
+
 use crate::array::FixedArray;
 use crate::Packet;
-use valence_binary::{Decode, Encode, VarInt};
 // TODO: fix this
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct LightUpdateS2c<'a> {

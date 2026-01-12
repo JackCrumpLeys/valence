@@ -3,12 +3,12 @@
 use std::borrow::Cow;
 use std::io::Write;
 
-use crate::Packet;
 use valence_binary::{Decode, Encode, TextComponent, VarInt};
+use valence_generated::packet_id;
 use valence_ident::Ident;
 use valence_item::ItemStack;
 
-use valence_generated::packet_id;
+use crate::Packet;
 
 pub type UpdateAdvancementsS2c<'a> =
     GenericUpdateAdvancementsS2c<'a, (Ident<Cow<'a, str>>, Advancement<'a, ItemStack>)>;

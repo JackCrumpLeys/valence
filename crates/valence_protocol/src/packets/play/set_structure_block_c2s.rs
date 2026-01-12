@@ -1,8 +1,7 @@
 use bitfield_struct::bitfield;
-
-use crate::BlockPos;
-use crate::Packet;
 use valence_binary::{Bounded, Decode, Encode, VarLong};
+
+use crate::{BlockPos, Packet};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct SetStructureBlockC2s<'a> {

@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
+use valence_binary::{Decode, Encode, TextComponent, VarInt};
+
 use super::set_objective_s2c::NumberFormat;
 use crate::Packet;
-use valence_binary::{Decode, Encode, TextComponent, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SetScoreS2c<'a> {

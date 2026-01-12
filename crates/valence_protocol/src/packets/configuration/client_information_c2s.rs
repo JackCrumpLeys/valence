@@ -1,8 +1,7 @@
-use crate::{
-    packets::play::client_information_c2s::{ChatMode, DisplayedSkinParts, MainArm},
-    Packet, PacketState,
-};
 use valence_binary::{Bounded, Decode, Encode};
+
+use crate::packets::play::client_information_c2s::{ChatMode, DisplayedSkinParts, MainArm};
+use crate::{Packet, PacketState};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 #[packet(state = PacketState::Configuration)]

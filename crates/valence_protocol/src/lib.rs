@@ -58,19 +58,15 @@ use serde::{Deserialize, Serialize};
 pub use sound::Sound;
 pub use text::{JsonText, Text};
 use valence_binary::Encode;
+pub use valence_binary::{
+    IDSet, IdOr, IntoTextComponent, TextComponent, VarInt, VarIntDecodeError, VarLong,
+};
 pub use valence_generated::registry_id::RegistryId;
-pub use valence_generated::{block, status_effects};
+pub use valence_generated::{block, packet_id, status_effects};
 pub use valence_ident::Ident;
 pub use valence_item::{ItemKind, ItemStack};
 use valence_protocol_macros::Packet;
 pub use velocity::Velocity;
-
-pub use valence_generated::packet_id;
-
-pub use valence_binary::{
-    IDSet, IdOr, IntoTextComponent, TextComponent, VarInt, VarIntDecodeError, VarLong,
-};
-
 pub use {
     anyhow, bytes, uuid, valence_ident as ident, valence_math as math, valence_nbt as nbt,
     valence_text as text,
@@ -160,6 +156,9 @@ mod tests {
     use std::borrow::Cow;
 
     use bytes::BytesMut;
+    // use crate::{Packet, PacketSide};
+    use valence_binary::{Decode, Encode, VarInt, VarLong};
+    use valence_item::{ItemKind, ItemStack};
     use valence_protocol_macros::Packet;
 
     use super::*;
@@ -169,9 +168,6 @@ mod tests {
     use crate::hand::Hand;
     use crate::text::{IntoText, Text};
     use crate::Ident;
-    // use crate::{Packet, PacketSide};
-    use valence_binary::{Decode, Encode, VarInt, VarLong};
-    use valence_item::{ItemKind, ItemStack};
 
     #[derive(Encode, Decode, Packet, Debug)]
     #[packet(id = 1, side = PacketSide::Clientbound)]

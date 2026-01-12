@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 
-use valence_ident::Ident;
-
 use valence_binary::{Decode, Encode};
+use valence_ident::Ident;
 
 use crate::{Packet, PacketState};
 

@@ -1,7 +1,7 @@
 use uuid::Uuid;
+use valence_binary::{Decode, Encode};
 
 use crate::Packet;
-use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, Packet)]
 pub struct ResourcePackC2s {

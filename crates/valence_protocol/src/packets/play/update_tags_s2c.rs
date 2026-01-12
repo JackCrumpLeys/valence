@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 
+use valence_binary::{Decode, Encode, VarInt};
 use valence_ident::Ident;
 
 use crate::Packet;
-use valence_binary::{Decode, Encode, VarInt};
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct UpdateTagsS2c<'a> {
     pub groups: Cow<'a, RegistryMap>,
