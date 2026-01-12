@@ -32,6 +32,7 @@ thiserror.workspace = true
 time = { workspace = true, features = ["local-offset"] }
 tokio = { workspace = true, features = ["full"] }
 tracing.workspace = true
+valence_binary.workspace = true
 valence_protocol = { workspace = true, features = ["compression"] }
 
 [build-dependencies]
@@ -42,5 +43,4 @@ quote.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 syn.workspace = true
-valence_binary.workspace = true
 valence_build_utils.workspace = true
