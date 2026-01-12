@@ -188,7 +188,7 @@ impl ItemStack {
         matches!(self.item, ItemKind::Air) || self.count <= 0
     }
 
-    pub fn encode_recursive(&self, mut w: impl Write, prefixed: bool) -> Result<(), anyhow::Error> {
+    pub fn encode_recursive<W: Write>(&self, mut w: W, prefixed: bool) -> Result<(), anyhow::Error> {
         if self.is_empty() {
             VarInt(0).encode(w)
         } else {
