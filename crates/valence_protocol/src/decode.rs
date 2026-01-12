@@ -5,8 +5,8 @@ use bytes::{Buf, BytesMut};
 
 #[cfg(feature = "compression")]
 use crate::CompressionThreshold;
-use crate::MAX_PACKET_SIZE;
-use valence_binary::{Decode, Packet};
+use crate::{Packet, MAX_PACKET_SIZE};
+use valence_binary::Decode;
 use valence_binary::{VarInt, VarIntDecodeError};
 
 /// The AES block cipher with a 128 bit key, using the CFB-8 mode of

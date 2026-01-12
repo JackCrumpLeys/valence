@@ -1,4 +1,5 @@
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, VarInt};
 #[derive(Clone, PartialEq, Debug, Encode, Decode, Packet)]
 pub struct RemoveMobEffectS2c {
     pub entity_id: VarInt,

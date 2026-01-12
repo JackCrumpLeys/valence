@@ -2,7 +2,8 @@ use std::borrow::Cow;
 
 use valence_ident::Ident;
 
-use valence_binary::{Bounded, Decode, Encode, Packet, RawBytes};
+use crate::Packet;
+use valence_binary::{Bounded, Decode, Encode, RawBytes};
 
 pub const MAX_PAYLOAD_SIZE: usize = 32767;
 

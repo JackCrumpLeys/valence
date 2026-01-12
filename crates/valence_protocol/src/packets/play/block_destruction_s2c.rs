@@ -1,5 +1,6 @@
+use crate::Packet;
 use crate::BlockPos;
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct BlockDestructionS2c {

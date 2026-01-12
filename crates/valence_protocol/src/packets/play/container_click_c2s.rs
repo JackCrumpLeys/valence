@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, VarInt};
 use valence_item::{HashedItemStack, ItemStack};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

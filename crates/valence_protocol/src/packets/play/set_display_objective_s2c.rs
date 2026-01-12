@@ -1,7 +1,8 @@
 use bevy_ecs::prelude::Component;
 
 use super::set_player_team_s2c::TeamColor;
-use valence_binary::{Decode, Encode, Packet};
+use crate::Packet;
+use valence_binary::{Decode, Encode};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct SetDisplayObjectiveS2c<'a> {

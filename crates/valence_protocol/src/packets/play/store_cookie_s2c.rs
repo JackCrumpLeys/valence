@@ -2,7 +2,8 @@ use std::borrow::Cow;
 
 use valence_ident::Ident;
 
-use valence_binary::{Decode, Encode, Packet};
+use crate::Packet;
+use valence_binary::{Decode, Encode};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 /// Stores a cookie on the client

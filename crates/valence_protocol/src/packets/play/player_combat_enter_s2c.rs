@@ -1,4 +1,5 @@
-use valence_binary::{Decode, Encode, Packet};
+use crate::Packet;
+use valence_binary::{Decode, Encode};
 
 /// Unused by notchian clients.
 #[derive(Copy, Clone, PartialEq, Debug, Encode, Decode, Packet)]

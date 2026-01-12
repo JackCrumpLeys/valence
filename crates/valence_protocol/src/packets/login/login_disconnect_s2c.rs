@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use valence_binary::{Decode, Encode, Packet, PacketState};
+use crate::{Packet, PacketState};
+use valence_binary::{Decode, Encode};
 use valence_text::JsonText;
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]

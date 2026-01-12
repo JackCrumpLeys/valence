@@ -1,6 +1,7 @@
+use crate::Packet;
 use crate::packets::play::set_structure_block_c2s::Rotation;
 use crate::BlockPos;
-use valence_binary::{Decode, Encode, Packet, TextComponent, VarInt};
+use valence_binary::{Decode, Encode, TextComponent, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct TestInstanceBlockActionC2s {

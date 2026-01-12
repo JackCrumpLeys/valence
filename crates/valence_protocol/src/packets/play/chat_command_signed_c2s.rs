@@ -1,4 +1,5 @@
-use valence_binary::{Bounded, Decode, Encode, Packet, RawBytes, VarInt};
+use crate::Packet;
+use valence_binary::{Bounded, Decode, Encode, RawBytes, VarInt};
 
 use crate::FixedBitSet;
 

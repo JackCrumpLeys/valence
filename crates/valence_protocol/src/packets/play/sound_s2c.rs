@@ -1,7 +1,8 @@
 use valence_math::IVec3;
 
+use crate::Packet;
 use crate::sound::{SoundCategory, SoundId};
-use valence_binary::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SoundS2c {

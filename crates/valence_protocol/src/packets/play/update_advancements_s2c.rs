@@ -3,7 +3,8 @@
 use std::borrow::Cow;
 use std::io::Write;
 
-use valence_binary::{Decode, Encode, Packet, TextComponent, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, TextComponent, VarInt};
 use valence_ident::Ident;
 use valence_item::ItemStack;
 

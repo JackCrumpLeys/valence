@@ -1,5 +1,6 @@
+use crate::Packet;
 use crate::ByteAngle;
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct MoveMinecartAlongTrackS2c {

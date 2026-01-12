@@ -1,4 +1,5 @@
-use valence_binary::{Bounded, Decode, Encode, Packet, VarInt};
+use crate::Packet;
+use valence_binary::{Bounded, Decode, Encode, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct CommandSuggestionC2s<'a> {

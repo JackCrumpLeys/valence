@@ -1,6 +1,7 @@
 use std::io::Write;
 
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, VarInt};
 use valence_item::ItemStack;
 
 #[derive(Clone, PartialEq, Debug, Packet)]

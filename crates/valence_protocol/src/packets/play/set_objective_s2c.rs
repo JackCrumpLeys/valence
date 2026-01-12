@@ -3,7 +3,8 @@ use std::borrow::Cow;
 use bevy_ecs::prelude::*;
 use valence_nbt::Compound;
 
-use valence_binary::{Decode, Encode, Packet, TextComponent};
+use crate::Packet;
+use valence_binary::{Decode, Encode, TextComponent};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SetObjectiveS2c<'a> {
