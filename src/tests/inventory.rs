@@ -2,8 +2,8 @@ use std::borrow::Cow;
 
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
-use valence_server::item::ItemComponent;
-use valence_server::protocol::text_component::IntoTextComponent;
+use valence_item::ItemComponent;
+use valence_server::protocol::IntoTextComponent;
 
 use crate::inventory::{
     convert_to_player_slot_id, ClickMode, ClientInventoryState, CursorItem, DropItemStackEvent,
@@ -2331,3 +2331,432 @@ fn should_drop_item_stack_player_open_inventory_with_dropkey() {
 //         ]));
 //     }
 // }
+
+// If you drag a item stack across multiple slots, the mc client will send
+// packets for each slot that you drag over + one final packet is sent that
+// contains the slot changes. this test verifies the entire process. (Note: the
+// packets are sent in that order, but only sent on drag release for some
+// reason. So without drag release, no packets are sent) see https://minecraft.wiki/w/Java_Edition_protocol/Packets#Click_Container
+// for the correct "button numbers" for the different drag actions.
+
+#[test]
+fn dragging_items_left_click_no_remainder() {
+    let ScenarioSingleClient {
+        mut app,
+        client,
+        mut helper,
+        ..
+    } = ScenarioSingleClient::new();
+    app.update();
+    helper.clear_received();
+
+    // setup
+    // Slot 9: 64 Diamonds with NBT
+    // pick up slot 9
+    // (start drag) + Drag over slots 10,11,12,13 (one by one in that order)
+    // end drag
+
+    let item_stack = ItemStack::new(ItemKind::Diamond, 64).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore Line 2.".into_text_component(),
+        ]),
+    ]);
+
+    app.world_mut()
+        .get_mut::<Inventory>(client)
+        .unwrap()
+        .set_slot(9, item_stack.clone());
+
+    let inv_state = app.world_mut().get::<ClientInventoryState>(client).unwrap();
+    let window_id = inv_state.window_id();
+    let state_id = inv_state.state_id().0;
+
+    // pickup diamonds
+    let pick_up_packet = ContainerClickC2s {
+        window_id,
+        state_id: VarInt(state_id),
+        slot_idx: 9,
+        button: 0,
+        mode: ClickMode::Click,
+        slot_changes: vec![SlotChange {
+            idx: 9,
+            stack: ItemStack::EMPTY,
+        }
+        .into()]
+        .into(),
+        carried_item: item_stack.clone().into(),
+    };
+    helper.send(&pick_up_packet);
+
+    app.update();
+    let sent_packets = helper.collect_received();
+    assert_eq!(
+        sent_packets.0.len(),
+        0,
+        "Server should not send any packets for valid click"
+    );
+
+    // Ensure diamnods are in the cursor
+    let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+    assert_eq!(cursor_item.0, item_stack, "Cursor should have the items");
+
+    let start_drag_packet = ContainerClickC2s {
+        window_id,
+        state_id: VarInt(state_id),
+        slot_idx: -999,
+        button: 0, // start left click drag
+        mode: ClickMode::Drag,
+        slot_changes: vec![].into(),
+        carried_item: item_stack.clone().into(),
+    };
+    helper.send(&start_drag_packet);
+
+    app.update();
+    let sent_packets = helper.collect_received();
+    assert_eq!(
+        sent_packets.0.len(),
+        0,
+        "Server should not send any packets for valid drag start"
+    );
+
+    // cursor should still have the items
+    let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+    assert_eq!(
+        cursor_item.0, item_stack,
+        "Cursor should still have items after drag start"
+    );
+
+    // sequentially "drag over the slots one by one"
+    for slot in [10, 11, 12, 13] {
+        let add_slot_packet = ContainerClickC2s {
+            window_id,
+            state_id: VarInt(state_id),
+            slot_idx: slot,
+            button: 1, // Add slot to left-click drag
+            mode: ClickMode::Drag,
+            slot_changes: vec![].into(),
+            carried_item: item_stack.clone().into(),
+        };
+        helper.send(&add_slot_packet);
+
+        app.update();
+        let sent_packets = helper.collect_received();
+        assert_eq!(
+            sent_packets.0.len(),
+            0,
+            "Server should not send any packets for valid drag add slot {slot}"
+        );
+
+        // cursor should still have the items
+        let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+        assert_eq!(
+            cursor_item.0, item_stack,
+            "Cursor should still have items after adding slot {slot} to drag"
+        );
+    }
+
+    // End drag (release left mouse), results in a final packet with all slot
+    // changes
+    let end_drag_packet = ContainerClickC2s {
+        window_id,
+        state_id: VarInt(state_id),
+        slot_idx: -999,
+        button: 2, // end left click drag
+        mode: ClickMode::Drag,
+        slot_changes: vec![
+            SlotChange {
+                idx: 10,
+                stack: ItemStack::new(ItemKind::Diamond, 16).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
+            }
+            .into(),
+            SlotChange {
+                idx: 11,
+                stack: ItemStack::new(ItemKind::Diamond, 16).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
+            }
+            .into(),
+            SlotChange {
+                idx: 12,
+                stack: ItemStack::new(ItemKind::Diamond, 16).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
+            }
+            .into(),
+            SlotChange {
+                idx: 13,
+                stack: ItemStack::new(ItemKind::Diamond, 16).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
+            }
+            .into(),
+        ]
+        .into(),
+        carried_item: ItemStack::EMPTY.into(), /* cursor is empty after drag end (because we have
+                                                * no remainder when dragging across 4 slots) */
+    };
+    helper.send(&end_drag_packet);
+
+    app.update();
+    let sent_packets = helper.collect_received();
+    assert_eq!(sent_packets.0.len(), 0, "Server should not resync");
+
+    let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+    assert_eq!(cursor_item.0, ItemStack::EMPTY, "Cursor should be empty");
+
+    let inventory = app.world_mut().get::<Inventory>(client).unwrap();
+
+    // slot 9 (where the original stack was) should now be empty
+    assert_eq!(inventory.slot(9), &ItemStack::EMPTY);
+
+    // slots 10-13 should each have 16 diamonds with correct nbt
+    for slot in [10, 11, 12, 13] {
+        let expected = ItemStack::new(ItemKind::Diamond, 16).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore Line 2.".into_text_component(),
+            ]),
+        ]);
+        assert_eq!(
+            inventory.slot(slot),
+            &expected,
+            "Slot {slot} should have 16 diamonds"
+        );
+    }
+}
+
+#[test]
+fn dragging_items_left_click_with_remainder() {
+    let ScenarioSingleClient {
+        mut app,
+        client,
+        mut helper,
+        ..
+    } = ScenarioSingleClient::new();
+    app.update();
+    helper.clear_received();
+
+    // setup
+    // Slot 9: 64 Diamonds with NBT
+    // Drag over slots 10,11,12 (3 slots)
+    // 64 / 3 = 21 per slot, remainder 1
+    // after end drag cursor should have 1 diamond remainng
+
+    let item_stack = ItemStack::new(ItemKind::Diamond, 64).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore Line 2.".into_text_component(),
+        ]),
+    ]);
+
+    app.world_mut()
+        .get_mut::<Inventory>(client)
+        .unwrap()
+        .set_slot(9, item_stack.clone());
+
+    let inv_state = app.world_mut().get::<ClientInventoryState>(client).unwrap();
+    let window_id = inv_state.window_id();
+    let state_id = inv_state.state_id().0;
+
+    // pickup diamonds
+    let pick_up_packet = ContainerClickC2s {
+        window_id,
+        state_id: VarInt(state_id),
+        slot_idx: 9,
+        button: 0,
+        mode: ClickMode::Click,
+        slot_changes: vec![SlotChange {
+            idx: 9,
+            stack: ItemStack::EMPTY,
+        }
+        .into()]
+        .into(),
+        carried_item: item_stack.clone().into(),
+    };
+    helper.send(&pick_up_packet);
+
+    app.update();
+    let sent_packets = helper.collect_received();
+    assert_eq!(
+        sent_packets.0.len(),
+        0,
+        "Server should not send any packets for valid click"
+    );
+
+    // Ensure diamonds are in the cursor
+    let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+    assert_eq!(cursor_item.0, item_stack, "Cursor should have the items");
+
+    let start_drag_packet = ContainerClickC2s {
+        window_id,
+        state_id: VarInt(state_id),
+        slot_idx: -999,
+        button: 0, // start left click drag
+        mode: ClickMode::Drag,
+        slot_changes: vec![].into(),
+        carried_item: item_stack.clone().into(),
+    };
+    helper.send(&start_drag_packet);
+
+    app.update();
+    let sent_packets = helper.collect_received();
+    assert_eq!(
+        sent_packets.0.len(),
+        0,
+        "Server should not send any packets for valid drag start"
+    );
+
+    // cursor should still have the items
+    let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+    assert_eq!(
+        cursor_item.0, item_stack,
+        "Cursor should still have items after drag start"
+    );
+
+    // sequentially "drag over the slots one by one" (only 3 slots this time)
+    for slot in [10, 11, 12] {
+        let add_slot_packet = ContainerClickC2s {
+            window_id,
+            state_id: VarInt(state_id),
+            slot_idx: slot,
+            button: 1, // Add slot to left-click drag
+            mode: ClickMode::Drag,
+            slot_changes: vec![].into(),
+            carried_item: item_stack.clone().into(),
+        };
+        helper.send(&add_slot_packet);
+
+        app.update();
+        let sent_packets = helper.collect_received();
+        assert_eq!(
+            sent_packets.0.len(),
+            0,
+            "Server should not send any packets for valid drag add slot {slot}"
+        );
+
+        // cursor should still have the items
+        let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+        assert_eq!(
+            cursor_item.0, item_stack,
+            "Cursor should still have items after adding slot {slot} to drag"
+        );
+    }
+
+    // End drag
+    // 64 items across 3 slots = 21 per slot, 1 remaining in cursor
+    let end_drag_packet = ContainerClickC2s {
+        window_id,
+        state_id: VarInt(state_id),
+        slot_idx: -999,
+        button: 2, // end left click drag
+        mode: ClickMode::Drag,
+        slot_changes: vec![
+            SlotChange {
+                idx: 10,
+                stack: ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
+            }
+            .into(),
+            SlotChange {
+                idx: 11,
+                stack: ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
+            }
+            .into(),
+            SlotChange {
+                idx: 12,
+                stack: ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+                    ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                    ItemComponent::Lore(vec![
+                        "Lore Line 1.".into_text_component(),
+                        "Lore Line 2.".into_text_component(),
+                    ]),
+                ]),
+            }
+            .into(),
+        ]
+        .into(),
+        // cursor has 1 diamond remaining
+        carried_item: ItemStack::new(ItemKind::Diamond, 1)
+            .with_components(vec![
+                ItemComponent::CustomName("Custom Diamond".into_text_component()),
+                ItemComponent::Lore(vec![
+                    "Lore Line 1.".into_text_component(),
+                    "Lore Line 2.".into_text_component(),
+                ]),
+            ])
+            .into(),
+    };
+    helper.send(&end_drag_packet);
+
+    app.update();
+    let sent_packets = helper.collect_received();
+    assert_eq!(sent_packets.0.len(), 0, "Server should not resync");
+
+    // cursor should have 1 diamond remaining
+    let cursor_item = app.world_mut().get::<CursorItem>(client).unwrap();
+    let expected_cursor = ItemStack::new(ItemKind::Diamond, 1).with_components(vec![
+        ItemComponent::CustomName("Custom Diamond".into_text_component()),
+        ItemComponent::Lore(vec![
+            "Lore Line 1.".into_text_component(),
+            "Lore Line 2.".into_text_component(),
+        ]),
+    ]);
+    assert_eq!(
+        cursor_item.0, expected_cursor,
+        "Cursor should have 1 diamond remaining"
+    );
+
+    let inventory = app.world_mut().get::<Inventory>(client).unwrap();
+
+    // slot 9 (where the original stack was) should now be empty
+    assert_eq!(inventory.slot(9), &ItemStack::EMPTY);
+
+    // slots 10-12 should each have 21 diamonds with correct nbt
+    for slot in [10, 11, 12] {
+        let expected = ItemStack::new(ItemKind::Diamond, 21).with_components(vec![
+            ItemComponent::CustomName("Custom Diamond".into_text_component()),
+            ItemComponent::Lore(vec![
+                "Lore Line 1.".into_text_component(),
+                "Lore Line 2.".into_text_component(),
+            ]),
+        ]);
+        assert_eq!(
+            inventory.slot(slot),
+            &expected,
+            "Slot {slot} should have 21 diamonds"
+        );
+    }
+}
