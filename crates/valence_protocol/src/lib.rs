@@ -9,15 +9,6 @@ pub mod __private {
     pub use crate::Packet;
 }
 
-// #[doc(hidden)]
-// pub mod valence_binary {
-//     pub mod __private {
-//         pub use anyhow::{anyhow, bail, ensure, Context, Result};
-//         pub use valence_binary::{VarInt, Decode, Encode, Packet};
-//     }
-// }
-
-// This allows us to use our own proc macros internally.
 extern crate self as valence_protocol;
 
 mod array;
@@ -36,7 +27,6 @@ pub mod game_mode;
 mod global_pos;
 mod hand;
 mod hash_utils;
-// mod impls;
 pub mod item;
 pub mod movement_flags;
 pub mod packets;
@@ -53,7 +43,6 @@ pub use bit_set::FixedBitSet;
 pub use bit_storage::BitStorage;
 pub use block::{BlockKind, BlockState};
 pub use block_pos::BlockPos;
-// pub use valence_binary::Bounded;
 pub use byte_angle::ByteAngle;
 pub use chunk_pos::ChunkPos;
 pub use chunk_section_pos::ChunkSectionPos;
