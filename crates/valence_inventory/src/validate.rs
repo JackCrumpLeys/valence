@@ -453,15 +453,16 @@ pub(super) fn validate_click_slot_packet(
         }
         ClickMode::Drag => {
             if matches!(packet.button, 2 | 6 | 10) {
+                // TODO: create constants or enum for the button ids
+                // buttons 2, 6, 10 mean we are ending the drag
                 let count_deltas = calculate_net_item_delta(packet, &window, cursor_item);
                 ensure!(
                     count_deltas == 0,
                     "invalid item delta: expected 0, got {count_deltas}"
                 );
 
-                // Items are spread out from a stack, to get the real item we need to find the
-                // cursor TODO: add a lot of testing
-
+                // Items are spread out from a stack, to get the real itemstack we need to find
+                // the current (serverside) cursor.
                 for hashed_change in packet.slot_changes.iter() {
                     let current_slot = window.slot(hashed_change.idx as u16);
 
@@ -476,7 +477,7 @@ pub(super) fn validate_click_slot_packet(
                             bail!("could not find unhashed drag item");
                         }
                     } else {
-                        ItemStack::EMPTY
+                        bail!("could not find unhashed drag item");
                     };
 
                     new_slot_changes.push(SlotChange {
@@ -496,12 +497,16 @@ pub(super) fn validate_click_slot_packet(
                     };
                 }
             } else {
+                // We are currently dragging or starting to drag (buttons: 0, 4, 8, 1, 5, 9)
                 ensure!(
                     packet.slot_changes.is_empty()
                         && packet.carried_item.item == cursor_item.0.item
                         && packet.carried_item.count == cursor_item.0.count,
                     "invalid drag state"
                 );
+
+                // the cursor only changes if the drag is released
+                new_cursor_stack = cursor_item.0.clone();
             }
         }
         ClickMode::DoubleClick => {
@@ -588,4 +593,550 @@ fn calculate_net_item_delta(
     };
 
     net_item_delta
+}
+// TODO: validate nbt after validation
+#[cfg(test)]
+mod tests {
+    use valence_server::protocol::VarInt;
+    use valence_server::{ItemKind, ItemStack};
+
+    use super::*;
+    use crate::InventoryKind;
+
+    #[test]
+    fn net_item_delta_1() {
+        let drag_packet = ContainerClickC2s {
+            window_id: VarInt(2),
+            state_id: VarInt(14),
+            slot_idx: -999,
+            button: 2,
+            mode: ClickMode::Drag,
+            slot_changes: vec![
+                SlotChange {
+                    idx: 4,
+                    stack: ItemStack::new(ItemKind::Diamond, 21),
+                }
+                .into(),
+                SlotChange {
+                    idx: 3,
+                    stack: ItemStack::new(ItemKind::Diamond, 21),
+                }
+                .into(),
+                SlotChange {
+                    idx: 5,
+                    stack: ItemStack::new(ItemKind::Diamond, 21),
+                }
+                .into(),
+            ]
+            .into(),
+            carried_item: ItemStack::new(ItemKind::Diamond, 1).into(),
+        };
+
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let inventory = Inventory::new(InventoryKind::Generic9x1);
+        let window = InventoryWindow::new(&player_inventory, Some(&inventory));
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 64));
+
+        assert_eq!(
+            calculate_net_item_delta(&drag_packet, &window, &cursor_item),
+            0
+        );
+    }
+
+    #[test]
+    fn net_item_delta_2() {
+        let drag_packet = ContainerClickC2s {
+            window_id: VarInt(2),
+            state_id: VarInt(14),
+            slot_idx: -999,
+            button: 2,
+            mode: ClickMode::Click,
+            slot_changes: vec![
+                SlotChange {
+                    idx: 2,
+                    stack: ItemStack::new(ItemKind::Diamond, 2),
+                }
+                .into(),
+                SlotChange {
+                    idx: 3,
+                    stack: ItemStack::new(ItemKind::IronIngot, 2),
+                }
+                .into(),
+                SlotChange {
+                    idx: 4,
+                    stack: ItemStack::new(ItemKind::GoldIngot, 2),
+                }
+                .into(),
+                SlotChange {
+                    idx: 5,
+                    stack: ItemStack::new(ItemKind::Emerald, 2),
+                }
+                .into(),
+            ]
+            .into(),
+            carried_item: ItemStack::new(ItemKind::OakWood, 2).into(),
+        };
+
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let inventory = Inventory::new(InventoryKind::Generic9x1);
+        let window = InventoryWindow::new(&player_inventory, Some(&inventory));
+        let cursor_item = CursorItem::default();
+
+        assert_eq!(
+            calculate_net_item_delta(&drag_packet, &window, &cursor_item),
+            10
+        );
+    }
+
+    #[test]
+    fn click_filled_slot_with_empty_cursor_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let mut inventory = Inventory::new(InventoryKind::Generic9x1);
+        inventory.set_slot(0, ItemStack::new(ItemKind::Diamond, 20));
+        let cursor_item = CursorItem::default();
+        let packet = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![SlotChange {
+                idx: 0,
+                stack: ItemStack::EMPTY,
+            }
+            .into()]
+            .into(),
+            carried_item: inventory.slot(0).clone().into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, Some(&inventory), &cursor_item)
+            .expect("packet should be valid");
+    }
+
+    #[test]
+    fn click_slot_with_filled_cursor_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let inventory1 = Inventory::new(InventoryKind::Generic9x1);
+        let mut inventory2 = Inventory::new(InventoryKind::Generic9x1);
+        inventory2.set_slot(0, ItemStack::new(ItemKind::Diamond, 10));
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 20));
+        let packet1 = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![SlotChange {
+                idx: 0,
+                stack: ItemStack::new(ItemKind::Diamond, 20),
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::EMPTY.into(),
+        };
+        let packet2 = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![SlotChange {
+                idx: 0,
+                stack: ItemStack::new(ItemKind::Diamond, 30),
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::EMPTY.into(),
+        };
+
+        validate_click_slot_packet(&packet1, &player_inventory, Some(&inventory1), &cursor_item)
+            .expect("packet should be valid");
+
+        validate_click_slot_packet(&packet2, &player_inventory, Some(&inventory2), &cursor_item)
+            .expect("packet should be valid");
+    }
+
+    #[test]
+    fn click_filled_slot_with_filled_cursor_stack_overflow_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let mut inventory = Inventory::new(InventoryKind::Generic9x1);
+        inventory.set_slot(0, ItemStack::new(ItemKind::Diamond, 20));
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 64));
+        let packet = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![SlotChange {
+                idx: 0,
+                stack: ItemStack::new(ItemKind::Diamond, 64),
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::new(ItemKind::Diamond, 20).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, Some(&inventory), &cursor_item)
+            .expect("packet should be valid");
+    }
+
+    #[test]
+    fn click_filled_slot_with_filled_cursor_different_item_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let mut inventory = Inventory::new(InventoryKind::Generic9x1);
+        inventory.set_slot(0, ItemStack::new(ItemKind::IronIngot, 2));
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 2));
+        let packet = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![SlotChange {
+                idx: 0,
+                stack: ItemStack::new(ItemKind::Diamond, 2),
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::new(ItemKind::IronIngot, 2).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, Some(&inventory), &cursor_item)
+            .expect("packet should be valid");
+    }
+
+    #[test]
+    fn click_slot_with_filled_cursor_failure() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let inventory1 = Inventory::new(InventoryKind::Generic9x1);
+        let mut inventory2 = Inventory::new(InventoryKind::Generic9x1);
+        inventory2.set_slot(0, ItemStack::new(ItemKind::Diamond, 10));
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Diamond, 20));
+        let packet1 = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![SlotChange {
+                idx: 0,
+                stack: ItemStack::new(ItemKind::Diamond, 22),
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::EMPTY.into(),
+        };
+        let packet2 = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![SlotChange {
+                idx: 0,
+                stack: ItemStack::new(ItemKind::Diamond, 32),
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::EMPTY.into(),
+        };
+        let packet3 = ContainerClickC2s {
+            window_id: VarInt(1),
+            button: 0,
+            mode: ClickMode::Click,
+            state_id: VarInt(0),
+            slot_idx: 0,
+            slot_changes: vec![
+                SlotChange {
+                    idx: 0,
+                    stack: ItemStack::new(ItemKind::Diamond, 22),
+                }
+                .into(),
+                SlotChange {
+                    idx: 1,
+                    stack: ItemStack::new(ItemKind::Diamond, 22),
+                }
+                .into(),
+            ]
+            .into(),
+            carried_item: ItemStack::EMPTY.into(),
+        };
+
+        validate_click_slot_packet(&packet1, &player_inventory, Some(&inventory1), &cursor_item)
+            .expect_err("packet 1 should fail item duplication check");
+
+        validate_click_slot_packet(&packet2, &player_inventory, Some(&inventory2), &cursor_item)
+            .expect_err("packet 2 should fail item duplication check");
+
+        validate_click_slot_packet(&packet3, &player_inventory, Some(&inventory1), &cursor_item)
+            .expect_err("packet 3 should fail item duplication check");
+    }
+
+    #[test]
+    fn disallow_item_transmutation() {
+        // no alchemy allowed - make sure that lead can't be turned into gold
+
+        let mut player_inventory = Inventory::new(InventoryKind::Player);
+        player_inventory.set_slot(9, ItemStack::new(ItemKind::Lead, 2));
+        let cursor_item = CursorItem::default();
+
+        let packets = [
+            ContainerClickC2s {
+                window_id: VarInt(0),
+                button: 0,
+                mode: ClickMode::ShiftClick,
+                state_id: VarInt(0),
+                slot_idx: 9,
+                slot_changes: vec![
+                    SlotChange {
+                        idx: 9,
+                        stack: ItemStack::EMPTY,
+                    }
+                    .into(),
+                    SlotChange {
+                        idx: 36,
+                        stack: ItemStack::new(ItemKind::GoldIngot, 2),
+                    }
+                    .into(),
+                ]
+                .into(),
+                carried_item: ItemStack::EMPTY.into(),
+            },
+            ContainerClickC2s {
+                window_id: VarInt(0),
+                button: 0,
+                mode: ClickMode::Hotbar,
+                state_id: VarInt(0),
+                slot_idx: 9,
+                slot_changes: vec![
+                    SlotChange {
+                        idx: 9,
+                        stack: ItemStack::EMPTY,
+                    }
+                    .into(),
+                    SlotChange {
+                        idx: 36,
+                        stack: ItemStack::new(ItemKind::GoldIngot, 2),
+                    }
+                    .into(),
+                ]
+                .into(),
+                carried_item: ItemStack::EMPTY.into(),
+            },
+            ContainerClickC2s {
+                window_id: VarInt(0),
+                button: 0,
+                mode: ClickMode::Click,
+                state_id: VarInt(0),
+                slot_idx: 9,
+                slot_changes: vec![SlotChange {
+                    idx: 9,
+                    stack: ItemStack::EMPTY,
+                }
+                .into()]
+                .into(),
+                carried_item: ItemStack::new(ItemKind::GoldIngot, 2).into(),
+            },
+            ContainerClickC2s {
+                window_id: VarInt(0),
+                button: 0,
+                mode: ClickMode::DropKey,
+                state_id: VarInt(0),
+                slot_idx: 9,
+                slot_changes: vec![SlotChange {
+                    idx: 9,
+                    stack: ItemStack::new(ItemKind::GoldIngot, 1),
+                }
+                .into()]
+                .into(),
+                carried_item: ItemStack::EMPTY.into(),
+            },
+        ];
+
+        for (i, packet) in packets.iter().enumerate() {
+            validate_click_slot_packet(packet, &player_inventory, None, &cursor_item).expect_err(
+                &format!("packet {i} passed item duplication check when it should have failed"),
+            );
+        }
+    }
+
+    #[test]
+    fn allow_shift_click_overflow_to_new_stack() {
+        let mut player_inventory = Inventory::new(InventoryKind::Player);
+        player_inventory.set_slot(9, ItemStack::new(ItemKind::Diamond, 64));
+        player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 32));
+        let cursor_item = CursorItem::default();
+
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: 9,
+            button: 0,
+            mode: ClickMode::ShiftClick,
+            slot_changes: vec![
+                SlotChange {
+                    idx: 37,
+                    stack: ItemStack::new(ItemKind::Diamond, 32),
+                }
+                .into(),
+                SlotChange {
+                    idx: 36,
+                    stack: ItemStack::new(ItemKind::Diamond, 64),
+                }
+                .into(),
+                SlotChange {
+                    idx: 9,
+                    stack: ItemStack::EMPTY,
+                }
+                .into(),
+            ]
+            .into(),
+            carried_item: ItemStack::EMPTY.into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
+
+    #[test]
+    fn allow_pickup_overfull_stack_click() {
+        let mut player_inventory = Inventory::new(InventoryKind::Player);
+        player_inventory.set_slot(9, ItemStack::new(ItemKind::Apple, 100));
+        let cursor_item = CursorItem::default();
+
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: 9,
+            button: 0,
+            mode: ClickMode::Click,
+            slot_changes: vec![SlotChange {
+                idx: 9,
+                stack: ItemStack::EMPTY,
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::new(ItemKind::Apple, 100).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
+
+    #[test]
+    fn allow_place_overfull_stack_click() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Apple, 100));
+
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: 9,
+            button: 0,
+            mode: ClickMode::Click,
+            slot_changes: vec![SlotChange {
+                idx: 9,
+                stack: ItemStack::new(ItemKind::Apple, 64),
+            }
+            .into()]
+            .into(),
+            carried_item: ItemStack::new(ItemKind::Apple, 36).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
+    #[test]
+    fn allow_clicking_outside_inventory_when_not_holding_anything_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Air, 0));
+
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: -999, // -999 means outside inventory
+            button: 0,
+            mode: ClickMode::DropKey, // when not holding an item and clicking outside the user
+            // interface the client sends this kind of packet
+            slot_changes: vec![].into(),
+            carried_item: ItemStack::new(ItemKind::Air, 0).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
+    #[test]
+    fn allow_clicking_outside_inventory_when_holding_something_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Air, 0));
+
+        // This is in the notchian server a stack drop
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: -999, // -999 means outside inventory
+            button: 0,
+            mode: ClickMode::Click, // when holding an item its a click
+            slot_changes: vec![].into(),
+            carried_item: ItemStack::new(ItemKind::Air, 0).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
+    #[test]
+    fn allow_clicking_on_the_margin_area_in_inventory_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Air, 0));
+
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: -1, // -1 here means on the margin areas
+            button: 0,
+            mode: ClickMode::Click,
+            slot_changes: vec![].into(),
+            carried_item: ItemStack::new(ItemKind::Air, 0).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
+    #[test]
+    fn allow_clicking_on_an_empty_slot_with_empty_carried_item_success() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Air, 0));
+
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: 3,
+            button: 0,
+            mode: ClickMode::Click,
+            slot_changes: vec![].into(),
+            carried_item: ItemStack::new(ItemKind::Air, 0).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
+    #[test]
+    fn allow_clicking_hotbar_keybinds_when_both_source_and_target_are_empty() {
+        let player_inventory = Inventory::new(InventoryKind::Player);
+        let cursor_item = CursorItem(ItemStack::new(ItemKind::Air, 0));
+
+        let packet = ContainerClickC2s {
+            window_id: VarInt(0),
+            state_id: VarInt(2),
+            slot_idx: 0,
+            button: 0,
+            mode: ClickMode::Hotbar,
+            slot_changes: vec![].into(),
+            carried_item: ItemStack::new(ItemKind::Air, 0).into(),
+        };
+
+        validate_click_slot_packet(&packet, &player_inventory, None, &cursor_item)
+            .expect("packet should be valid");
+    }
 }
