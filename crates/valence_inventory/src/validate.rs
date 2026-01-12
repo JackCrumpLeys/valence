@@ -713,43 +713,6 @@ mod tests {
             .expect("packet should be valid");
     }
 
-    // TODO: is this test here still valid?
-    // #[test]
-    // fn click_filled_slot_with_incorrect_nbt_and_empty_cursor_success() {
-    //     let player_inventory = Inventory::new(InventoryKind::Player);
-    //     let cursor_item = CursorItem(ItemStack::EMPTY);
-
-    //     let mut inventory = Inventory::new(InventoryKind::Generic9x1);
-    //     // Insert an item with no NBT data that should have NBT Data.
-    //     inventory.set_slot(0, ItemStack::new(ItemKind::DiamondPickaxe, 1));
-
-    //     // Proper NBT Compound
-    //     let mut compound = Compound::new();
-    //     compound.insert("Damage", Int(1));
-
-    //     let packet = ContainerClickC2s {
-    //         window_id: VarInt(1),
-    //         state_id: VarInt(0),
-    //         slot_idx: 0,
-    //         button: 0,
-    //         mode: ClickMode::Click,
-    //         slot_changes: vec![SlotChange {
-    //             idx: 0,
-    //             stack: ItemStack::EMPTY,
-    //         }.into()
-    //         ]
-    //         .into(),
-    //         carried_item: ItemStack {
-    //             item: ItemKind::DiamondPickaxe,
-    //             count: 1,
-    //             nbt: Some(compound),
-    //         }.into(),
-    //     };
-
-    //     validate_click_slot_packet(&packet, &player_inventory, Some(&inventory),
-    // &cursor_item)         .expect("packet should be valid");
-    // }
-
     #[test]
     fn click_slot_with_filled_cursor_success() {
         let player_inventory = Inventory::new(InventoryKind::Player);
