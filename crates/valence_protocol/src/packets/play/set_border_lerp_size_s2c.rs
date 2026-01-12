@@ -1,4 +1,5 @@
-use valence_binary::{Decode, Encode, Packet, VarLong};
+use crate::Packet;
+use valence_binary::{Decode, Encode, VarLong};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SetBorderLerpSizeS2c {

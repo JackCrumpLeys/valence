@@ -1,4 +1,5 @@
-use valence_binary::{Decode, Encode, Packet};
+use crate::Packet;
+use valence_binary::{Decode, Encode};
 use valence_item::{decode_item_stack_recursive, ItemStack};
 
 #[derive(Clone, Debug, Packet)]

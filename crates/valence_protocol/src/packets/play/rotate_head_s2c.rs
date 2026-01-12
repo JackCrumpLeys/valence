@@ -1,5 +1,6 @@
+use crate::Packet;
 use crate::ByteAngle;
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct RotateHeadS2c {

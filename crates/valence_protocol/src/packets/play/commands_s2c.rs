@@ -5,7 +5,8 @@ use anyhow::bail;
 use byteorder::WriteBytesExt;
 use valence_ident::Ident;
 
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct CommandsS2c<'a> {

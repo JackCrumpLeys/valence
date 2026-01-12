@@ -1,4 +1,5 @@
-use valence_binary::{Bounded, Decode, Encode, Packet, VarInt};
+use crate::Packet;
+use valence_binary::{Bounded, Decode, Encode, VarInt};
 
 pub const MAX_TITLE_CHARS: usize = 32;
 pub const MAX_PAGE_CHARS: usize = 1024;

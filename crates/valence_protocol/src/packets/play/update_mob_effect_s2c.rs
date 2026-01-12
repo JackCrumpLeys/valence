@@ -1,6 +1,7 @@
 use bitfield_struct::bitfield;
 
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, VarInt};
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct UpdateMobEffectS2c {
     pub entity_id: VarInt,

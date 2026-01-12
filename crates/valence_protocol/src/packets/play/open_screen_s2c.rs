@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use valence_binary::{Decode, Encode, Packet, TextComponent, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, TextComponent, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct OpenScreenS2c<'a> {

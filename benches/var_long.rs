@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use divan::Bencher;
 use rand::Rng;
-use valence::protocol::{Decode, Encode, VarLong};
+use valence_binary::{Decode, Encode, VarLong};
 
 #[divan::bench]
 fn varlong_encode(bencher: Bencher) {

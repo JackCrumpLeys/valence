@@ -3,9 +3,10 @@ use std::collections::BTreeSet;
 
 use valence_ident::Ident;
 
+use crate::Packet;
 use crate::game_mode::OptGameMode;
 use crate::{GameMode, GlobalPos};
-use valence_binary::{Decode, Encode, Packet, VarInt};
+use valence_binary::{Decode, Encode, VarInt};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct LoginS2c<'a> {

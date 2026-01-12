@@ -4,7 +4,8 @@ use std::io::Write;
 use anyhow::bail;
 use bitfield_struct::bitfield;
 
-use valence_binary::{Decode, Encode, Packet, TextComponent};
+use crate::Packet;
+use valence_binary::{Decode, Encode, TextComponent};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct SetPlayerTeamS2c<'a> {

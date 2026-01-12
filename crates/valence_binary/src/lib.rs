@@ -25,10 +25,10 @@ pub mod __private {
     pub use anyhow::{anyhow, bail, ensure, Context, Result};
 
     pub use crate::VarInt;
-    pub use crate::{Decode, Encode, Packet};
+    pub use crate::{Decode, Encode};
 }
 
-pub use valence_protocol_macros::{Decode, Encode, Packet};
+pub use valence_protocol_macros::{Decode, Encode};
 
 // pub use impls::cautious_capacity;
 
@@ -174,52 +174,4 @@ pub trait Decode<'a>: Sized {
     /// Implementations of `Decode` are expected to shrink the slice from the
     /// front as bytes are read.
     fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self>;
-}
-
-/// Types considered to be Minecraft packets.
-///
-/// In serialized form, a packet begins with a [`VarInt`] packet ID followed by
-/// the body of the packet. If present, the implementations of [`Encode`] and
-/// [`Decode`] on `Self` are expected to only encode/decode the _body_ of this
-/// packet without the leading ID.
-pub trait Packet: std::fmt::Debug {
-    /// The leading `VarInt` ID of this packet.
-    const ID: i32;
-    /// The name of this packet for debugging purposes.
-    const NAME: &'static str;
-    /// The side this packet is intended for.
-    const SIDE: PacketSide;
-    /// The state in which this packet is used.
-    const STATE: PacketState;
-
-    /// Encodes this packet's `VarInt` ID first, followed by the packet's body.
-    fn encode_with_id(&self, mut w: impl Write) -> anyhow::Result<()>
-    where
-        Self: Encode,
-    {
-        VarInt(Self::ID)
-            .encode(&mut w)
-            .context("failed to encode packet ID")?;
-
-        self.encode(w)
-    }
-}
-
-/// The side a packet is intended for.
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
-pub enum PacketSide {
-    /// Server -> Client
-    Clientbound,
-    /// Client -> Server
-    Serverbound,
-}
-
-/// The state in  which a packet is used.
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
-pub enum PacketState {
-    Handshake,
-    Status,
-    Login,
-    Configuration,
-    Play,
 }

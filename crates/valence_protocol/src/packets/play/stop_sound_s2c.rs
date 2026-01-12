@@ -3,8 +3,9 @@ use std::io::Write;
 
 use valence_ident::Ident;
 
+use crate::Packet;
 use crate::sound::SoundCategory;
-use valence_binary::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode};
 
 #[derive(Clone, PartialEq, Debug, Packet)]
 pub struct StopSoundS2c<'a> {

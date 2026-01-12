@@ -13,7 +13,7 @@ use bytes::{Bytes, BytesMut};
 use derive_more::{Deref, DerefMut, From, Into};
 use tracing::warn;
 use uuid::Uuid;
-use valence_binary::{Decode, Encode, Packet};
+use valence_binary::Encode;
 use valence_entity::attributes::{EntityAttributes, TrackedEntityAttributes};
 use valence_entity::living::Health;
 use valence_entity::player::{Food, PlayerEntityBundle, Saturation};
@@ -38,7 +38,7 @@ use valence_protocol::sound::{Sound, SoundCategory, SoundDirect, SoundId};
 use valence_protocol::text::{IntoText, Text};
 use valence_protocol::IntoTextComponent;
 use valence_protocol::VarInt;
-use valence_protocol::{BlockPos, ChunkPos, GameMode};
+use valence_protocol::{BlockPos, ChunkPos, GameMode, Packet};
 use valence_registry::RegistrySet;
 use valence_server_common::{Despawned, UniqueId};
 

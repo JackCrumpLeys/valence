@@ -1,4 +1,5 @@
-use valence_binary::{Bounded, Decode, Encode, Packet};
+use crate::Packet;
+use valence_binary::{Bounded, Decode, Encode};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct RenameItemC2s<'a> {

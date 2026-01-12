@@ -13,7 +13,7 @@ use crate::protocol::packets::play::{
 };
 use crate::testing::ScenarioSingleClient;
 use crate::{BlockState, ChunkView, Despawned, Server};
-use valence_binary::Packet;
+use crate::protocol::Packet;
 
 #[test]
 fn block_create_destroy() {

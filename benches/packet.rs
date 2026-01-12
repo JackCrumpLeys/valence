@@ -7,7 +7,7 @@ use valence::protocol::decode::PacketDecoder;
 use valence::protocol::encode::{PacketEncoder, PacketWriter, WritePacket};
 use valence::protocol::packets::play::level_chunk_with_light_s2c::{HeightMap, HeightMapKind};
 use valence::protocol::packets::play::{AddEntityS2c, LevelChunkWithLightS2c, TabListS2c};
-use valence::protocol::text_component::IntoTextComponent;
+use valence::protocol::IntoTextComponent;
 use valence::protocol::{ByteAngle, FixedArray, VarInt};
 use valence::text::IntoText;
 use valence_server::protocol::Velocity;

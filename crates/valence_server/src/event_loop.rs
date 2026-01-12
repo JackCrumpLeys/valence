@@ -7,7 +7,8 @@ use bevy_ecs::schedule::ScheduleLabel;
 use bevy_ecs::system::SystemState;
 use bytes::Bytes;
 use tracing::{debug, warn};
-use valence_binary::{Decode, Packet};
+use valence_binary::Decode;
+use valence_protocol::Packet;
 
 use crate::client::Client;
 

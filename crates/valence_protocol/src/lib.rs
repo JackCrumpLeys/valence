@@ -2,13 +2,12 @@
 #![allow(deprecated)] // TODO: update aes library
 
 /// Used only by macros. Not public API.
-// #[doc(hidden)]
-// pub mod __private {
-//     pub use anyhow::{anyhow, bail, ensure, Context, Result};
+#[doc(hidden)]
+pub mod __private {
+    pub use anyhow::{anyhow, bail, ensure, Context, Result};
 
-//     pub use valence_binary::{VarInt, Decode, Encode, Packet};
-//     // pub use crate::{VarInt, Decode, Encode, Packet};
-// }
+    pub use crate::Packet;
+}
 
 // #[doc(hidden)]
 // pub mod valence_binary {
@@ -68,13 +67,18 @@ pub use global_pos::GlobalPos;
 pub use hand::Hand;
 pub use ident::ident;
 pub use packets::play::level_particles_s2c::Particle;
+use serde::{Deserialize, Serialize};
 pub use sound::Sound;
 pub use text::{JsonText, Text};
+use valence_binary::Encode;
 pub use valence_generated::registry_id::RegistryId;
 pub use valence_generated::{block, status_effects};
 pub use valence_ident::Ident;
 pub use valence_item::{ItemKind, ItemStack};
+use valence_protocol_macros::Packet;
 pub use velocity::Velocity;
+
+pub use valence_generated::packet_id;
 
 pub use valence_binary::{
     IDSet, IdOr, IntoTextComponent, TextComponent, VarInt, VarIntDecodeError, VarLong,
@@ -115,12 +119,61 @@ impl Default for CompressionThreshold {
     }
 }
 
+/// Types considered to be Minecraft packets.
+///
+/// In serialized form, a packet begins with a [`VarInt`] packet ID followed by
+/// the body of the packet. If present, the implementations of [`Encode`] and
+/// [`Decode`] on `Self` are expected to only encode/decode the _body_ of this
+/// packet without the leading ID.
+pub trait Packet: std::fmt::Debug {
+    /// The leading `VarInt` ID of this packet.
+    const ID: i32;
+    /// The name of this packet for debugging purposes.
+    const NAME: &'static str;
+    /// The side this packet is intended for.
+    const SIDE: PacketSide;
+    /// The state in which this packet is used.
+    const STATE: PacketState;
+
+    /// Encodes this packet's `VarInt` ID first, followed by the packet's body.
+    fn encode_with_id(&self, mut w: impl Write) -> anyhow::Result<()>
+    where
+        Self: Encode,
+    {
+        VarInt(Self::ID)
+            .encode(&mut w)
+            .context("failed to encode packet ID")?;
+
+        self.encode(w)
+    }
+}
+
+/// The side a packet is intended for.
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
+pub enum PacketSide {
+    /// Server -> Client
+    Clientbound,
+    /// Client -> Server
+    Serverbound,
+}
+
+/// The state in  which a packet is used.
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
+pub enum PacketState {
+    Handshake,
+    Status,
+    Login,
+    Configuration,
+    Play,
+}
+
 #[allow(dead_code)]
 #[cfg(test)]
 mod tests {
     use std::borrow::Cow;
 
     use bytes::BytesMut;
+    use valence_protocol_macros::Packet;
 
     use super::*;
     use crate::block_pos::BlockPos;
@@ -129,7 +182,8 @@ mod tests {
     use crate::hand::Hand;
     use crate::text::{IntoText, Text};
     use crate::Ident;
-    use valence_binary::{Decode, Encode, Packet, PacketSide, VarInt, VarLong};
+    // use crate::{Packet, PacketSide};
+    use valence_binary::{Decode, Encode, VarInt, VarLong};
     use valence_item::{ItemKind, ItemStack};
 
     #[derive(Encode, Decode, Packet, Debug)]

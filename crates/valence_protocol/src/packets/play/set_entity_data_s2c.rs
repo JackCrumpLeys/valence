@@ -1,4 +1,5 @@
-use valence_binary::{Decode, Encode, Packet, RawBytes, VarInt};
+use crate::Packet;
+use valence_binary::{Decode, Encode, RawBytes, VarInt};
 
 #[derive(Copy, Clone, Debug, Encode, Decode, Packet)]
 pub struct SetEntityDataS2c<'a> {

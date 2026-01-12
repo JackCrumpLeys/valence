@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
+use crate::Packet;
 use crate::ChunkPos;
-use valence_binary::{Decode, Encode, Packet};
+use valence_binary::{Decode, Encode};
 
 #[derive(Clone, Debug, Encode, Decode, Packet)]
 pub struct ChunksBiomesS2c<'a> {
