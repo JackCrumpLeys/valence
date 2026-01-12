@@ -12,7 +12,7 @@ use valence::entity::{EntityAnimations, EntityStatuses, OnGround, Velocity};
 use valence::interact_block::InteractBlockEvent;
 use valence::inventory::HeldItem;
 use valence::log::debug;
-use valence::math::Vec3Swizzles;
+use valence::math::{Aabb, Vec3Swizzles};
 use valence::nbt::{compound, List};
 use valence::prelude::*;
 use valence::scoreboard::*;
@@ -504,14 +504,15 @@ fn digging(
 }
 
 fn place_blocks(
-    mut clients: Query<(&mut Inventory, &GameMode, &HeldItem)>,
+    mut clients: Query<(&mut Inventory, &GameMode, &HeldItem, &Hitbox)>,
     mut layers: Query<&mut ChunkLayer>,
+    globals: Res<CtfGlobals>,
     mut events: EventReader<InteractBlockEvent>,
 ) {
     let mut layer = layers.single_mut();
 
     for event in events.read() {
-        let Ok((mut inventory, game_mode, held)) = clients.get_mut(event.client) else {
+        let Ok((mut inventory, game_mode, held, hitbox)) = clients.get_mut(event.client) else {
             continue;
         };
         if event.hand != Hand::Main {
@@ -529,6 +530,27 @@ fn place_blocks(
             // can't place this item as a block
             continue;
         };
+        let real_pos = event.position.get_in_direction(event.face);
+
+        // Can't place blocks on the flag positions
+        if real_pos == globals.red_flag || real_pos == globals.blue_flag {
+            continue;
+        }
+
+        // Can't place block if there's already a block there
+        if let Some(existing_block) = layer.block(real_pos) {
+            if existing_block.state != BlockState::AIR {
+                continue;
+            }
+        }
+
+        // Can't place the block if it would intersect the player's hitbox
+        if hitbox.intersects_strict(Aabb::new(
+            real_pos.to_dvec3(),
+            (real_pos.offset(1, 1, 1)).to_dvec3(),
+        )) {
+            continue;
+        }
 
         if *game_mode == GameMode::Survival {
             // check if the player has the item in their inventory and remove
@@ -540,7 +562,6 @@ fn place_blocks(
                 inventory.set_slot(slot_id, ItemStack::EMPTY);
             }
         }
-        let real_pos = event.position.get_in_direction(event.face);
         layer.set_block(real_pos, block_kind.to_state());
     }
 }
