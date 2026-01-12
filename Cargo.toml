@@ -54,20 +54,20 @@ valence_advancement = { workspace = true, optional = true }
 valence_anvil = { workspace = true, optional = true, features = [
   "bevy_plugin",
 ] }
+valence_binary.workspace = true
 valence_boss_bar = { workspace = true, optional = true }
 valence_command = { workspace = true, optional = true }
 valence_command_macros = { workspace = true, optional = true }
-valence_ident_macros.workspace = true
 valence_ident.workspace = true
+valence_ident_macros.workspace = true
 valence_inventory = { workspace = true, optional = true }
+valence_item.workspace = true
 valence_lang.workspace = true
 valence_network = { workspace = true, optional = true }
 valence_player_list = { workspace = true, optional = true }
 valence_registry.workspace = true
 valence_scoreboard = { workspace = true, optional = true }
 valence_server.workspace = true
-valence_item.workspace = true
-valence_binary.workspace = true
 valence_text.workspace = true
 valence_weather = { workspace = true, optional = true }
 valence_world_border = { workspace = true, optional = true }

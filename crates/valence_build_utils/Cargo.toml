@@ -13,5 +13,5 @@ workspace = true
 
 [dependencies]
 anyhow.workspace = true
-syn.workspace = true
 proc-macro2.workspace = true
+syn.workspace = true

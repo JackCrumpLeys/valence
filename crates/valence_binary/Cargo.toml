@@ -7,21 +7,21 @@ documentation.workspace = true
 license.workspace = true
 
 [dependencies]
-valence_generated.workspace = true
-uuid.workspace = true
-indexmap.workspace = true
-valence_nbt.workspace = true
-serde.workspace = true
 anyhow.workspace = true
 byteorder.workspace = true
-thiserror.workspace = true
 derive_more.workspace = true
+indexmap.workspace = true
 rand.workspace = true
-valence_text.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+valence_generated.workspace = true
 valence_ident.workspace = true
 valence_math.workspace = true
-serde_json.workspace = true
+valence_nbt.workspace = true
 valence_protocol_macros.workspace = true
+valence_text.workspace = true
 
 [lints]
 workspace = true

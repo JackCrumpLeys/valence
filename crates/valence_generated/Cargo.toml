@@ -13,8 +13,8 @@ build = "build/main.rs"
 workspace = true
 
 [dependencies]
-valence_math.workspace = true
 valence_ident.workspace = true
+valence_math.workspace = true
 
 [build-dependencies]
 anyhow.workspace = true
