@@ -343,6 +343,14 @@ impl EntityAttributes {
         }
     }
 
+    /// Clears all attributes and their modifiers.
+    pub fn clear(&mut self) {
+        let keys: Vec<_> = self.attributes.keys().copied().collect();
+        for attribute in keys {
+            self.clear_modifiers(attribute);
+        }
+    }
+
     /// Checks if a modifier exists on an attribute.
     pub fn has_modifier<S: Into<String>>(&self, attribute: EntityAttribute, id: S) -> bool {
         self.attributes
