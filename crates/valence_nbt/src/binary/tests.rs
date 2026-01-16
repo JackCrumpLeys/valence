@@ -28,7 +28,7 @@ fn check_min_sizes() {
         let dbg = format!("{min_val:?}");
         let mut buf = vec![];
 
-        to_binary::<_, _, str>(&compound!("" => min_val), &mut buf, None).unwrap();
+        to_binary::<_, _, str>(&compound!("" => min_val), &mut buf, Some("")).unwrap();
 
         assert_eq!(
             expected_size,
