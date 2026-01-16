@@ -19,15 +19,16 @@ default = [
   "advancement",
   "anvil",
   "boss_bar",
+  "command",
+  "equipment",
   "inventory",
   "log",
   "network",
   "player_list",
   "scoreboard",
-  "world_border",
-  "command",
-  "weather",
   "testing",
+  "weather",
+  "world_border",
 ]
 advancement = ["dep:valence_advancement"]
 anvil = ["dep:valence_anvil"]

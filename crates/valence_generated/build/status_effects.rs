@@ -171,20 +171,18 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
         use super::attributes::{EntityAttribute, EntityAttributeOperation};
         use crate::registry_id::RegistryId;
 
-        #[doc = "Represents an attribute modifier."]
+        /// Represents an attribute modifier.
         #[derive(Debug, Clone, Copy, PartialEq)]
         pub struct AttributeModifier {
-            #[doc = "The attribute that this modifier modifies."]
+            /// The attribute that this modifier modifies.
             pub attribute: EntityAttribute,
-            #[doc = "The operation that this modifier applies."]
+            /// The operation that this modifier applies.
             pub operation: EntityAttributeOperation,
-            #[doc = "The value of this modifier."]
+            /// The value of this modifier.
             pub value: f64,
-            #[doc = "The UUID of this modifier."]
-            pub uuid: Uuid,
         }
 
-        #[doc = "Represents a status effect category"]
+        /// Represents a status effect category
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
         pub enum StatusEffectCategory {
             Beneficial,
@@ -192,16 +190,16 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
             Neutral,
         }
 
-        #[doc = "Represents a status effect from the game"]
+        /// Represents a status effect from the game
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
         pub enum StatusEffect {
             #(#effect_variants,)*
         }
 
         impl StatusEffect {
-            #[doc = "Constructs a effect from a raw item ID."]
-            #[doc = ""]
-            #[doc = "If the given ID is invalid, `None` is returned."]
+            /// Constructs a effect from a raw item ID.
+            ///
+            /// If the given ID is invalid, `None` is returned.
             pub const fn from_raw(id: u16) -> Option<Self> {
                 match id {
                     #effect_from_raw_id_arms
@@ -209,7 +207,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            #[doc = "Gets the raw effect ID from the effect"]
+            /// Gets the raw effect ID from the effect
             pub const fn to_raw(self) -> u16 {
                 match self {
                     #effect_to_raw_id_arms
@@ -226,50 +224,50 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            #[doc = "Gets the identifier of this effect."]
+            /// Gets the identifier of this effect.
             pub const fn to_ident(self) -> Ident<&'static str> {
                 match self {
                     #effect_to_ident_arms
                 }
             }
 
-            #[doc = "Gets the name of this effect."]
-            #[doc = "Same as [`StatusEffect::to_ident`], but doesn't take ownership."]
+            /// Gets the name of this effect.
+            /// Same as [`StatusEffect::to_ident`], but doesn't take ownership.
             pub const fn name(&self) -> Ident<&'static str> {
                 match self {
                     #effect_to_ident_arms
                 }
             }
 
-            #[doc = "Gets the translation key of this effect."]
+            /// Gets the translation key of this effect.
             pub const fn translation_key(&self) -> &'static str {
                 match self {
                     #effect_to_translation_key_arms
                 }
             }
 
-            #[doc = "Gets the category of this effect."]
+            /// Gets the category of this effect.
             pub const fn category(&self) -> StatusEffectCategory {
                 match self {
                     #effect_to_category_arms
                 }
             }
 
-            #[doc = "Gets the color of this effect."]
+            /// Gets the color of this effect.
             pub const fn color(&self) -> u32 {
                 match self {
                     #effect_to_color_arms
                 }
             }
 
-            #[doc = "Gets whether this effect is instant."]
+            /// Gets whether this effect is instant.
             pub const fn instant(&self) -> bool {
                 match self {
                     #effect_to_instant_arms
                 }
             }
 
-            #[doc = "Gets the attribute modifiers of this effect."]
+            /// Gets the attribute modifiers of this effect.
             pub fn attribute_modifiers(&self) -> Vec<AttributeModifier> {
                 match self {
                     #effect_to_attribute_modifiers_arms
@@ -277,7 +275,7 @@ pub(crate) fn build() -> anyhow::Result<TokenStream> {
                 }
             }
 
-            #[doc = "An array of all effects."]
+            /// An array of all effects.
             pub const ALL: [Self; #effect_count] = [#(Self::#effect_variants,)*];
         }
 

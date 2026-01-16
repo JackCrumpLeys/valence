@@ -87,7 +87,7 @@ fn init_clients(
         *game_mode = GameMode::Survival;
 
         // 40 is the fifth hotbar slot
-        inventory.set_slot(40, ItemStack::new(ItemKind::Compass, 1, None));
+        inventory.set_slot(40, ItemStack::new(ItemKind::Compass, 1));
     }
 }
 
@@ -100,7 +100,7 @@ fn on_item_interact(
         let Ok((player_ent, held_item, inventory)) = clients.get(event.client) else {
             continue;
         };
-        if *inventory.slot(held_item.slot()) == ItemStack::new(ItemKind::Compass, 1, None) {
+        if *inventory.slot(held_item.slot()) == ItemStack::new(ItemKind::Compass, 1) {
             open_menu(&mut commands, player_ent);
         }
     }
@@ -109,8 +109,8 @@ fn on_item_interact(
 fn open_menu(commands: &mut Commands, player: Entity) {
     let mut menu_inv = Inventory::new(InventoryKind::Generic3x3);
 
-    menu_inv.set_slot(3, ItemStack::new(ItemKind::RedWool, 1, None));
-    menu_inv.set_slot(5, ItemStack::new(ItemKind::GreenWool, 1, None));
+    menu_inv.set_slot(3, ItemStack::new(ItemKind::RedWool, 1));
+    menu_inv.set_slot(5, ItemStack::new(ItemKind::GreenWool, 1));
 
     let menu = ItemMenu::new(menu_inv);
     commands.entity(player).insert(menu);

@@ -26,7 +26,7 @@ pub(crate) fn equipment_inventory_sync(
 ) {
     for (mut equipment, mut inventory, held_item) in &mut clients {
         // Equipment change has priority over held item changes
-        if equipment.changed & (1 << Equipment::MAIN_HAND_IDX) != 0 {
+        if equipment.changed & (1 << EquipmentSlot::MainHand as u8) != 0 {
             let item = equipment.main_hand().clone();
             inventory.set_slot(held_item.slot(), item);
         } else {
@@ -40,11 +40,11 @@ pub(crate) fn equipment_inventory_sync(
         }
 
         let slots = [
-            (Equipment::OFF_HAND_IDX, PlayerInventory::SLOT_OFFHAND),
-            (Equipment::HEAD_IDX, PlayerInventory::SLOT_HEAD),
-            (Equipment::CHEST_IDX, PlayerInventory::SLOT_CHEST),
-            (Equipment::LEGS_IDX, PlayerInventory::SLOT_LEGS),
-            (Equipment::FEET_IDX, PlayerInventory::SLOT_FEET),
+            (EquipmentSlot::OffHand, PlayerInventory::SLOT_OFFHAND),
+            (EquipmentSlot::Helmet, PlayerInventory::SLOT_HEAD),
+            (EquipmentSlot::Chestplate, PlayerInventory::SLOT_CHEST),
+            (EquipmentSlot::Leggings, PlayerInventory::SLOT_LEGS),
+            (EquipmentSlot::Boots, PlayerInventory::SLOT_FEET),
         ];
 
         // We cant rely on the changed bitfield of inventory here
@@ -52,7 +52,7 @@ pub(crate) fn equipment_inventory_sync(
 
         for (equipment_slot, inventory_slot) in slots {
             // Equipment has priority over inventory changes
-            if equipment.changed & (1 << equipment_slot) != 0 {
+            if equipment.changed & (1 << equipment_slot as u8) != 0 {
                 let item = equipment.slot(equipment_slot).clone();
                 inventory.set_slot(inventory_slot, item);
             } else if inventory.is_changed() {

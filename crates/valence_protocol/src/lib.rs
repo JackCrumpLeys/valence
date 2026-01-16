@@ -32,13 +32,10 @@ mod velocity;
 use std::io::Write;
 
 use anyhow::Context;
-pub use valence_binary::array::FixedArray;
 pub use biome_pos::BiomePos;
-pub use valence_binary::bit_set::FixedBitSet;
 pub use bit_storage::BitStorage;
 pub use block::{BlockKind, BlockState};
 pub use block_pos::BlockPos;
-pub use valence_binary::byte_angle::ByteAngle;
 pub use chunk_pos::ChunkPos;
 pub use chunk_section_pos::ChunkSectionPos;
 pub use decode::PacketDecoder;
@@ -54,6 +51,9 @@ pub use packets::play::level_particles_s2c::Particle;
 use serde::{Deserialize, Serialize};
 pub use sound::Sound;
 pub use text::{JsonText, Text};
+pub use valence_binary::array::FixedArray;
+pub use valence_binary::bit_set::FixedBitSet;
+pub use valence_binary::byte_angle::ByteAngle;
 use valence_binary::Encode;
 pub use valence_binary::{
     IDSet, IdOr, IntoTextComponent, TextComponent, VarInt, VarIntDecodeError, VarLong,

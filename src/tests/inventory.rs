@@ -240,7 +240,7 @@ fn test_should_allow_non_modifying_inventory_clicks() {
         .world_mut()
         .get_mut::<Inventory>(client)
         .expect("could not find inventory for client");
-    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2, None));
+    inventory.set_slot(20, ItemStack::new(ItemKind::Diamond, 2));
 
     // Make the client click the slot and pick up the item.
     let state_id = app
@@ -250,46 +250,46 @@ fn test_should_allow_non_modifying_inventory_clicks() {
         .state_id();
     // Used keyboard to "click" on one of the slots, but both the hovered slot and
     // the target hotbar slot are empty
-    helper.send(&ClickSlotC2s {
-        window_id: 0,
+    helper.send(&ContainerClickC2s {
+        window_id: 0.into(),
         button: 0,
         mode: ClickMode::Hotbar,
         state_id: VarInt(state_id.0),
         slot_idx: 0,
         slot_changes: vec![].into(),
-        carried_item: ItemStack::new(ItemKind::Air, 0, None),
+        carried_item: ItemStack::new(ItemKind::Air, 0).into(),
     });
     // Clicked on a real slot, but the slot is empty
-    helper.send(&ClickSlotC2s {
-        window_id: 0,
+    helper.send(&ContainerClickC2s {
+        window_id: 0.into(),
         button: 0,
         mode: ClickMode::Click,
         state_id: VarInt(state_id.0),
         slot_idx: 1,
         slot_changes: vec![].into(),
-        carried_item: ItemStack::new(ItemKind::Air, 0, None),
+        carried_item: ItemStack::new(ItemKind::Air, 0).into(),
     });
     // Clicked in the margin area of an inventory (in the main ui but not in one of
     // the slots)
-    helper.send(&ClickSlotC2s {
-        window_id: 0,
+    helper.send(&ContainerClickC2s {
+        window_id: 0.into(),
         button: 0,
         mode: ClickMode::Click,
         state_id: VarInt(state_id.0),
         slot_idx: -1,
         slot_changes: vec![].into(),
-        carried_item: ItemStack::new(ItemKind::Air, 0, None),
+        carried_item: ItemStack::new(ItemKind::Air, 0).into(),
     });
     // Clicked outside the user interface without holding an item (this is a drop
     // key mode from the client for some reason)
-    helper.send(&ClickSlotC2s {
-        window_id: 0,
+    helper.send(&ContainerClickC2s {
+        window_id: 0.into(),
         button: 0,
         mode: ClickMode::DropKey,
         state_id: VarInt(state_id.0),
         slot_idx: -999,
         slot_changes: vec![].into(),
-        carried_item: ItemStack::new(ItemKind::Air, 0, None),
+        carried_item: ItemStack::new(ItemKind::Air, 0).into(),
     });
 
     app.update();
@@ -299,7 +299,7 @@ fn test_should_allow_non_modifying_inventory_clicks() {
 
     // The user intereacted with the inventory themselves, and should not get a
     // resync
-    sent_packets.assert_count::<InventoryS2c>(0);
+    sent_packets.assert_count::<ContainerSetContentS2c>(0);
 }
 
 #[test]
@@ -504,24 +504,22 @@ fn test_sync_inventory_change_made_from_valence_while_inventory_is_opened() {
         .get_mut::<Inventory>(client)
         .expect("could not find inventory for client");
 
-    inventory.set_slot(9, ItemStack::new(ItemKind::Diamond, 2, None));
+    inventory.set_slot(9, ItemStack::new(ItemKind::Diamond, 2));
 
     app.update();
 
     // Make assertions
     let sent_packets = helper.collect_received();
 
-    let received = sent_packets.0[0]
-        .decode::<ScreenHandlerSlotUpdateS2c>()
-        .unwrap();
+    let received = sent_packets.0[0].decode::<ContainerSetSlotS2c>().unwrap();
 
-    assert_eq!(received.window_id, inv_state_window_id as i8,);
+    assert_eq!(received.window_id, inv_state_window_id);
 
     assert_eq!(received.slot_idx, 27);
 
     assert_eq!(
         received.slot_data,
-        Cow::Borrowed(&ItemStack::new(ItemKind::Diamond, 2, None))
+        Cow::Borrowed(&ItemStack::new(ItemKind::Diamond, 2))
     );
 
     assert_eq!(received.state_id, VarInt(inv_state_state_id.0));

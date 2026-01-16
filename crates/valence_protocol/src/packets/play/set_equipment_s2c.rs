@@ -28,6 +28,30 @@ pub enum EquipmentSlot {
     Body = 6,
     Saddle = 7,
 }
+
+impl EquipmentSlot {
+    pub const fn number_of_members() -> usize {
+        // Please update if number changes!!!
+        8
+    }
+}
+
+impl From<u8> for EquipmentSlot {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => EquipmentSlot::MainHand,
+            1 => EquipmentSlot::OffHand,
+            2 => EquipmentSlot::Boots,
+            3 => EquipmentSlot::Leggings,
+            4 => EquipmentSlot::Chestplate,
+            5 => EquipmentSlot::Helmet,
+            6 => EquipmentSlot::Body,
+            7 => EquipmentSlot::Saddle,
+            _ => panic!("Invalid equipment slot value: {value}"),
+        }
+    }
+}
+
 impl From<i8> for EquipmentSlot {
     fn from(value: i8) -> Self {
         match value {

@@ -53,6 +53,15 @@ impl HashedItemStack {
         components: [const { Patchable::None }; NUM_ITEM_COMPONENTS],
     };
 
+    #[must_use]
+    pub const fn new(item: ItemKind, count: i8) -> Self {
+        Self {
+            item,
+            count,
+            components: [const { Patchable::None }; NUM_ITEM_COMPONENTS],
+        }
+    }
+
     pub const fn is_empty(&self) -> bool {
         matches!(self.item, ItemKind::Air) || self.count <= 0
     }
@@ -188,7 +197,11 @@ impl ItemStack {
         matches!(self.item, ItemKind::Air) || self.count <= 0
     }
 
-    pub fn encode_recursive<W: Write>(&self, mut w: W, prefixed: bool) -> Result<(), anyhow::Error> {
+    pub fn encode_recursive<W: Write>(
+        &self,
+        mut w: W,
+        prefixed: bool,
+    ) -> Result<(), anyhow::Error> {
         if self.is_empty() {
             VarInt(0).encode(w)
         } else {

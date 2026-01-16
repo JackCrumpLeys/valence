@@ -6,6 +6,7 @@ use rand::Rng;
 use valence::entity::armor_stand::ArmorStandEntityBundle;
 use valence::entity::zombie::ZombieEntityBundle;
 use valence::prelude::*;
+use valence::protocol::packets::play::set_equipment_s2c::EquipmentSlot;
 use valence_equipment::{EquipmentInteractionBroadcast, EquipmentInventorySync};
 
 pub fn main() {
@@ -94,11 +95,11 @@ fn init_clients(
         visible_chunk_layer.0 = layer;
         visible_entity_layers.0.insert(layer);
         *game_mode = GameMode::Survival;
-        inv.set_slot(36, ItemStack::new(ItemKind::Bow, 1, None));
-        inv.set_slot(37, ItemStack::new(ItemKind::Crossbow, 1, None));
-        inv.set_slot(38, ItemStack::new(ItemKind::GoldenApple, 1, None));
-        inv.set_slot(44, ItemStack::new(ItemKind::Arrow, 1, None));
-        inv.set_slot(45, ItemStack::new(ItemKind::FireworkRocket, 1, None));
+        inv.set_slot(36, ItemStack::new(ItemKind::Bow, 1));
+        inv.set_slot(37, ItemStack::new(ItemKind::Crossbow, 1));
+        inv.set_slot(38, ItemStack::new(ItemKind::GoldenApple, 1));
+        inv.set_slot(44, ItemStack::new(ItemKind::Arrow, 1));
+        inv.set_slot(45, ItemStack::new(ItemKind::FireworkRocket, 1));
 
         commands
             .entity(player)
@@ -118,28 +119,25 @@ fn randomize_equipment(mut query: Query<&mut Equipment, Without<Client>>, server
 
         let (slot, item_stack) = match rand::thread_rng().gen_range(0..=5) {
             0 => (
-                Equipment::MAIN_HAND_IDX,
-                ItemStack::new(ItemKind::DiamondSword, 1, None),
+                EquipmentSlot::MainHand,
+                ItemStack::new(ItemKind::DiamondSword, 1),
             ),
-            1 => (
-                Equipment::OFF_HAND_IDX,
-                ItemStack::new(ItemKind::Shield, 1, None),
-            ),
+            1 => (EquipmentSlot::OffHand, ItemStack::new(ItemKind::Shield, 1)),
             2 => (
-                Equipment::FEET_IDX,
-                ItemStack::new(ItemKind::DiamondBoots, 1, None),
+                EquipmentSlot::Boots,
+                ItemStack::new(ItemKind::DiamondBoots, 1),
             ),
             3 => (
-                Equipment::LEGS_IDX,
-                ItemStack::new(ItemKind::DiamondLeggings, 1, None),
+                EquipmentSlot::Leggings,
+                ItemStack::new(ItemKind::DiamondLeggings, 1),
             ),
             4 => (
-                Equipment::CHEST_IDX,
-                ItemStack::new(ItemKind::DiamondChestplate, 1, None),
+                EquipmentSlot::Chestplate,
+                ItemStack::new(ItemKind::DiamondChestplate, 1),
             ),
             5 => (
-                Equipment::HEAD_IDX,
-                ItemStack::new(ItemKind::DiamondHelmet, 1, None),
+                EquipmentSlot::Helmet,
+                ItemStack::new(ItemKind::DiamondHelmet, 1),
             ),
             _ => unreachable!(),
         };

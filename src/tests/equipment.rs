@@ -1,13 +1,15 @@
 use valence_equipment::{Equipment, EquipmentInventorySync};
 use valence_inventory::player_inventory::PlayerInventory;
-use valence_inventory::{ClickMode, ClientInventoryState, Inventory, SlotChange};
+use valence_inventory::{ClickMode, ClientInventoryState, Inventory};
+use valence_item::HashedItemStack;
 use valence_server::entity::armor_stand::ArmorStandEntityBundle;
 use valence_server::entity::item::ItemEntityBundle;
 use valence_server::entity::zombie::ZombieEntityBundle;
 use valence_server::entity::{EntityLayerId, Position};
 use valence_server::math::DVec3;
+use valence_server::protocol::packets::play::container_click_c2s::HashedSlotChange;
 use valence_server::protocol::packets::play::{
-    ClickSlotC2s, EntityEquipmentUpdateS2c, UpdateSelectedSlotC2s,
+    ContainerClickC2s, SetCarriedItemC2s, SetEquipmentS2c,
 };
 use valence_server::{ItemKind, ItemStack};
 
@@ -31,7 +33,7 @@ fn test_only_send_update_to_other_players() {
         .get_mut::<Equipment>(client)
         .expect("could not get player equipment");
 
-    player_equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1, None));
+    player_equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1));
 
     app.update();
 
@@ -39,7 +41,7 @@ fn test_only_send_update_to_other_players() {
     let sent_packets = helper.collect_received();
 
     // We only have one player, so we should not have sent any packets.
-    sent_packets.assert_count::<EntityEquipmentUpdateS2c>(0);
+    sent_packets.assert_count::<SetEquipmentS2c>(0);
 }
 
 #[test]
@@ -69,14 +71,14 @@ fn test_multiple_entities() {
         .get_mut::<Equipment>(zombie)
         .expect("could not get entity equipment");
 
-    equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1, None));
-    equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1, None));
+    equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1));
+    equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1));
 
     app.update();
 
     // Make assertions
     let sent_packets = helper.collect_received();
-    sent_packets.assert_count::<EntityEquipmentUpdateS2c>(1);
+    sent_packets.assert_count::<SetEquipmentS2c>(1);
 
     helper.clear_received();
 
@@ -86,14 +88,14 @@ fn test_multiple_entities() {
         .expect("could not get entity equipment");
 
     // Set the zombie's equipment to the same items
-    equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1, None));
-    equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1, None));
+    equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1));
+    equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1));
 
     app.update();
 
     // Make assertions
     let sent_packets = helper.collect_received();
-    sent_packets.assert_count::<EntityEquipmentUpdateS2c>(0);
+    sent_packets.assert_count::<SetEquipmentS2c>(0);
 }
 
 #[test]
@@ -128,15 +130,15 @@ fn test_update_on_load_entity() {
         .get_mut::<Equipment>(zombie)
         .expect("could not get entity equipment");
 
-    equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1, None));
-    equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1, None));
+    equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1));
+    equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1));
 
     app.update();
 
     // Make assertions
     let sent_packets = helper.collect_received();
     // The zombie is not in range of the player
-    sent_packets.assert_count::<EntityEquipmentUpdateS2c>(0);
+    sent_packets.assert_count::<SetEquipmentS2c>(0);
 
     // Move the player to the zombie
     let mut player_pos = app
@@ -153,7 +155,7 @@ fn test_update_on_load_entity() {
     // Make assertions
     let sent_packets = helper.collect_received();
     // Once the player is in range, we send the equipment update
-    sent_packets.assert_count::<EntityEquipmentUpdateS2c>(1);
+    sent_packets.assert_count::<SetEquipmentS2c>(1);
 }
 
 #[test]
@@ -184,7 +186,7 @@ fn test_skip_update_for_empty_equipment() {
     // Make assertions
     let sent_packets = helper.collect_received();
     // The zombie is not in range of the player
-    sent_packets.assert_count::<EntityEquipmentUpdateS2c>(0);
+    sent_packets.assert_count::<SetEquipmentS2c>(0);
 
     // Move the player to the zombie
     let mut player_pos = app
@@ -201,7 +203,7 @@ fn test_skip_update_for_empty_equipment() {
     // Make assertions
     let sent_packets = helper.collect_received();
     // We skip the packet, because the equipment is empty
-    sent_packets.assert_count::<EntityEquipmentUpdateS2c>(0);
+    sent_packets.assert_count::<SetEquipmentS2c>(0);
 }
 
 #[test]
@@ -272,7 +274,7 @@ fn test_inventory_sync_from_equipment() {
         .get_mut::<Equipment>(client)
         .expect("could not get player equipment");
 
-    player_equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1, None));
+    player_equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1));
 
     app.update();
 
@@ -290,12 +292,12 @@ fn test_inventory_sync_from_equipment() {
     // after the equipment change
     assert_eq!(
         *player_inventory.slot(PlayerInventory::SLOT_CHEST),
-        ItemStack::new(ItemKind::DiamondChestplate, 1, None)
+        ItemStack::new(ItemKind::DiamondChestplate, 1)
     );
 
     assert_eq!(
         *player_equipment.chest(),
-        ItemStack::new(ItemKind::DiamondChestplate, 1, None)
+        ItemStack::new(ItemKind::DiamondChestplate, 1)
     );
 }
 
@@ -323,7 +325,7 @@ fn test_equipment_sync_from_inventory() {
 
     player_inventory.set_slot(
         PlayerInventory::SLOT_CHEST,
-        ItemStack::new(ItemKind::DiamondChestplate, 1, None),
+        ItemStack::new(ItemKind::DiamondChestplate, 1),
     );
 
     app.update();
@@ -342,12 +344,12 @@ fn test_equipment_sync_from_inventory() {
     // after the inventory change
     assert_eq!(
         *player_inventory.slot(PlayerInventory::SLOT_CHEST),
-        ItemStack::new(ItemKind::DiamondChestplate, 1, None)
+        ItemStack::new(ItemKind::DiamondChestplate, 1)
     );
 
     assert_eq!(
         *player_equipment.chest(),
-        ItemStack::new(ItemKind::DiamondChestplate, 1, None)
+        ItemStack::new(ItemKind::DiamondChestplate, 1)
     );
 }
 
@@ -373,7 +375,7 @@ fn test_equipment_priority_over_inventory() {
 
     player_inventory.set_slot(
         PlayerInventory::SLOT_CHEST,
-        ItemStack::new(ItemKind::DiamondChestplate, 1, None),
+        ItemStack::new(ItemKind::DiamondChestplate, 1),
     );
 
     let mut player_equipment = app
@@ -381,7 +383,7 @@ fn test_equipment_priority_over_inventory() {
         .get_mut::<Equipment>(client)
         .expect("could not get player equipment");
 
-    player_equipment.set_chest(ItemStack::new(ItemKind::GoldenChestplate, 1, None));
+    player_equipment.set_chest(ItemStack::new(ItemKind::GoldenChestplate, 1));
 
     app.update();
 
@@ -399,12 +401,12 @@ fn test_equipment_priority_over_inventory() {
 
     assert_eq!(
         *player_inventory.slot(PlayerInventory::SLOT_CHEST),
-        ItemStack::new(ItemKind::GoldenChestplate, 1, None)
+        ItemStack::new(ItemKind::GoldenChestplate, 1)
     );
 
     assert_eq!(
         *player_equipment.chest(),
-        ItemStack::new(ItemKind::GoldenChestplate, 1, None)
+        ItemStack::new(ItemKind::GoldenChestplate, 1)
     );
 }
 
@@ -430,7 +432,7 @@ fn test_equipment_change_from_player() {
         .get_mut::<Inventory>(client)
         .expect("could not get player equipment");
 
-    player_inventory.set_slot(36, ItemStack::new(ItemKind::DiamondChestplate, 1, None));
+    player_inventory.set_slot(36, ItemStack::new(ItemKind::DiamondChestplate, 1));
     app.update();
     helper.clear_received();
 
@@ -442,24 +444,24 @@ fn test_equipment_change_from_player() {
 
     app.update();
 
-    helper.send(&ClickSlotC2s {
-        window_id: 0,
+    helper.send(&ContainerClickC2s {
+        window_id: 0.into(),
         button: 0,
         mode: ClickMode::Hotbar,
         state_id: state_id.0.into(),
         slot_idx: 36,
         slot_changes: vec![
-            SlotChange {
+            HashedSlotChange {
                 idx: 36,
-                stack: ItemStack::EMPTY,
+                stack: HashedItemStack::EMPTY,
             },
-            SlotChange {
+            HashedSlotChange {
                 idx: PlayerInventory::SLOT_CHEST as i16,
-                stack: ItemStack::new(ItemKind::DiamondChestplate, 1, None),
+                stack: HashedItemStack::new(ItemKind::DiamondChestplate, 1),
             },
         ]
         .into(),
-        carried_item: ItemStack::EMPTY,
+        carried_item: HashedItemStack::EMPTY,
     });
 
     app.update();
@@ -477,14 +479,14 @@ fn test_equipment_change_from_player() {
 
     assert_eq!(
         player_inventory.slot(PlayerInventory::SLOT_CHEST),
-        &ItemStack::new(ItemKind::DiamondChestplate, 1, None)
+        &ItemStack::new(ItemKind::DiamondChestplate, 1)
     );
 
     assert_eq!(player_inventory.slot(36), &ItemStack::EMPTY);
 
     assert_eq!(
         player_equipment.chest(),
-        &ItemStack::new(ItemKind::DiamondChestplate, 1, None)
+        &ItemStack::new(ItemKind::DiamondChestplate, 1)
     );
 }
 
@@ -510,8 +512,8 @@ fn test_held_item_change_from_client() {
         .get_mut::<Inventory>(client)
         .expect("could not get player equipment");
 
-    player_inventory.set_slot(36, ItemStack::new(ItemKind::DiamondSword, 1, None));
-    player_inventory.set_slot(37, ItemStack::new(ItemKind::IronSword, 1, None));
+    player_inventory.set_slot(36, ItemStack::new(ItemKind::DiamondSword, 1));
+    player_inventory.set_slot(37, ItemStack::new(ItemKind::IronSword, 1));
 
     app.update();
 
@@ -522,11 +524,11 @@ fn test_held_item_change_from_client() {
 
     assert_eq!(
         player_equipment.main_hand(),
-        &ItemStack::new(ItemKind::DiamondSword, 1, None)
+        &ItemStack::new(ItemKind::DiamondSword, 1)
     );
 
     // Change the held item from the client
-    helper.send(&UpdateSelectedSlotC2s { slot: 1 });
+    helper.send(&SetCarriedItemC2s { slot: 1 });
 
     app.update(); // handle change slot
     app.update(); // handle change equipment
@@ -538,6 +540,6 @@ fn test_held_item_change_from_client() {
 
     assert_eq!(
         player_equipment.main_hand(),
-        &ItemStack::new(ItemKind::IronSword, 1, None)
+        &ItemStack::new(ItemKind::IronSword, 1)
     );
 }

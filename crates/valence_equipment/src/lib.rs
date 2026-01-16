@@ -9,8 +9,8 @@ pub use inventory_sync::EquipmentInventorySync;
 use valence_server::client::{Client, FlushPacketsSet, LoadEntityForClientEvent};
 use valence_server::entity::living::LivingEntity;
 use valence_server::entity::{EntityId, EntityLayerId, Position};
-use valence_server::protocol::packets::play::entity_equipment_update_s2c::EquipmentEntry;
-use valence_server::protocol::packets::play::EntityEquipmentUpdateS2c;
+use valence_server::protocol::packets::play::set_equipment_s2c::{EquipmentEntry, EquipmentSlot};
+use valence_server::protocol::packets::play::SetEquipmentS2c;
 use valence_server::protocol::WritePacket;
 use valence_server::{EntityLayer, ItemStack, Layer};
 
@@ -55,16 +55,11 @@ pub struct Equipment {
     pub(crate) changed: u8,
 }
 
+#[allow(clippy::large_stack_arrays)] // About 10kb but I think its worth it.
 impl Equipment {
-    pub const SLOT_COUNT: usize = 6;
+    pub const SLOT_COUNT: usize = EquipmentSlot::number_of_members();
 
-    pub const MAIN_HAND_IDX: u8 = 0;
-    pub const OFF_HAND_IDX: u8 = 1;
-    pub const FEET_IDX: u8 = 2;
-    pub const LEGS_IDX: u8 = 3;
-    pub const CHEST_IDX: u8 = 4;
-    pub const HEAD_IDX: u8 = 5;
-
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         main_hand: ItemStack,
         off_hand: ItemStack,
@@ -72,80 +67,105 @@ impl Equipment {
         leggings: ItemStack,
         chestplate: ItemStack,
         helmet: ItemStack,
+        body: ItemStack,
+        saddle: ItemStack,
     ) -> Self {
+        let equipment = [
+            main_hand, off_hand, boots, leggings, chestplate, helmet, body, saddle,
+        ];
         Self {
-            equipment: [main_hand, off_hand, boots, leggings, chestplate, helmet],
+            equipment,
             changed: 0,
         }
     }
 
-    pub fn slot(&self, idx: u8) -> &ItemStack {
+    pub fn new_empty() -> Self {
+        let equipment = [ItemStack::EMPTY; 8];
+        Self {
+            equipment,
+            changed: 0,
+        }
+    }
+
+    pub fn slot(&self, idx: EquipmentSlot) -> &ItemStack {
         &self.equipment[idx as usize]
     }
 
-    pub fn set_slot(&mut self, idx: u8, item: ItemStack) {
-        assert!(
-            idx < Self::SLOT_COUNT as u8,
-            "slot index of {idx} out of bounds"
-        );
+    pub fn set_slot(&mut self, idx: EquipmentSlot, item: ItemStack) {
         if self.equipment[idx as usize] != item {
             self.equipment[idx as usize] = item;
-            self.changed |= 1 << idx;
+            self.changed |= 1 << idx as u8;
         }
     }
 
     pub fn main_hand(&self) -> &ItemStack {
-        self.slot(Self::MAIN_HAND_IDX)
+        self.slot(EquipmentSlot::MainHand)
     }
 
     pub fn off_hand(&self) -> &ItemStack {
-        self.slot(Self::OFF_HAND_IDX)
+        self.slot(EquipmentSlot::OffHand)
     }
 
     pub fn feet(&self) -> &ItemStack {
-        self.slot(Self::FEET_IDX)
+        self.slot(EquipmentSlot::Boots)
     }
 
     pub fn legs(&self) -> &ItemStack {
-        self.slot(Self::LEGS_IDX)
+        self.slot(EquipmentSlot::Leggings)
     }
 
     pub fn chest(&self) -> &ItemStack {
-        self.slot(Self::CHEST_IDX)
+        self.slot(EquipmentSlot::Chestplate)
     }
 
     pub fn head(&self) -> &ItemStack {
-        self.slot(Self::HEAD_IDX)
+        self.slot(EquipmentSlot::Helmet)
+    }
+
+    pub fn body(&self) -> &ItemStack {
+        self.slot(EquipmentSlot::Body)
+    }
+
+    pub fn saddle(&self) -> &ItemStack {
+        self.slot(EquipmentSlot::Saddle)
     }
 
     pub fn set_main_hand(&mut self, item: ItemStack) {
-        self.set_slot(Self::MAIN_HAND_IDX, item);
+        self.set_slot(EquipmentSlot::MainHand, item);
     }
 
     pub fn set_off_hand(&mut self, item: ItemStack) {
-        self.set_slot(Self::OFF_HAND_IDX, item);
+        self.set_slot(EquipmentSlot::OffHand, item);
     }
 
     pub fn set_feet(&mut self, item: ItemStack) {
-        self.set_slot(Self::FEET_IDX, item);
+        self.set_slot(EquipmentSlot::Boots, item);
     }
 
     pub fn set_legs(&mut self, item: ItemStack) {
-        self.set_slot(Self::LEGS_IDX, item);
+        self.set_slot(EquipmentSlot::Leggings, item);
     }
 
     pub fn set_chest(&mut self, item: ItemStack) {
-        self.set_slot(Self::CHEST_IDX, item);
+        self.set_slot(EquipmentSlot::Chestplate, item);
     }
 
     pub fn set_head(&mut self, item: ItemStack) {
-        self.set_slot(Self::HEAD_IDX, item);
+        self.set_slot(EquipmentSlot::Helmet, item);
+    }
+
+    pub fn set_body(&mut self, item: ItemStack) {
+        self.set_slot(EquipmentSlot::Body, item);
+    }
+
+    pub fn set_saddle(&mut self, item: ItemStack) {
+        self.set_slot(EquipmentSlot::Saddle, item);
     }
 
     pub fn clear(&mut self) {
-        for slot in 0..Self::SLOT_COUNT as u8 {
-            self.set_slot(slot, ItemStack::EMPTY);
-        }
+        self.equipment
+            .iter_mut()
+            .for_each(|itm| *itm = ItemStack::EMPTY);
     }
 
     pub fn is_default(&self) -> bool {
@@ -193,12 +213,12 @@ fn update_equipment(
 
             entity_layer
                 .view_except_writer(position.0, entity)
-                .write_packet(&EntityEquipmentUpdateS2c {
+                .write_packet(&SetEquipmentS2c {
                     entity_id: entity_id.get().into(),
                     equipment: slots_changed
                         .iter()
                         .map(|change| EquipmentEntry {
-                            slot: change.idx as i8,
+                            slot: change.idx.into(),
                             item: change.stack.clone(),
                         })
                         .collect(),
@@ -237,12 +257,12 @@ fn on_entity_load(
         let mut entries: Vec<EquipmentEntry> = Vec::with_capacity(Equipment::SLOT_COUNT);
         for (idx, stack) in equipment.equipment.iter().enumerate() {
             entries.push(EquipmentEntry {
-                slot: idx as i8,
+                slot: (idx as u8).into(),
                 item: stack.clone(),
             });
         }
 
-        client.write_packet(&EntityEquipmentUpdateS2c {
+        client.write_packet(&SetEquipmentS2c {
             entity_id: entity_id.get().into(),
             equipment: entries,
         });

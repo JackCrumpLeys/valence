@@ -12,6 +12,7 @@ use player_inventory::PlayerInventory;
 use tracing::{debug, warn};
 use valence_server::client::{Client, FlushPacketsSet, SpawnClientsSet};
 use valence_server::event_loop::{EventLoopPreUpdate, PacketEvent};
+use valence_server::interact_block::InteractBlockEvent;
 pub use valence_server::protocol::packets::play::container_click_c2s::{ClickMode, SlotChange};
 use valence_server::protocol::packets::play::open_screen_s2c::WindowType;
 pub use valence_server::protocol::packets::play::player_action_c2s::PlayerAction;
@@ -1067,7 +1068,6 @@ fn handle_click_slot(
                     // The player was just clicking outside the inventories without holding an item
                     continue;
                 }
-
 
                 if pkt.slot_idx == -999 {
                     // The player was just clicking outside the inventories without holding an item

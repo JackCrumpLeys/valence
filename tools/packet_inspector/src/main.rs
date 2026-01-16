@@ -48,8 +48,8 @@ fn load_icon() -> IconData {
 }
 pub(crate) mod utils {
     use packet_inspector::Packet as ProxyPacket;
-    use valence_protocol::Packet;
     use valence_binary::Decode;
+    use valence_protocol::Packet;
 
     include!(concat!(env!("OUT_DIR"), "/packet_to_string.rs"));
 }

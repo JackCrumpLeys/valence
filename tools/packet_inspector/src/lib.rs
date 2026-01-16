@@ -11,6 +11,7 @@ use bytes::{BufMut, BytesMut};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
+use valence_binary::{Decode, Encode};
 use valence_protocol::decode::PacketFrame;
 use valence_protocol::packets::handshake::intention_c2s::HandShakeIntent;
 use valence_protocol::packets::handshake::IntentionC2s;
@@ -21,10 +22,9 @@ use valence_protocol::packets::{configuration, play};
 use valence_protocol::text::color::NamedColor;
 use valence_protocol::text::{Color, IntoText};
 use valence_protocol::{
-    CompressionThreshold, JsonText, Packet as ValencePacket, PacketSide,
-    PacketState,
+    CompressionThreshold, JsonText, Packet as ValencePacket, PacketSide, PacketState,
 };
-use valence_binary::{Decode, Encode};
+
 use crate::packet_io::PacketIo;
 pub use crate::packet_registry::{Packet, PacketRegistry};
 
