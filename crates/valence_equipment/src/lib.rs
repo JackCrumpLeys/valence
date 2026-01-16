@@ -166,6 +166,7 @@ impl Equipment {
         self.equipment
             .iter_mut()
             .for_each(|itm| *itm = ItemStack::EMPTY);
+        self.changed = u8::MAX
     }
 
     pub fn is_default(&self) -> bool {
