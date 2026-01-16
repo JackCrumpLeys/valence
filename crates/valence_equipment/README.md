@@ -24,12 +24,12 @@ fn init_equipment(
 ) {
     for mut equipment in &mut clients
     {
-        equipment.set_main_hand(ItemStack::new(ItemKind::DiamondSword, 1, None));
-        equipment.set_off_hand(ItemStack::new(ItemKind::Shield, 1, None));
-        equipment.set_feet(ItemStack::new(ItemKind::DiamondBoots, 1, None));
-        equipment.set_legs(ItemStack::new(ItemKind::DiamondLeggings, 1, None));
-        equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1, None));
-        equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1, None));
+        equipment.set_main_hand(ItemStack::new(ItemKind::DiamondSword, 1));
+        equipment.set_off_hand(ItemStack::new(ItemKind::Shield, 1));
+        equipment.set_feet(ItemStack::new(ItemKind::DiamondBoots, 1));
+        equipment.set_legs(ItemStack::new(ItemKind::DiamondLeggings, 1));
+        equipment.set_chest(ItemStack::new(ItemKind::DiamondChestplate, 1));
+        equipment.set_head(ItemStack::new(ItemKind::DiamondHelmet, 1));
     }
 }
 ```
