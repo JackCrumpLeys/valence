@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use valence_binary::{Decode, Encode, VarInt};
 
-use crate::array::FixedArray;
+use valence_binary::array::FixedArray;
 use crate::Packet;
 // TODO: fix this
 #[derive(Clone, Debug, Encode, Decode, Packet)]

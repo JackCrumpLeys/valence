@@ -1,6 +1,9 @@
 use std::io::Write;
 
+pub mod array;
+pub mod bit_set;
 mod bounded;
+pub mod byte_angle;
 mod id_or;
 mod id_set;
 mod impls;
@@ -44,7 +47,7 @@ pub use valence_protocol_macros::{Decode, Encode};
 /// discriminants.
 ///
 /// ```
-/// use valence_protocol::Encode;
+/// use valence_binary::Encode;
 ///
 /// #[derive(Encode)]
 /// struct MyStruct<'a> {
@@ -132,7 +135,7 @@ pub trait Encode {
 /// discriminants.
 ///
 /// ```
-/// use valence_protocol::Decode;
+/// use valence_binary::Decode;
 ///
 /// #[derive(PartialEq, Debug, Decode)]
 /// struct MyStruct {

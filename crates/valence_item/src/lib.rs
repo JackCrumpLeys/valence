@@ -175,6 +175,8 @@ mod tests {
             ItemKind::Bundle.encode(&mut *w).unwrap(); // Item
 
             VarInt(1).encode(&mut *w).unwrap(); // Added components count
+            VarInt(0).encode(&mut *w).unwrap(); // Removed components count
+
             VarInt(41).encode(&mut *w).unwrap(); // Component ID: BundleContents
 
             if depth > 0 {
@@ -183,8 +185,6 @@ mod tests {
             } else {
                 VarInt(0).encode(&mut *w).unwrap(); // Empty nested list
             }
-
-            VarInt(0).encode(w).unwrap(); // Removed components count
         }
 
         write_recursive_bundle(&mut buf, 20); // 20 > 16
@@ -193,10 +193,7 @@ mod tests {
         let result = ItemStack::decode(&mut slice);
 
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("recursion limit exceeded"));
+        assert!(result.unwrap_err().to_string().contains("recursion limit exceeded"));
     }
 
     // --- HashedItemStack Tests ---

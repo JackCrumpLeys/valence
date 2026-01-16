@@ -40,7 +40,7 @@ fn translate() {
     let deserialized = Text::from_str(&serialized).unwrap();
     assert_eq!(
         serialized,
-        r#"{"translate":"chat.type.advancement.task","with":[{"text":"arg1"},{"text":"arg2"}],"fallback":"Hello World!"}"#
+        r#"{"translate":"chat.type.advancement.task","fallback":"Hello World!","with":[{"text":"arg1"},{"text":"arg2"}]}"#
     );
     assert_eq!(txt, deserialized);
 }

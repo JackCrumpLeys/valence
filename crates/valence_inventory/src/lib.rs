@@ -109,7 +109,7 @@ impl Inventory {
     ///
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::{ItemStack, ItemKind};
+    /// # use valence_server::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// assert_eq!(inv.slot(0).item, ItemKind::Diamond);
@@ -130,7 +130,7 @@ impl Inventory {
     ///
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::{ItemStack, ItemKind};
+    /// # use valence_server::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// let old = inv.replace_slot(0, ItemStack::new(ItemKind::IronIngot, 1));
@@ -158,7 +158,7 @@ impl Inventory {
     ///
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::{ItemStack, ItemKind};
+    /// # use valence_server::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// assert!(inv.slot(1).is_empty());
@@ -195,7 +195,7 @@ impl Inventory {
     ///
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::{ItemStack, ItemKind};
+    /// # use valence_server::{ItemStack, ItemKind};
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// inv.set_slot_amount(0, 64);
@@ -237,7 +237,7 @@ impl Inventory {
     ///
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::{ItemStack, ItemKind};
+    /// # use valence_server::{ItemStack, ItemKind};
     /// # use valence_server::text::Text;
     /// let inv = Inventory::with_title(InventoryKind::Generic9x3, "Box of Holding");
     /// assert_eq!(inv.title(), &Text::from("Box of Holding"));
@@ -277,7 +277,7 @@ impl Inventory {
     ///
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::*;
+    /// # use valence_server::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 1));
@@ -301,7 +301,7 @@ impl Inventory {
     /// empty slots.
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::*;
+    /// # use valence_server::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 1));
@@ -317,7 +317,7 @@ impl Inventory {
     /// where `count < stack_max`, or `None` if there are no empty slots.
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::*;
+    /// # use valence_server::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 64));
@@ -351,7 +351,7 @@ impl Inventory {
     /// where `count < stack_max`, or `None` if there are no empty slots.
     /// ```
     /// # use valence_inventory::*;
-    /// # use valence_server::item::*;
+    /// # use valence_server::*;
     /// let mut inv = Inventory::new(InventoryKind::Generic9x1);
     /// inv.set_slot(0, ItemStack::new(ItemKind::Diamond, 1));
     /// inv.set_slot(2, ItemStack::new(ItemKind::GoldIngot, 64));
@@ -457,7 +457,7 @@ impl OpenInventory {
 ///
 /// ```
 /// # use valence_inventory::*;
-/// # use valence_server::item::*;
+/// # use valence_server::*;
 /// let mut player_inventory = Inventory::new(InventoryKind::Player);
 /// player_inventory.set_slot(36, ItemStack::new(ItemKind::Diamond, 1));
 ///
@@ -512,7 +512,7 @@ impl<'a> InventoryWindow<'a> {
 ///
 /// ```
 /// # use valence_inventory::*;
-/// # use valence_server::item::*;
+/// # use valence_server::*;
 /// let mut player_inventory = Inventory::new(InventoryKind::Player);
 /// let mut target_inventory = Inventory::new(InventoryKind::Generic9x3);
 /// let mut window = InventoryWindowMut::new(&mut player_inventory, Some(&mut target_inventory));

@@ -11,12 +11,9 @@ pub mod __private {
 
 extern crate self as valence_protocol;
 
-mod array;
 mod biome_pos;
-mod bit_set;
 mod bit_storage;
 pub mod block_pos;
-mod byte_angle;
 pub mod chunk_pos;
 pub mod chunk_section_pos;
 pub mod decode;
@@ -26,7 +23,6 @@ pub mod encode;
 pub mod game_mode;
 mod global_pos;
 mod hand;
-mod hash_utils;
 pub mod movement_flags;
 pub mod packets;
 pub mod profile;
@@ -36,13 +32,13 @@ mod velocity;
 use std::io::Write;
 
 use anyhow::Context;
-pub use array::FixedArray;
+pub use valence_binary::array::FixedArray;
 pub use biome_pos::BiomePos;
-pub use bit_set::FixedBitSet;
+pub use valence_binary::bit_set::FixedBitSet;
 pub use bit_storage::BitStorage;
 pub use block::{BlockKind, BlockState};
 pub use block_pos::BlockPos;
-pub use byte_angle::ByteAngle;
+pub use valence_binary::byte_angle::ByteAngle;
 pub use chunk_pos::ChunkPos;
 pub use chunk_section_pos::ChunkSectionPos;
 pub use decode::PacketDecoder;
