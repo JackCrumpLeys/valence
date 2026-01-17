@@ -4,7 +4,7 @@ use rand::seq::IteratorRandom;
 use rand::Rng;
 use valence::prelude::*;
 use valence::registry::biome::BiomeEffects;
-use valence_server::BiomePos;
+use valence::BiomePos;
 
 const SPAWN_Y: i32 = 0;
 const SIZE: i32 = 5;

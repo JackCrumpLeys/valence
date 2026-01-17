@@ -103,7 +103,7 @@ impl Default for CompressionThreshold {
 ///
 /// In serialized form, a packet begins with a [`VarInt`] packet ID followed by
 /// the body of the packet. If present, the implementations of [`Encode`] and
-/// [`Decode`] on `Self` are expected to only encode/decode the _body_ of this
+/// [`valence_binary::Decode`] on `Self` are expected to only encode/decode the _body_ of this
 /// packet without the leading ID.
 pub trait Packet: std::fmt::Debug {
     /// The leading `VarInt` ID of this packet.
