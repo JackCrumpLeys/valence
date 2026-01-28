@@ -13,12 +13,10 @@ extern crate self as valence_protocol;
 
 mod biome_pos;
 mod bit_storage;
-pub mod block_pos;
 pub mod chunk_pos;
 pub mod chunk_section_pos;
 pub mod decode;
 mod difficulty;
-mod direction;
 pub mod encode;
 pub mod game_mode;
 mod global_pos;
@@ -35,13 +33,13 @@ use anyhow::Context;
 pub use biome_pos::BiomePos;
 pub use bit_storage::BitStorage;
 pub use block::{BlockKind, BlockState};
-pub use block_pos::BlockPos;
+pub use valence_binary::block_pos::BlockPos;
 pub use chunk_pos::ChunkPos;
 pub use chunk_section_pos::ChunkSectionPos;
 pub use decode::PacketDecoder;
 use derive_more::{From, Into};
 pub use difficulty::Difficulty;
-pub use direction::Direction;
+pub use valence_binary::direction::Direction;
 pub use encode::{PacketEncoder, WritePacket};
 pub use game_mode::GameMode;
 pub use global_pos::GlobalPos;
@@ -159,7 +157,7 @@ mod tests {
     use valence_protocol_macros::Packet;
 
     use super::*;
-    use crate::block_pos::BlockPos;
+    use valence_binary::block_pos::BlockPos;
     use crate::decode::PacketDecoder;
     use crate::encode::PacketEncoder;
     use crate::hand::Hand;

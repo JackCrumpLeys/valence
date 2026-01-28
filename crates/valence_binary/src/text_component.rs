@@ -3,13 +3,15 @@ use std::io::Write;
 
 use anyhow::ensure;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use serde::{Deserialize, Serialize};
 use valence_nbt::Tag;
 use valence_text::{IntoText, Text};
 
 use crate::{Decode, Encode};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[repr(transparent)] // if you change this you have to remove the unsafe code!
+#[serde(transparent)]
 pub struct TextComponent {
     pub text: Text,
 }

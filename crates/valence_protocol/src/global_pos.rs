@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use valence_binary::{Decode, Encode};
 use valence_ident::Ident;
 
-use crate::block_pos::BlockPos;
+use valence_binary::block_pos::BlockPos;
 
 #[derive(Clone, PartialEq, Eq, Debug, Encode, Decode)]
 pub struct GlobalPos<'a> {

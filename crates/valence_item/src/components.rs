@@ -1,14 +1,92 @@
 use std::io::Write;
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use valence_binary::registry_id::RegistryId;
 use valence_binary::{Decode, Encode, IDSet, IdOr, TextComponent, VarInt};
 use valence_generated::attributes::EntityAttributeOperation;
-use valence_generated::registry_id::RegistryId;
+use valence_generated::block::BlockKind;
+use valence_generated::item::ItemKind;
 use valence_ident::Ident;
 use valence_nbt::Compound;
 use valence_text::Text;
 
 use crate::stack::ItemStack;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Enchantment {
+    pub description: Text,
+    pub supported_items: IDSet<ItemKind>,
+    #[serde(default)]
+    pub primary_items: Option<IDSet<ItemKind>>,
+    pub weight: i32,
+    pub max_level: i32,
+    pub min_cost: EnchantmentCost,
+    pub max_cost: EnchantmentCost,
+    pub anvil_cost: i32,
+    pub slots: Vec<EquipmentSlot>,
+    pub effects: Compound, // TODO
+    #[serde(default)]
+    pub exclusive_set: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EnchantmentCost {
+    pub base: i32,
+    pub per_level_above_first: i32,
+}
+
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[rename_all = "snake_case"]
+pub enum EquipmentSlot {
+    MainHand = 0,
+    OffHand = 1,
+    Boots = 2,
+    Leggings = 3,
+    Chestplate = 4,
+    Helmet = 5,
+    Body = 6,
+    Saddle = 7,
+}
+
+impl EquipmentSlot {
+    pub const fn number_of_members() -> usize {
+        // Please update if number changes!!!
+        8
+    }
+}
+
+impl From<u8> for EquipmentSlot {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => EquipmentSlot::MainHand,
+            1 => EquipmentSlot::OffHand,
+            2 => EquipmentSlot::Boots,
+            3 => EquipmentSlot::Leggings,
+            4 => EquipmentSlot::Chestplate,
+            5 => EquipmentSlot::Helmet,
+            6 => EquipmentSlot::Body,
+            7 => EquipmentSlot::Saddle,
+            _ => panic!("Invalid equipment slot value: {value}"),
+        }
+    }
+}
+
+impl From<i8> for EquipmentSlot {
+    fn from(value: i8) -> Self {
+        match value {
+            0 => EquipmentSlot::MainHand,
+            1 => EquipmentSlot::OffHand,
+            2 => EquipmentSlot::Boots,
+            3 => EquipmentSlot::Leggings,
+            4 => EquipmentSlot::Chestplate,
+            5 => EquipmentSlot::Helmet,
+            6 => EquipmentSlot::Body,
+            7 => EquipmentSlot::Saddle,
+            _ => panic!("Invalid equipment slot value: {value}"),
+        }
+    }
+}
 
 #[derive(Clone, PartialEq, Debug, Copy)]
 pub(crate) enum Patchable<T> {
@@ -38,65 +116,131 @@ impl<T> Patchable<T> {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+enum DynamicRegistryPlaceholder {
+    // FIXME: We can only handle static registries for now
+    String(String),
+    Id(VarInt),
+}
+
+impl Encode for DynamicRegistryPlaceholder {
+    fn encode(&self, mut w: impl Write) -> anyhow::Result<()> {
+        match self {
+            DynamicRegistryPlaceholder::String(s) => VarInt(0).encode(&mut w),
+            DynamicRegistryPlaceholder::Id(id) => id.encode(&mut w),
+        }
+    }
+}
+
+impl<'a> Decode<'a> for DynamicRegistryPlaceholder {
+    fn decode(r: &mut &'a [u8]) -> anyhow::Result<Self> {
+        // always decode as num.
+        let s = VarInt::decode(r)?;
+        Ok(DynamicRegistryPlaceholder::Id(s))
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+enum OneOrMany<T> {
+    Many(Vec<T>),
+    One(T),
+}
+
+impl<T> From<OneOrMany<T>> for Vec<T> {
+    fn from(item: OneOrMany<T>) -> Self {
+        match item {
+            OneOrMany::Many(vec) => vec,
+            OneOrMany::One(val) => vec![val],
+        }
+    }
+}
+
+fn deserialize_one_or_many<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    let helper = OneOrMany::<T>::deserialize(deserializer)?;
+    Ok(helper.into())
+}
+
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub enum ItemComponent {
     /// Arbitrary NBT data that does not fit into other structured components.
     /// Used primarily by data-driven systems and server-side plugins to store
     /// state.
+    #[serde(rename = "minecraft:custom_data")]
     CustomData(Compound),
 
     /// Overrides the default maximum stack size of the item.
     /// Allowed values are between 1 and 99.
+    #[serde(rename = "minecraft:max_stack_size")]
     MaxStackSize(VarInt),
 
     /// The total durability of the item. This is the maximum value the 'Damage'
     /// component can reach before the item breaks.
+    #[serde(rename = "minecraft:max_damage")]
     MaxDamage(VarInt),
 
     /// The current wear/tear of the item. 0 represents a new item,
     /// and higher values indicate more damage.
+    #[serde(rename = "minecraft:damage")]
     Damage(VarInt),
 
     /// If present, the item will not take durability damage when used.
     /// Mechanical equivalent to the old 'Unbreakable: 1b' NBT tag.
+    #[serde(rename = "minecraft:unbreakable")]
     Unbreakable,
 
     /// A custom name for the item, typically set via an anvil.
     /// Usually rendered in italics by the client.
+    #[serde(rename = "minecraft:custom_name")]
     CustomName(TextComponent),
 
     /// Overrides the base name of the item (e.g., "Stone").
     /// Unlike `CustomName`, this is not italicized by default.
+    #[serde(rename = "minecraft:item_name")]
     ItemName(TextComponent),
 
     /// References a specific model file in a resource pack.
     /// Allows a single Item ID to have multiple distinct visual appearances.
+    #[serde(rename = "minecraft:item_model")]
     ItemModel(String),
 
     /// Additional lines of text displayed below the item's name in the tooltip.
+    #[serde(rename = "minecraft:lore")]
     Lore(Vec<TextComponent>),
 
     /// Determines the color of the item's name (Common/Uncommon/Rare/Epic).
     /// Also affects the default glint behavior in some contexts.
+    #[serde(rename = "minecraft:rarity")]
     Rarity(Rarity),
 
     /// A list of enchantments applied to the item and their corresponding
     /// levels.
-    Enchantments(Vec<(RegistryId, VarInt)>),
+    #[serde(rename = "minecraft:enchantments")]
+    Enchantments(Vec<(DynamicRegistryPlaceholder, VarInt)>), // TODO we cant handle dynamic registries here yet
 
     /// In Adventure mode, this restricts which blocks a player can place
     /// this specific block on.
+    #[serde(rename = "minecraft:can_place_on")]
+    #[serde(deserialize_with = "deserialize_one_or_many")]
     CanPlaceOn(Vec<BlockPredicate>),
 
     /// In Adventure mode, this restricts which blocks the player can break
     /// while holding this item.
+    #[serde(rename = "minecraft:can_break")]
     CanBreak(Vec<BlockPredicate>),
 
     /// Modifies the player's base attributes (like Attack Damage, Movement
     /// Speed, or Max Health) when this item is held or equipped.
+    #[serde(rename = "minecraft:attribute_modifiers")]
     AttributeModifiers { modifiers: Vec<AttributeModifier> },
 
     /// Advanced visual overrides for resource packs.
+    #[serde(rename = "minecraft:custom_model_data")]
     CustomModelData {
         /// Generic floating point values used by shaders or model predicates.
         floats: Vec<f32>,
@@ -109,6 +253,7 @@ pub enum ItemComponent {
     },
 
     /// Controls the visibility of the item's details.
+    #[serde(rename = "minecraft:tooltip_display")]
     TooltipDisplay {
         /// If true, the entire tooltip (including name) is hidden.
         hide_tooltip: bool,
@@ -119,21 +264,26 @@ pub enum ItemComponent {
 
     /// The cumulative cost (in levels) added to anvil operations involving this
     /// item. Increases every time the item is repaired or modified.
+    #[serde(rename = "minecraft:repair_cost")]
     RepairCost(VarInt),
 
     /// Internal flag used for creative mode. If present, the item cannot be
     /// picked up or moved within specific creative tabs.
+    #[serde(rename = "minecraft:creative_slot_lock")]
     CreativeSlotLock,
 
     /// Forces the "enchantment purple glow" to be either always on or always
     /// off, regardless of whether the item is actually enchanted.
+    #[serde(rename = "minecraft:enchantment_glint_override")]
     EnchantmentGlintOverride(bool),
 
     /// Used for projectiles (like arrows or tridents) to mark them as "ghost"
     /// items that cannot be picked back up by the player.
+    #[serde(rename = "minecraft:intangible_projectile")]
     IntangibleProjectile(Compound),
 
     /// Defines the nutritional value of the item when eaten.
+    #[serde(rename = "minecraft:food")]
     Food {
         /// How many hunger points (half-shanks) are restored.
         nutrition: VarInt,
@@ -145,6 +295,7 @@ pub enum ItemComponent {
 
     /// Defines how the item is used/consumed (e.g., eating, drinking, or using
     /// a bow).
+    #[serde(rename = "minecraft:consumable")]
     Consumable {
         /// The time in seconds required to finish using the item.
         consume_seconds: f32,
@@ -161,9 +312,11 @@ pub enum ItemComponent {
 
     /// Defines an item that is returned to the inventory after this one is
     /// used. Example: Eating Mushroom Stew returns an empty Bowl.
+    #[serde(rename = "minecraft:use_remainder")]
     UseRemainder(Box<ItemStack>),
 
     /// Prevents the item from being used again for a set duration.
+    #[serde(rename = "minecraft:use_cooldown")]
     UseCooldown {
         /// Duration of the cooldown in seconds.
         seconds: f32,
@@ -174,9 +327,11 @@ pub enum ItemComponent {
 
     /// Prevents the item from being destroyed by certain damage types (e.g.,
     /// fire-resistant Netherite).
+    #[serde(rename = "minecraft:damage_resistant")]
     DamageResistant(String),
 
     /// Configures how this item mines blocks.
+    #[serde(rename = "minecraft:tool")]
     Tool {
         /// Specific rules for block sets (e.g., "Pickaxes mine stones fast").
         rules: Vec<ToolRule>,
@@ -189,6 +344,7 @@ pub enum ItemComponent {
     },
 
     /// Statistics for attacking.
+    #[serde(rename = "minecraft:weapon")]
     Weapon {
         /// Base damage added to the player's attack.
         damage_per_attack: VarInt,
@@ -199,9 +355,11 @@ pub enum ItemComponent {
 
     /// Determines how many experience points the item "absorbs" in an
     /// enchanting table.
+    #[serde(rename = "minecraft:enchantable")]
     Enchantable(VarInt),
 
     /// Logic for equipping the item.
+    #[serde(rename = "minecraft:equippable")]
     Equippable {
         /// Which body slot this item fits into (Head, Chest, etc.).
         slot: EquipSlot,
@@ -224,18 +382,23 @@ pub enum ItemComponent {
     },
 
     /// Items that can be used in an anvil to repair this item.
+    #[serde(rename = "minecraft:repairable")]
     Repairable(IDSet),
 
     /// Enables Elytra-style flight physics when equipped.
+    #[serde(rename = "minecraft:glider")]
     Glider,
 
     /// References a custom sprite used as the background of the item's tooltip.
+    #[serde(rename = "minecraft:tooltip_style")]
     TooltipStyle(String),
 
     /// Replicates the "Totem of Undying" behavior.
+    #[serde(rename = "minecraft:death_protection")]
     DeathProtection(Vec<ConsumeEffect>),
 
     /// Shield-specific combat logic.
+    #[serde(rename = "minecraft:blocks_attacks")]
     BlocksAttacks {
         /// Delay in seconds before blocking becomes active.
         block_delay_seconds: f32,
@@ -258,12 +421,14 @@ pub enum ItemComponent {
     },
 
     /// Enchantments contained within an Enchanted Book.
+    #[serde(rename = "minecraft:stored_enchantments")]
     StoredEnchantments {
         enchantments: Vec<(RegistryId, VarInt)>,
         show_in_tooltip: bool,
     },
 
     /// RGB color for leather armor or other dyeable items.
+    #[serde(rename = "minecraft:dyed_color")]
     DyedColor {
         /// The packed RGB integer.
         color: i32,
@@ -272,24 +437,31 @@ pub enum ItemComponent {
     },
 
     /// The color used for markings on a Map item.
+    #[serde(rename = "minecraft:map_color")]
     MapColor(i32),
 
     /// The numerical ID associated with a filled Map.
+    #[serde(rename = "minecraft:map_id")]
     MapId(VarInt),
 
     /// NBT data defining markers, banners, and icons shown on a map.
+    #[serde(rename = "minecraft:map_decorations")]
     MapDecorations(Compound),
 
     /// Tracking state for map expansion or locking.
+    #[serde(rename = "minecraft:map_post_processing")]
     MapPostProcessing(MapPostProcessingType),
 
     /// Items currently loaded into a Crossbow.
+    #[serde(rename = "minecraft:charged_projectiles")]
     ChargedProjectiles(Vec<ItemStack>),
 
     /// Items stored inside a Bundle.
+    #[serde(rename = "minecraft:bundle_contents")]
     BundleContents(Vec<ItemStack>),
 
     /// Data for Potion items, including their base type and custom effects.
+    #[serde(rename = "minecraft:potion_contents")]
     PotionContents {
         /// The base potion type (e.g., "Invisibility").
         potion_id: Option<RegistryId>,
@@ -302,15 +474,19 @@ pub enum ItemComponent {
     },
 
     /// Multiplier for the duration of effects applied by this potion.
+    #[serde(rename = "minecraft:potion_duration_scale")]
     PotionDurationScale(f32),
 
     /// Effects granted by eating Suspicious Stew.
+    #[serde(rename = "minecraft:suspicious_stew_effects")]
     SuspiciousStewEffects(Vec<(RegistryId, VarInt)>),
 
     /// Pages and filtering information for a Book and Quill.
+    #[serde(rename = "minecraft:writable_book_content")]
     WritableBookContent { pages: Vec<WritablePage> },
 
     /// Finalized content for a Written Book.
+    #[serde(rename = "minecraft:written_book_content")]
     WrittenBookContent {
         /// The displayed title.
         raw_title: String,
@@ -327,6 +503,7 @@ pub enum ItemComponent {
         resolved: bool,
     },
     /// Visual armor customization (Pattern and Material).
+    #[serde(rename = "minecraft:trim")]
     Trim {
         material: IdOr<TrimMaterial>,
         pattern: IdOr<TrimPattern>,
@@ -335,29 +512,37 @@ pub enum ItemComponent {
     },
 
     /// Internal state for the Debug Stick, tracking property toggles.
+    #[serde(rename = "minecraft:debug_stick_state")]
     DebugStickState(Compound),
 
     /// NBT data used to modify an entity when it is spawned from an item (Spawn
     /// Eggs).
+    #[serde(rename = "minecraft:entity_data")]
     EntityData { id: RegistryId, data: Compound },
 
     /// NBT data for entities inside a Bucket (like Fish or Axolotls).
+    #[serde(rename = "minecraft:bucket_entity_data")]
     BucketEntityData(Compound),
 
     /// NBT data for the Block Entity created when this item is placed (Chests,
     /// Signs).
+    #[serde(rename = "minecraft:block_entity_data")]
     BlockEntityData { id: RegistryId, data: Compound },
 
     /// The specific sound and duration associated with a Goat Horn.
+    #[serde(rename = "minecraft:instrument")]
     Instrument(IdOr<InstrumentDefinition>),
 
     /// Marks an item as a valid material for the Armor Trim system.
+    #[serde(rename = "minecraft:provides_trim_material")]
     ProvidesTrimMaterial(ModePair<String, IdOr<TrimMaterial>>),
 
     /// The level of Bad Omen granted by an Ominous Bottle (0-4).
+    #[serde(rename = "minecraft:ominous_bottle_amplifier")]
     OminousBottleAmplifier(VarInt),
 
     /// Configuration for items that can be played in a Jukebox.
+    #[serde(rename = "minecraft:jukebox_playable")]
     JukeboxPlayable {
         /// Reference to a Jukebox Song.
         song: ModePair<String, IdOr<JukeboxSong>>,
@@ -365,12 +550,15 @@ pub enum ItemComponent {
     },
 
     /// Marks an item as a valid pattern for the Loom (Banner Patterns).
+    #[serde(rename = "minecraft:provides_banner_patterns")]
     ProvidesBannerPatterns(String),
 
     /// A list of recipe IDs that a Knowledge Book will teach the player.
+    #[serde(rename = "minecraft:recipes")]
     Recipes(Compound),
 
     /// Tracking data for a Compass pointing to a specific Lodestone.
+    #[serde(rename = "minecraft:lodestone_tracker")]
     LodestoneTracker {
         /// The dimension and coordinate of the target. None if the compass is
         /// spinning.
@@ -381,118 +569,155 @@ pub enum ItemComponent {
     },
 
     /// Individual explosion properties for a Firework Star.
+    #[serde(rename = "minecraft:firework_explosion")]
     FireworkExplosion(FireworkExplosionData),
 
     /// Flight and explosion data for a Firework Rocket.
+    #[serde(rename = "minecraft:fireworks")]
     Fireworks {
         flight_duration: VarInt,
         explosions: Vec<FireworkExplosionData>,
     },
 
     /// Data for a Player Head, including the skin texture and UUID.
+    #[serde(rename = "minecraft:profile")]
     Profile(ResolvableProfile),
 
     /// The sound played by a Note Block if this player head is placed on top of
     /// it.
+    #[serde(rename = "minecraft:note_block_sound")]
     NoteBlockSound(String),
 
     /// Visual layers for a Banner or Shield.
+    #[serde(rename = "minecraft:banner_patterns")]
     BannerPatterns(Vec<BannerLayer>),
 
     /// The base dye color for a Banner.
+    #[serde(rename = "minecraft:base_color")]
     BaseColor(VarInt),
 
     /// The four item IDs used as patterns on a Decorated Pot.
+    #[serde(rename = "minecraft:pot_decorations")]
     PotDecorations(Vec<RegistryId>),
 
     /// The inventory contents of a block (like a Chest or Shulker Box).
+    #[serde(rename = "minecraft:container")]
     Container(Vec<ItemStack>),
 
     /// Block state property overrides (e.g., "lit: true").
+    #[serde(rename = "minecraft:block_state")]
     BlockState(Vec<(String, String)>),
 
     /// Data for bees currently inside a Beehive item.
+    #[serde(rename = "minecraft:bees")]
     Bees(Vec<BeeData>),
 
     /// The "Key" name required to open a container if it has a Lock component.
+    #[serde(rename = "minecraft:lock")]
     Lock(String),
 
     /// Reference to a Loot Table for an unopened chest.
+    #[serde(rename = "minecraft:container_loot")]
     ContainerLoot(Compound),
 
     /// Overrides the default sound played when this specific item breaks.
+    #[serde(rename = "minecraft:break_sound")]
     BreakSound(IdOr<SoundEventDefinition>),
 
     /// Biome-specific variant of a Villager (e.g., Desert, Plains).
+    #[serde(rename = "minecraft:villager_variant")]
     VillagerVariant(RegistryId),
 
     /// Skin variant for a Wolf.
+    #[serde(rename = "minecraft:wolf_variant")]
     WolfVariant(RegistryId),
 
     /// Determines the bark/growl sounds for a Wolf.
+    #[serde(rename = "minecraft:wolf_sound_variant")]
     WolfSoundVariant(RegistryId),
 
     /// Dye color of a Wolf's collar.
+    #[serde(rename = "minecraft:wolf_collar")]
     WolfCollar(DyeColor),
 
     /// Type of Fox (Red or Snow).
+    #[serde(rename = "minecraft:fox_variant")]
     FoxVariant(FoxType),
 
     /// Size of a Salmon (Small, Medium, Large).
+    #[serde(rename = "minecraft:salmon_size")]
     SalmonSize(SalmonScale),
 
     /// Color of a Parrot.
+    #[serde(rename = "minecraft:parrot_variant")]
     ParrotVariant(ParrotType),
 
     /// Pattern type for a Tropical Fish.
+    #[serde(rename = "minecraft:tropical_fish_pattern")]
     TropicalFishPattern(TropicalFishPattern),
 
     /// Primary color of a Tropical Fish.
+    #[serde(rename = "minecraft:tropical_fish_base_color")]
     TropicalFishBaseColor(DyeColor),
 
     /// Secondary color of a Tropical Fish.
+    #[serde(rename = "minecraft:tropical_fish_pattern_color")]
     TropicalFishPatternColor(DyeColor),
 
     /// Type of Mooshroom (Red or Brown).
+    #[serde(rename = "minecraft:mooshroom_variant")]
     MooshroomVariant(MooshroomType),
 
     /// Breed of a Rabbit.
+    #[serde(rename = "minecraft:rabbit_variant")]
     RabbitVariant(RabbitType),
 
     /// Skin variant for a Pig.
+    #[serde(rename = "minecraft:pig_variant")]
     PigVariant(RegistryId),
 
     /// Skin variant for a Cow.
+    #[serde(rename = "minecraft:cow_variant")]
     CowVariant(RegistryId),
 
     /// Skin variant for a Chicken.
+    #[serde(rename = "minecraft:chicken_variant")]
     ChickenVariant(ModePair<String, RegistryId>),
 
     /// Biome variant for a Frog.
+    #[serde(rename = "minecraft:frog_variant")]
     FrogVariant(RegistryId),
 
     /// Color and marking variant for a Horse.
+    #[serde(rename = "minecraft:horse_variant")]
     HorseVariant(HorseColor),
 
     /// The specific painting texture and dimensions.
+    #[serde(rename = "minecraft:painting_variant")]
     PaintingVariant(IdOr<PaintingVariantDefinition>),
 
     /// Color variant for a Llama.
+    #[serde(rename = "minecraft:llama_variant")]
     LlamaVariant(LlamaColor),
 
     /// Color variant for an Axolotl.
+    #[serde(rename = "minecraft:axolotl_variant")]
     AxolotlVariant(AxolotlType),
 
     /// Breed variant for a Cat.
+    #[serde(rename = "minecraft:cat_variant")]
     CatVariant(RegistryId),
 
     /// Dye color of a Cat's collar.
+    #[serde(rename = "minecraft:cat_collar")]
     CatCollar(DyeColor),
 
     /// Natural wool color of a Sheep.
+    #[serde(rename = "minecraft:sheep_color")]
     SheepColor(DyeColor),
 
     /// Shell color of a Shulker.
+    #[serde(rename = "minecraft:shulker_color")]
     ShulkerColor(DyeColor),
 }
 
@@ -648,7 +873,7 @@ impl<'a, A: Decode<'a>, B: Decode<'a>> Decode<'a> for ModePair<A, B> {
 #[derive(Clone, PartialEq, Debug, Encode)]
 pub struct BlockPredicate {
     /// If None, matches any block ID.
-    pub blocks: Option<IDSet>,
+    pub blocks: Option<IDSet<BlockKind>>,
 
     /// Matches specific block state properties (e.g., `lit=true`).
     pub properties: Option<Vec<Property>>,
@@ -732,7 +957,8 @@ pub struct PartialComponentMatcher {
 }
 
 /// Modifies a player's attributes (like Strength or Speed).
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct AttributeModifier {
     /// The ID of the attribute to modify in the registry.
     pub attribute_id: RegistryId,
@@ -756,7 +982,8 @@ pub struct AttributeModifier {
 }
 
 /// Defines custom mining speed logic for a tool.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct ToolRule {
     /// The blocks this rule applies to.
     pub blocks: IDSet,
@@ -769,7 +996,8 @@ pub struct ToolRule {
     pub correct_drop_for_blocks: Option<bool>,
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct LodestoneTarget {
     /// The namespaced key of the dimension (e.g., "`minecraft:the_nether`").
     pub dimension: String,
@@ -780,7 +1008,8 @@ pub struct LodestoneTarget {
 
 /// Defines a sound event, either by referencing the registry or defining it
 /// on the fly.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct SoundEventDefinition {
     /// The identifier of the sound (e.g., "minecraft:entity.pig.ambient").
     /// In 1.21, this can be a direct String or a Registry ID.
@@ -791,7 +1020,8 @@ pub struct SoundEventDefinition {
 }
 
 /// Defines a material used to trim armor (e.g., Gold, Amethyst).
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct TrimMaterial {
     /// Corresponds to "Suffix" in the Wiki.
     /// This string is appended to the texture path (e.g., "amethyst" ->
@@ -812,7 +1042,8 @@ pub struct TrimMaterial {
 }
 
 /// Defines the shape/pattern of the armor trim (e.g., Vex, Coast).
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct TrimPattern {
     /// The asset ID for the texture pattern.
     pub asset_id: String,
@@ -828,7 +1059,8 @@ pub struct TrimPattern {
 }
 
 /// Defines a Goat Horn instrument.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct InstrumentDefinition {
     /// The sound played when the horn is used.
     pub sound_event: IdOr<SoundEventDefinition>,
@@ -844,7 +1076,8 @@ pub struct InstrumentDefinition {
 }
 
 /// Defines a Music Disc song.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct JukeboxSong {
     /// The sound event to play.
     pub sound_event: IdOr<SoundEventDefinition>,
@@ -861,7 +1094,8 @@ pub struct JukeboxSong {
 }
 
 /// Defines a variant of a painting entity.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct PaintingVariantDefinition {
     /// The path to the texture in the resource pack.
     pub asset_id: String,
@@ -874,7 +1108,8 @@ pub struct PaintingVariantDefinition {
 }
 
 /// Defines a single explosion in a Firework Rocket.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct FireworkExplosionData {
     /// The shape (Small Ball, Large Ball, Star, Creeper, Burst).
     pub shape: VarInt,
@@ -893,7 +1128,8 @@ pub struct FireworkExplosionData {
 }
 
 /// Defines a layer on a Banner.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct BannerLayer {
     /// The pattern type (Flower, Skull, Stripe, etc.).
     pub pattern: IdOr<BannerPattern>,
@@ -902,7 +1138,8 @@ pub struct BannerLayer {
     pub color: DyeColor,
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct BannerPattern {
     /// The texture identifier (e.g., "minecraft:flower").
     pub asset_id: String,
@@ -913,7 +1150,8 @@ pub struct BannerPattern {
 }
 
 /// A page in a Book and Quill (Writable).
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct WritablePage {
     /// The raw text entered by the player.
     pub raw: String,
@@ -924,7 +1162,8 @@ pub struct WritablePage {
 }
 
 /// A page in a Finished Book (Written).
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct WrittenPage {
     /// The JSON text component for the page content.
     pub raw: TextComponent,
@@ -934,7 +1173,8 @@ pub struct WrittenPage {
 }
 
 /// Represents a Player's Game Profile (Skin/UUID).
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct ResolvableProfile {
     /// The player's username.
     pub name: Option<String>,
@@ -946,7 +1186,8 @@ pub struct ResolvableProfile {
     pub properties: Vec<ProfileProperty>,
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct ProfileProperty {
     pub name: String,
     /// The base64 encoded value.
@@ -956,7 +1197,8 @@ pub struct ProfileProperty {
 }
 
 /// Information about a Bee inside a Beehive.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct BeeData {
     /// The NBT data of the Bee entity itself (Health, Name, etc.).
     pub entity_data: Compound,
@@ -969,19 +1211,17 @@ pub struct BeeData {
 }
 
 /// A wrapper for the various effects caused by consuming an item.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct ConsumeEffect {
-    /// The registry ID of the effect type (`ApplyEffects`, Teleport, etc.).
-    pub type_id: VarInt,
-
-    /// The effect data. Note: The protocol doesn't wrap this in a neat enum,
-    /// it sends the data immediately after the ID.
-    /// You must ensure your Decode logic matches the `type_id` to the correct
-    /// variant here.
     pub data: ConsumeEffectData,
 }
 
 #[derive(Clone, PartialEq, Debug, Encode, Decode)]
+// This is a "registry" but im not making a
+// RegistryId impl for it cuase this is its only use
+// #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ConsumeEffectData {
     /// Type 0: Apply Effects
     ApplyEffects {
@@ -1004,10 +1244,11 @@ pub enum ConsumeEffectData {
 }
 
 /// A standard Potion Effect.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct PotionEffect {
     /// The ID of the effect (Speed, Jump Boost, etc.).
-    pub id: RegistryId,
+    pub id: RegistryId, // TODO
 
     /// The level of the effect (0 = Level 1, 1 = Level 2).
     pub amplifier: VarInt,
@@ -1026,7 +1267,8 @@ pub struct PotionEffect {
 }
 
 /// Shield logic for reducing damage.
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct DamageReduction {
     /// The angle (in degrees) in front of the player that is blocked.
     pub horizontal_blocking_angle: f32,
@@ -1041,7 +1283,8 @@ pub struct DamageReduction {
     pub factor: f32,
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Rarity {
     Common,   // White
     Uncommon, // Yellow
@@ -1049,13 +1292,15 @@ pub enum Rarity {
     Epic,     // Purple
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum MapPostProcessingType {
     Lock,  // The map has been locked in a Cartography Table.
     Scale, // The map is being zoomed out.
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ConsumableAnimation {
     None,
     Eat,
@@ -1069,7 +1314,8 @@ pub enum ConsumableAnimation {
     Brush,
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum EquipSlot {
     MainHand,
     Feet,
@@ -1080,7 +1326,8 @@ pub enum EquipSlot {
     Body, // Horse armor / Llama carpet
 }
 
-#[derive(Clone, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum AttributeSlot {
     Any,
     MainHand,
@@ -1094,7 +1341,8 @@ pub enum AttributeSlot {
     Body,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum DyeColor {
     White,
     Orange,
@@ -1114,20 +1362,23 @@ pub enum DyeColor {
     Black,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FoxType {
     Red,
     Snow,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SalmonScale {
     Small,
     Medium,
     Large,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ParrotType {
     RedBlue,
     Blue,
@@ -1136,7 +1387,8 @@ pub enum ParrotType {
     Gray,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum TropicalFishPattern {
     Kob,
     Sunstreak,
@@ -1152,13 +1404,15 @@ pub enum TropicalFishPattern {
     Clayfish,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum MooshroomType {
     Red,
     Brown,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum RabbitType {
     Brown,
     White,
@@ -1169,7 +1423,8 @@ pub enum RabbitType {
     Evil, // "Toast"
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum HorseColor {
     White,
     Creamy,
@@ -1180,7 +1435,8 @@ pub enum HorseColor {
     DarkBrown,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum LlamaColor {
     Creamy,
     White,
@@ -1188,7 +1444,8 @@ pub enum LlamaColor {
     Gray,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode)]
+#[derive(Clone, Copy, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum AxolotlType {
     Lucy, // Pink
     Wild, // Brown
