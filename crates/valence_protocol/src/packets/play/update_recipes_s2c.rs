@@ -1,9 +1,11 @@
 use std::borrow::Cow;
 
-use valence_binary::{Decode, Encode, IDSet, VarInt};
-use valence_generated::registry_id::RegistryId;
+use valence_binary::{
+    registry_id::{PlaceholderDynamicRegistryItem, RegistryId},
+    Decode, Encode, IDSet, VarInt,
+};
 use valence_ident::Ident;
-use valence_item::ItemStack;
+use valence_item::{ItemKind, ItemStack};
 
 use crate::Packet;
 
@@ -21,7 +23,7 @@ pub struct PropertySet<'a> {
 
 #[derive(Clone, Debug, Encode, Decode)]
 pub struct StonecutterRecipe<'a> {
-    pub ingredients: IDSet,
+    pub ingredients: IDSet<ItemKind>,
     pub result: SlotDisplay<'a>,
 }
 
@@ -29,13 +31,13 @@ pub struct StonecutterRecipe<'a> {
 pub enum SlotDisplay<'a> {
     Empty,
     AnyFuel,
-    Item(RegistryId),
+    Item(RegistryId<ItemKind>),
     ItemStack(Box<ItemStack>),
     Tag(Ident<Cow<'a, str>>),
     SmithingTrim {
         base: Box<SlotDisplay<'a>>,
         material: Box<SlotDisplay<'a>>,
-        pattern: RegistryId, // ID in trim_pattern registry
+        pattern: RegistryId<PlaceholderDynamicRegistryItem>, // ID in trim_pattern registry
     },
     WithRemainder {
         ingredient: Box<SlotDisplay<'a>>,

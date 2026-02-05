@@ -2,7 +2,7 @@ use valence_binary::{Decode, Encode, IdOr};
 pub use valence_generated::sound::Sound;
 use valence_ident::Ident;
 
-pub type SoundId = IdOr<SoundDirect>;
+pub type SoundId = IdOr<Sound, SoundDirect>;
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq)]
 pub struct SoundDirect {

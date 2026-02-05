@@ -15,6 +15,7 @@ workspace = true
 [dependencies]
 valence_ident.workspace = true
 valence_math.workspace = true
+serde = { workspace = true, features = ["derive"] }
 
 [build-dependencies]
 anyhow.workspace = true
