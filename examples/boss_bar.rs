@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 use valence::prelude::*;
 use valence_boss_bar::{
     BossBarBundle, BossBarColor, BossBarDivision, BossBarFlags, BossBarHealth, BossBarStyle,
@@ -90,7 +90,7 @@ fn init_clients(
     >,
     layers_query: Query<Entity, (With<ChunkLayer>, With<EntityLayer>)>,
 ) {
-    let layer = layers_query.single();
+    let layer = layers_query.single().unwrap();
 
     for (
         mut client,
@@ -137,7 +137,7 @@ fn init_clients(
 }
 
 fn listen_messages(
-    mut message_events: EventReader<ChatMessageEvent>,
+    mut message_events: MessageReader<ChatMessageEvent>,
     mut boss_bars_query: Query<
         (
             &mut BossBarStyle,
@@ -156,7 +156,7 @@ fn listen_messages(
         mut boss_bar_health,
         mut boss_bar_title,
         entity_layer_id,
-    ) = boss_bars_query.single_mut();
+    ) = boss_bars_query.single_mut().unwrap();
 
     for ChatMessageEvent {
         client, message, ..
@@ -182,7 +182,7 @@ fn listen_messages(
                 ];
                 colors.retain(|c| *c != boss_bar_style.color);
 
-                let random_color = colors.choose(&mut rand::thread_rng()).unwrap();
+                let random_color = colors.choose(&mut rand::rng()).unwrap();
 
                 boss_bar_style.color = *random_color;
             }
@@ -196,7 +196,7 @@ fn listen_messages(
                 ];
                 divisions.retain(|d| *d != boss_bar_style.division);
 
-                let random_division = divisions.choose(&mut rand::thread_rng()).unwrap();
+                let random_division = divisions.choose(&mut rand::rng()).unwrap();
 
                 boss_bar_style.division = *random_division;
             }

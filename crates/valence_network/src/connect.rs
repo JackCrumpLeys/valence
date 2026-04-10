@@ -8,7 +8,7 @@ use std::time::Duration;
 use anyhow::{bail, ensure, Context};
 use base64::prelude::*;
 use hmac::digest::Update;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use num_bigint::BigInt;
 use reqwest::StatusCode;
 use rsa::Pkcs1v15Encrypt;

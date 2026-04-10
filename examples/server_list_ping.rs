@@ -2,7 +2,7 @@
 
 use std::net::SocketAddr;
 
-use rand::Rng;
+use rand::RngExt;
 use valence::network::{
     async_trait, BroadcastToLan, CleanupFn, ConnectionMode, HandshakeData, PlayerSampleEntry,
     ServerListPing,
@@ -34,7 +34,7 @@ impl NetworkCallbacks for MyCallbacks {
         let max_players = 420;
 
         ServerListPing::Respond {
-            online_players: rand::thread_rng().gen_range(0..=max_players),
+            online_players: rand::rng().random_range(0..=max_players),
             max_players,
             player_sample: vec![PlayerSampleEntry {
                 name: "foobar".into(),

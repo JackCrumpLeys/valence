@@ -7,7 +7,7 @@ use std::time::Instant;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_ecs::query::QueryData;
-use bevy_ecs::world::Command;
+use bevy_ecs::system::Command;
 use byteorder::{NativeEndian, ReadBytesExt};
 use bytes::{Bytes, BytesMut};
 use derive_more::{Deref, DerefMut, From, Into};
@@ -101,8 +101,8 @@ impl Plugin for ClientPlugin {
                 FlushPacketsSet,
             ),
         )
-        .add_event::<LoadEntityForClientEvent>()
-        .add_event::<UnloadEntityForClientEvent>();
+        .add_message::<LoadEntityForClientEvent>()
+        .add_message::<UnloadEntityForClientEvent>();
     }
 }
 
@@ -395,7 +395,7 @@ pub struct DisconnectClient {
 
 impl Command for DisconnectClient {
     fn apply(self, world: &mut World) {
-        if let Some(mut entity) = world.get_entity_mut(self.client) {
+        if let Ok(mut entity) = world.get_entity_mut(self.client) {
             if let Some(mut client) = entity.get_mut::<Client>() {
                 client.write_packet(&DisconnectS2c {
                     reason: self.reason.into_cow_text_component(),
@@ -542,7 +542,7 @@ pub struct View {
     pub view_dist: &'static ViewDistance,
 }
 
-impl ViewItem<'_> {
+impl ViewItem<'_, '_> {
     pub fn get(&self) -> ChunkView {
         ChunkView::new(self.pos.0.into(), self.view_dist.0)
     }
@@ -554,7 +554,7 @@ pub struct OldView {
     pub old_view_dist: &'static OldViewDistance,
 }
 
-impl OldViewItem<'_> {
+impl OldViewItem<'_, '_> {
     pub fn get(&self) -> ChunkView {
         ChunkView::new(self.old_pos.get().into(), self.old_view_dist.0)
     }
@@ -611,7 +611,7 @@ pub fn despawn_disconnected_clients(
     mut disconnected_clients: RemovedComponents<Client>,
 ) {
     for entity in disconnected_clients.read() {
-        if let Some(mut entity) = commands.get_entity(entity) {
+        if let Ok(mut entity) = commands.get_entity(entity) {
             entity.insert(Despawned);
         }
     }
@@ -887,7 +887,7 @@ fn handle_layer_messages(
 
 /// This event will be emitted when a entity is unloaded for a client (e.g when
 /// moving out of range of the entity).
-#[derive(Debug, Clone, PartialEq, Event)]
+#[derive(Debug, Clone, PartialEq, Message)]
 pub struct UnloadEntityForClientEvent {
     /// The client to unload the entity for.
     pub client: Entity,
@@ -897,7 +897,7 @@ pub struct UnloadEntityForClientEvent {
 
 /// This event will be emitted when a entity is loaded for a client (e.g when
 /// moving into range of the entity).
-#[derive(Debug, Clone, PartialEq, Event)]
+#[derive(Debug, Clone, PartialEq, Message)]
 pub struct LoadEntityForClientEvent {
     /// The client to load the entity for.
     pub client: Entity,
@@ -932,8 +932,8 @@ pub(crate) fn update_view_and_layers(
     entity_ids: Query<&EntityId>,
     entity_init: Query<(EntityInitQuery, &Position)>,
 
-    mut unload_entity_writer: EventWriter<UnloadEntityForClientEvent>,
-    mut load_entity_writer: EventWriter<LoadEntityForClientEvent>,
+    mut unload_entity_writer: MessageWriter<UnloadEntityForClientEvent>,
+    mut load_entity_writer: MessageWriter<LoadEntityForClientEvent>,
 ) {
     // Wrap the events in this, so we only need one channel.
     enum ChannelEvent {
@@ -1188,10 +1188,10 @@ pub(crate) fn update_view_and_layers(
     for event in rx.try_iter() {
         match event {
             ChannelEvent::UnloadEntity(event) => {
-                unload_entity_writer.send(event);
+                unload_entity_writer.write(event);
             }
             ChannelEvent::LoadEntity(event) => {
-                load_entity_writer.send(event);
+                load_entity_writer.write(event);
             }
         };
     }

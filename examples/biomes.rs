@@ -1,7 +1,7 @@
 #![allow(clippy::type_complexity)]
 
 use rand::seq::IteratorRandom;
-use rand::Rng;
+use rand::RngExt;
 use valence::prelude::*;
 use valence::registry::biome::BiomeEffects;
 use valence::BiomePos;
@@ -69,13 +69,13 @@ fn setup(
 }
 
 fn set_biomes(mut layers: Query<&mut ChunkLayer>, biomes: Res<BiomeRegistry>) {
-    let mut layer = layers.single_mut();
+    let mut layer = layers.single_mut().unwrap();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     for _ in 0..10 {
-        let x = rng.gen_range(-SIZE * 4..SIZE * 4);
-        let z = rng.gen_range(-SIZE * 4..SIZE * 4);
+        let x = rng.random_range(-SIZE * 4..SIZE * 4);
+        let z = rng.random_range(-SIZE * 4..SIZE * 4);
 
         let biome = biomes
             .iter()
@@ -108,7 +108,7 @@ fn init_clients(
         mut game_mode,
     ) in &mut clients
     {
-        let layer = layers.single();
+        let layer = layers.single().unwrap();
 
         layer_id.0 = layer;
         visible_chunk_layer.0 = layer;

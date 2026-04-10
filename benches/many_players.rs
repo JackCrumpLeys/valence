@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy_app::prelude::*;
 use divan::Bencher;
-use rand::Rng;
+use rand::RngExt;
 use valence::entity::Position;
 use valence::keepalive::KeepaliveSettings;
 use valence::layer::chunk::UnloadedChunk;
@@ -71,9 +71,9 @@ fn run_many_players(bencher: Bencher, client_count: usize, view_dist: u8, world_
         bundle.player.layer.0 = layer;
         bundle.view_distance.set(view_dist);
 
-        let mut rng = rand::thread_rng();
-        let x = rng.gen_range(-f64::from(world_size) * 16.0..=f64::from(world_size) * 16.0);
-        let z = rng.gen_range(-f64::from(world_size) * 16.0..=f64::from(world_size) * 16.0);
+        let mut rng = rand::rng();
+        let x = rng.random_range(-f64::from(world_size) * 16.0..=f64::from(world_size) * 16.0);
+        let z = rng.random_range(-f64::from(world_size) * 16.0..=f64::from(world_size) * 16.0);
 
         bundle.player.position.set(DVec3::new(x, 64.0, z));
 
@@ -93,19 +93,19 @@ fn run_many_players(bencher: Bencher, client_count: usize, view_dist: u8, world_
     app.update();
 
     bencher.bench_local(|| {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         // Move the clients around randomly. They'll cross chunk borders and cause
         // interesting things to happen.
         for (id, helper) in &mut clients {
             let pos = query.get(app.world_mut(), *id).unwrap().get();
 
-            let offset = DVec3::new(rng.gen_range(-1.0..=1.0), 0.0, rng.gen_range(-1.0..=1.0));
+            let offset = DVec3::new(rng.random_range(-1.0..=1.0), 0.0, rng.random_range(-1.0..=1.0));
 
             helper.send(&MovePlayerPosRotC2s {
                 position: pos + offset,
-                yaw: rng.gen_range(0.0..=360.0),
-                pitch: rng.gen_range(0.0..=360.0),
+                yaw: rng.random_range(0.0..=360.0),
+                pitch: rng.random_range(0.0..=360.0),
                 flags: MovementFlags::new().with_on_ground(true),
             });
 

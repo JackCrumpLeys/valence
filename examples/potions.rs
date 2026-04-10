@@ -1,5 +1,5 @@
-use rand::seq::SliceRandom;
-use rand::Rng;
+use rand::seq::IndexedRandom;
+use rand::RngExt;
 use valence::client::despawn_disconnected_clients;
 use valence::entity::active_status_effects::{ActiveStatusEffect, ActiveStatusEffects};
 use valence::log::LogPlugin;
@@ -119,7 +119,7 @@ fn init_clients(
         mut game_mode,
     ) in &mut clients
     {
-        let layer = layers.single();
+        let layer = layers.single().unwrap();
 
         layer_id.0 = layer;
         visible_chunk_layer.0 = layer;
@@ -135,16 +135,16 @@ fn init_clients(
 
 pub fn add_potion_effect(
     mut clients: Query<&mut ActiveStatusEffects>,
-    mut events: EventReader<SneakEvent>,
+    mut events: MessageReader<SneakEvent>,
 ) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for event in events.read() {
         if event.state == SneakState::Start {
             if let Ok(mut status) = clients.get_mut(event.client) {
                 status.apply(
                     ActiveStatusEffect::from_effect(*StatusEffect::ALL.choose(&mut rng).unwrap())
-                        .with_duration(rng.gen_range(10..1000))
-                        .with_amplifier(rng.gen_range(0..5)),
+                        .with_duration(rng.random_range(10..1000))
+                        .with_amplifier(rng.random_range(0..5)),
                 );
             }
         }
@@ -208,7 +208,7 @@ pub fn handle_status_effect_added(
         Option<&mut Absorption>,
         &mut Flags,
     )>,
-    mut events: EventReader<StatusEffectAdded>,
+    mut events: MessageReader<StatusEffectAdded>,
 ) {
     for event in events.read() {
         if let Ok((status, mut attributes, mut health, absorption, mut flags)) =
@@ -264,7 +264,7 @@ pub fn handle_status_effect_removed(
         Option<&mut Absorption>,
         &mut Flags,
     )>,
-    mut events: EventReader<StatusEffectRemoved>,
+    mut events: MessageReader<StatusEffectRemoved>,
 ) {
     for event in events.read() {
         if let Ok((mut attributes, mut health, absorption, mut flags)) =

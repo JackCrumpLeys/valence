@@ -12,8 +12,8 @@ use valence::entity::warden::WardenEntityBundle;
 use valence::entity::zombie::ZombieEntityBundle;
 use valence::entity::zombie_horse::ZombieHorseEntityBundle;
 use valence::entity::{entity, Pose};
+use rand::RngExt;
 use valence::prelude::*;
-use valence::rand::Rng;
 
 pub fn main() {
     App::new()
@@ -69,7 +69,7 @@ fn init_clients(
         mut game_mode,
     ) in &mut clients
     {
-        let layer = layers.single();
+        let layer = layers.single().unwrap();
 
         layer_id.0 = layer;
         visible_chunk_layer.0 = layer;
@@ -83,7 +83,7 @@ fn init_clients(
 
 fn spawn_entity(
     mut commands: Commands,
-    mut sneaking: EventReader<SneakEvent>,
+    mut sneaking: MessageReader<SneakEvent>,
     client_query: Query<(&Position, &EntityLayerId)>,
 ) {
     for sneaking in sneaking.read() {
@@ -96,7 +96,7 @@ fn spawn_entity(
         let position = *position;
         let layer = *layer;
 
-        match rand::thread_rng().gen_range(0..7) {
+        match rand::rng().random_range(0..7) {
             0 => commands.spawn(SheepEntityBundle {
                 position,
                 layer,

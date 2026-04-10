@@ -2,7 +2,7 @@
 
 const SPAWN_Y: i32 = 64;
 
-use rand::Rng;
+use rand::RngExt;
 use valence::entity::armor_stand::ArmorStandEntityBundle;
 use valence::entity::zombie::ZombieEntityBundle;
 use valence::equipment::{EquipmentInteractionBroadcast, EquipmentInventorySync};
@@ -88,7 +88,7 @@ fn init_clients(
         mut inv,
     ) in &mut clients
     {
-        let layer = layers.single();
+        let layer = layers.single().unwrap();
 
         pos.0 = [0.0, f64::from(SPAWN_Y) + 1.0, 0.0].into();
         layer_id.0 = layer;
@@ -117,7 +117,7 @@ fn randomize_equipment(mut query: Query<&mut Equipment, Without<Client>>, server
     for mut equipment in &mut query {
         equipment.clear();
 
-        let (slot, item_stack) = match rand::thread_rng().gen_range(0..=5) {
+        let (slot, item_stack) = match rand::rng().random_range(0..=5) {
             0 => (
                 EquipmentSlot::MainHand,
                 ItemStack::new(ItemKind::DiamondSword, 1),
