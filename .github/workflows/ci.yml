@@ -218,6 +218,8 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1.5.0
         with:
           toolchain: "nightly"
+          # This removes the default `-D warnings` setting since we don't want new warnings in nightly to break CI
+          rustflags: ""
 
       - name: Install cargo-udeps
         uses: baptiste0928/cargo-install@v2.1.0
